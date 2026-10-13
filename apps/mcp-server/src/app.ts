@@ -1,0 +1,99 @@
+// HTTP front for the MCP server: POST /mcp (Streamable HTTP, stateless), /healthz, demo clock.
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
+import { localAt, type Ctx, type DemoClock } from "@recollect/core";
+import { buildServer, type ToolLog, type ToolRole } from "./tools.ts";
+
+export interface AppOptions {
+  ctx: Ctx;
+  tokens: { elder: string; family: string };
+  /** Present only when DEMO_CLOCK=1: lets the simulator jump to 17:00 or 03:00 (scenarios I, K). */
+  demoClock?: DemoClock;
+  log?: (line: ToolLog | Record<string, unknown>) => void;
+}
+
+export interface App { http: Server; /** Resolves when queued background work has finished. */ idle(): Promise<void> }
+
+function json(res: ServerResponse, status: number, body: unknown): void {
+  res.writeHead(status, { "content-type": "application/json" }).end(JSON.stringify(body));
+}
+
+async function readJson(req: IncomingMessage): Promise<unknown> {
+  const chunks: Buffer[] = [];
+  for await (const c of req) chunks.push(c as Buffer);
+  const text = Buffer.concat(chunks).toString("utf8");
+  return text ? JSON.parse(text) : undefined;
+}
+
+export function createApp(opts: AppOptions): App {
+  const { ctx, tokens, demoClock } = opts;
+  const log = opts.log ?? ((line) => console.log(JSON.stringify(line)));
+
+  // One background job at a time, strictly after the tool has answered. Failures never reach a
+  // tool response (§9): retry twice, then log.
+  let queue: Promise<unknown> = Promise.resolve();
+  const background = (job: () => Promise<unknown>) => {
+    queue = queue.then(async () => {
+      for (let attempt = 1; ; attempt++) {
+        try { return await job(); } catch (e) {
+          if (attempt === 3) return log({ background: "failed", error: String(e) });
+        }
+      }
+    });
+  };
+
+  const roleOf = (req: IncomingMessage): ToolRole | undefined => {
+    const token = /^Bearer (.+)$/.exec(req.headers.authorization ?? "")?.[1];
+    return token === tokens.elder ? "elder" : token === tokens.family ? "family" : undefined;
+  };
+
+  const http = createServer(async (req, res) => {
+    try {
+      const path = new URL(req.url ?? "/", "http://localhost").pathname;
+      if (path === "/healthz") return json(res, 200, { ok: true, quotes: ctx.index.size });
+
+      const role = roleOf(req);
+      if (path === "/demo/clock" && demoClock) {
+        if (role !== "family") return json(res, 401, { error: "family token required" });
+        if (req.method === "POST") {
+          const body = (await readJson(req)) as { at?: string } | undefined;
+          if (!body?.at) demoClock.reset();
+          else if (/^\d{1,2}:\d{2}$/.test(body.at)) demoClock.set(localAt(new Date(), ctx.household.tz, body.at));
+          else demoClock.set(new Date(body.at));
+        }
+        return json(res, 200, { now: ctx.clock.now().toISOString() });
+      }
+
+      if (path !== "/mcp") return json(res, 404, { error: "not found" });
+      if (!role) {
+        res.setHeader("www-authenticate", "Bearer");
+        return json(res, 401, { error: "missing or unknown bearer token" });
+      }
+      // Stateless: no server-initiated stream, so GET and DELETE have nothing to serve.
+      if (req.method !== "POST") {
+        res.setHeader("allow", "POST");
+        return json(res, 405, { jsonrpc: "2.0", error: { code: -32000, message: "Method not allowed." }, id: null });
+      }
+      const body = await readJson(req);
+      const init = [body].flat().find((m) => (m as { method?: string } | undefined)?.method === "initialize") as
+        { params?: { protocolVersion?: string } } | undefined;
+      if (init) {
+        const requested = init.params?.protocolVersion ?? "";
+        log({
+          mcp: "initialize", role, requested,
+          negotiated: SUPPORTED_PROTOCOL_VERSIONS.includes(requested) ? requested : SUPPORTED_PROTOCOL_VERSIONS[0],
+        });
+      }
+      const server = buildServer({ ctx, background, log }, role);
+      const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
+      res.on("close", () => { void transport.close(); void server.close(); });
+      await server.connect(transport);
+      await transport.handleRequest(req, res, body);
+    } catch (e) {
+      console.error(e);
+      if (!res.headersSent) json(res, 500, { jsonrpc: "2.0", error: { code: -32603, message: "Internal error" }, id: null });
+    }
+  });
+  return { http, idle: async () => { await queue; } };
+}

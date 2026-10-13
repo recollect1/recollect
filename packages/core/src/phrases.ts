@@ -1,0 +1,111 @@
+// Every sentence Recollect speaks or shows comes from here (CLAUDE.md §8).
+// No model writes memory, medicine or trend wording. Wording never varies with repeat counts.
+
+/** §1.2 — banned in every family card, report and spoken line (case-insensitive). */
+export const BANNED_CLAIMS = [
+  "diagnos", "dementia detected", "alzheimer's detected", "you have", "signs of dementia",
+  "risk score", "cognitive decline detected", "screening result",
+];
+/** §1.5 — banned in any medicine response (case-insensitive). */
+export const BANNED_MEDICINE = [
+  "safe to", "you can take", "it's fine", "no problem", "stop taking", "increase", "decrease",
+  "double", "skip",
+];
+export const NOT_MEDICAL = "This is not a medical assessment.";
+
+export function findBanned(text: string, list: string[]): string[] {
+  const t = text.toLowerCase();
+  return list.filter((w) => t.includes(w));
+}
+
+export type Audience = "elder" | "family";
+
+// --- memory ---
+export const fromTheirWords = (quote: string, speakerName: string, date: string, to: Audience = "elder") =>
+  to === "elder" ? `You told me on ${date}: "${quote}"` : `${speakerName} said on ${date}: "${quote}"`;
+export const nothingRecorded = (topic: string) =>
+  `I don't have anything saved about ${topic} yet. Would you like to tell me about it?`;
+export const storySaved = () => "Thank you, I've kept that.";
+export const privateKept = () => "Alright, I'll keep that just for you.";
+export const storyPromptFor = (entityName: string) =>
+  `You mentioned ${entityName}. Would you like to tell me more?`;
+export const storyPromptOpen = () => "Would you like to tell me a story from when you were young?";
+
+// --- medicine ---
+export const doseTaken = (name: string, time: string) => `Yes, you took your ${name} at ${time} today.`;
+export const doseNotYet = (name: string, due: string) =>
+  `Your ${name} is due at ${due}. It isn't marked as taken yet.`;
+export const doseLogged = (name: string, time: string) => `Noted, ${name} at ${time}.`;
+export const doseAlreadyLogged = (name: string, time: string, admin: string) =>
+  `Your ${name} was already marked at ${time} today. If you're unsure, please ask ${admin}.`;
+export const medicineUnknown = (admin: string) =>
+  `I'm not sure which tablet you mean. Please ask ${admin}.`;
+
+// --- today ---
+export const visitorComes = (name: string, time: string) => `${name} comes at ${time}`;
+export const visitorCalls = (name: string) => `${name} calls today`;
+export const noVisitors = () => "Nobody is expected today";
+export const nextDose = (name: string, time: string) => `Your next tablet is your ${name}, at ${time}.`;
+export const noMoreDoses = () => "There are no more tablets on today's list.";
+export const today = (weekday: string, d: number, month: string, visitorLine: string, nextDoseLine: string) =>
+  `It's ${weekday}, ${d} ${month}. ${visitorLine}. ${nextDoseLine}`;
+
+// --- people ---
+export const personStatus = (name: string, statusLine: string) => `${name} ${statusLine}.`;
+export const whoIs = (name: string, relationToElder: string, extra?: string) =>
+  `That's ${name}, your ${relationToElder}.${extra ? ` ${extra}` : ""}`;
+export const whoIsUnknown = (admin: string) => `I'm not sure who that is. ${admin} can add them for me.`;
+
+// --- tracking and consent ---
+export const trackingPaused = (admin: string) =>
+  `Okay, I've stopped tracking your speech. You can turn it back on with ${admin} any time.`;
+
+// --- routines ---
+export const eveningHello = (name: string, offer: string) => `It's evening, ${name}. ${offer}`;
+export const nightReassure = (name: string) =>
+  `It's night time, ${name}, and everyone is asleep. You're safe at home. Let's rest until morning.`;
+export const nightPlaceReassure = (place: string) =>
+  `The ${place} opens in the morning. We can go after breakfast.`;
+
+// --- weekly photo ---
+export const weeklyPhotoPrompt = (name: string) =>
+  `${name}, would you tell me about this photo? There's no right or wrong answer.`;
+export const photoThanks = () => "Thank you, I loved hearing that.";
+export const noPhotoYet = (admin: string) => `There's no photo chosen yet. ${admin} can pick one for us.`;
+
+// --- family only: never spoken to the elder ---
+export const CHANGE_PHRASES: Record<string, string> = {
+  mean_pause_s: "pauses longer",
+  pause_rate: "pauses more often",
+  speech_rate_wpm: "speaks more slowly",
+  mattr: "uses fewer different words",
+  vague_rate: "uses more vague words",
+  pronoun_noun_ratio: "uses more pronouns in place of names",
+  mean_utt_len: "speaks in shorter sentences",
+  idea_density: "packs less detail into each sentence",
+  self_corrections: "corrects themselves more often",
+  named_recall: "names familiar people less often",
+  retell_rate: "retells the same stories more often",
+  new_entity_rate: "brings up fewer new people and places",
+  orientation_asks: "asks about the day, people and tablets more often",
+  evening_orientation_share: "asks more of those questions in the evening",
+};
+const listOf = (items: string[]) =>
+  items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+export const trendStable = (name: string, weeks: number) =>
+  `${name}'s speech has stayed close to their usual pattern over the last ${weeks} weeks. ${NOT_MEDICAL}`;
+export const trendChange = (name: string, metrics: string[], since: string) =>
+  `Since ${since}, ${name} ${listOf(metrics.map((m) => CHANGE_PHRASES[m] ?? m))}. ` +
+  `Worth mentioning at the next check-up. ${NOT_MEDICAL}`;
+export const trendNotReady = (name: string) =>
+  `There isn't a trend for ${name} yet. Recollect needs a few weeks of conversations first. ${NOT_MEDICAL}`;
+export const trackingOff = (name: string) =>
+  `Change tracking is turned off for ${name}, so there is no trend to show.`;
+export const REPEATS_NORMAL = "Repeats are normal; Recollect answers the same way every time.";
+export const familySummary = (name: string, taken: number, due: number, stories: number, repeats: string[]) =>
+  `Today ${name} has ${taken} of ${due} tablets marked as taken and told ${stories} ` +
+  `${stories === 1 ? "story" : "stories"}.` +
+  (repeats.length ? ` Asked more than once: ${listOf(repeats)}. ${REPEATS_NORMAL}` : "");
+export const repeatLine = (label: string, count: number) => `${label} (asked ${count} times today)`;
+export const thisIsMeReady = (name: string) => `Here is ${name}'s "This is me" page, ready to print.`;
+export const thisIsMeMissing = (name: string) => `${name}'s "This is me" page hasn't been written yet.`;

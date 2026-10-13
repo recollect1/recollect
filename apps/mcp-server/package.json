@@ -1,0 +1,18 @@
+{
+  "name": "@recollect/mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "test:latency": "tsx test/latency.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.0",
+    "@recollect/core": "workspace:*",
+    "zod": "^3.25.0"
+  }
+}
