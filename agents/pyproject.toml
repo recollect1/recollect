@@ -1,0 +1,16 @@
+[project]
+name = "recollect-agents"
+version = "0.1.0"
+description = "Recollect background agents: extract, markers, trends, synth"
+license = "MIT"
+requires-python = ">=3.12"
+# Added as each agent is wired up: strands-agents, boto3, falkordb (extract, worker);
+# numpy, soundfile, webrtcvad (timing markers). Nothing here needs them yet.
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

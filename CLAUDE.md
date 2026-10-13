@@ -596,5 +596,7 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   `packages/ui-cards` exists. `GET /mcp` returns 405 (stateless server).
 - **ONNX threads.** Both local models run with `ONNX_THREADS` threads (default 2), spinning off,
   and never concurrently (friction log 5).
-- **Not built yet:** `agents/`, `apps/alexa-sim`, `apps/family`, `packages/ui-cards`, `skill/`.
+- **Agents so far:** only `agents/extract/validate.py` (§9.1 step 2) with its property test. The
+  Bedrock call, graph writes, story prompts, markers, trends and synth are not written.
+- **Not built yet:** the rest of `agents/`, `apps/alexa-sim`, `apps/family`, `packages/ui-cards`, `skill/`.
 - **Not passing yet:** `pnpm test:latency` (see README, Latency).

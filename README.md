@@ -36,7 +36,8 @@ A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has t
 | Grounding eval (`pnpm eval:recall`) | Passing, table below |
 | FalkorDB adapter (`FalkorGraph`) | Written, **not yet run** — no Docker on the build machine |
 | Latency test (`pnpm test:latency`) | Written; **not yet passing** — see [Latency](#latency) |
-| `agents/` (extract, markers, trends, synth), `apps/alexa-sim`, `apps/family`, `packages/ui-cards`, `skill/` | Not built yet |
+| `agents/extract/validate.py` — span, orphan-relation and entity-resolution checks | Built, tested (`pytest`) |
+| Rest of `agents/` (Bedrock extraction call, markers, trends, synth), `apps/alexa-sim`, `apps/family`, `packages/ui-cards`, `skill/` | Not built yet |
 
 ## Setup
 
@@ -57,6 +58,7 @@ The first run downloads two small local ONNX models (about 50 MB together) from 
 pnpm test            # unit and MCP server tests, offline
 pnpm eval:recall     # grounding eval with the real local models
 pnpm test:latency    # 50 calls per elder tool against MCP_SERVER_URL
+(cd agents && uv run pytest)
 ```
 
 Demo tokens are whatever you set in `.env`: `ELDER_TOKEN` gets Gurdev's tools, `FAMILY_TOKEN` gets
