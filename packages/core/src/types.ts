@@ -36,6 +36,11 @@ export interface Profile {
 export interface WeeklyPhoto { id: string; photoId: string; week: string; sessionId?: string }
 export interface Device { id: string; kind: "light" | "speaker"; room: string; state: string }
 export interface RoutineEvent { id: string; kind: "evening" | "night"; at: string; actions: string[]; escalated: boolean }
+/** Per-session speech markers (§7). `simulated` marks demo data, which every screen must label. */
+export interface MarkerSet {
+  id: string; sessionId: string; computedAt: string; mode: SessionMode; simulated: boolean;
+  retold?: boolean; [metric: string]: unknown;
+}
 // Written by the trends agent (§9.3); read, never computed, by the speech_trend tool.
 export interface TrendCard {
   id: string; personId: string; createdAt: string; kind: "stable" | "change";

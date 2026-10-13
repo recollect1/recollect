@@ -1,0 +1,16 @@
+{
+ "id": "tc-2026-10-12",
+ "personId": "p-gurdev",
+ "createdAt": "2026-10-12T04:30:00Z",
+ "weeks": 12,
+ "simulated": true,
+ "changes": [
+  "mean_pause_s",
+  "mattr",
+  "named_recall",
+  "retell_rate"
+ ],
+ "kind": "change",
+ "since": "August",
+ "say": "Since August, Gurdev pauses longer, uses fewer different words, names familiar people less often and retells the same stories more often. Worth mentioning at the next check-up. This is not a medical assessment."
+}

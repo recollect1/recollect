@@ -1,5 +1,6 @@
 // Loads the fictional seed household (§5) into a graph. Idempotent for the fixed-id nodes;
 // run against an empty graph (the CLI clears first) so stories are not duplicated.
+import { existsSync, readFileSync } from "node:fs";
 import { loadCtx, type Ctx } from "../ctx.ts";
 import type { Embedder } from "../embed.ts";
 import type { Graph } from "../graph.ts";
@@ -13,6 +14,28 @@ import {
   CONSENT, DEVICES, ENTITIES, HOUSEHOLD, MEDICINES, PEOPLE, PHOTOS, PROFILE, SAME_AS, SCHEDULES,
   STORIES, VISITS, WEEKLY_PHOTO_ID,
 } from "./data.ts";
+
+/** Output of `python -m synth` and `python -m trends`: the SIMULATED 12-week history (§12). */
+const SIMULATED = new URL("../../../../data/simulated/", import.meta.url);
+
+interface SimulatedHistory {
+  markerSets: { id: string; sessionId: string; at: string; mode: string; simulated: boolean; retold?: boolean; metrics: Record<string, number> }[];
+}
+
+/** Loads the simulated marker history and its trend card, when they have been generated. */
+export async function loadSimulated(graph: Graph): Promise<number> {
+  const markers = new URL("markers.json", SIMULATED), trend = new URL("trend.json", SIMULATED);
+  if (!existsSync(markers) || !existsSync(trend)) return 0;
+  const history = JSON.parse(readFileSync(markers, "utf8")) as SimulatedHistory;
+  for (const { metrics, at, ...rest } of history.markerSets) {
+    if (!rest.simulated) throw new Error(`${rest.id} is not labelled simulated`);
+    await graph.upsert("MarkerSet", { ...rest, computedAt: at, ...metrics });
+  }
+  const card = JSON.parse(readFileSync(trend, "utf8")) as { id: string; simulated: boolean };
+  if (!card.simulated) throw new Error("the seeded trend card is not labelled simulated");
+  await graph.upsert("TrendCard", { ...card });
+  return history.markerSets.length;
+}
 
 export interface SeedOptions {
   /** Story keys to leave out, e.g. ["radio"] so scenario C can be told live. */
@@ -65,6 +88,7 @@ export async function seed(
       id: "sp-nimmo", text: storyPromptFor(`your sister ${once.name}`), basedOnEntityId: once.id, used: false,
     });
   }
+  await loadSimulated(graph);
   await ctx.index.load(graph);
   return ctx;
 }

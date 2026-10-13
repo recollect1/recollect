@@ -1,7 +1,7 @@
 # Friction log
 
 Written as issues happen. Each entry: what we were doing, what went wrong, what we did.
-Entries 1–11 were recorded by Claude Code during the first build session and **need a human to
+Entries 1–15 were recorded by Claude Code during the first build sessions and **need a human to
 confirm them before submission** (CLAUDE.md §18.6).
 
 ## 1. pnpm install scripts fail on a deep Windows path (12 Oct)
@@ -82,3 +82,34 @@ be bound to the role of its bearer token.
 **Problem:** in stateless mode there is no stream for `GET /mcp` to serve; the SDK example answers
 405, which is not obvious from the spec's "POST/GET /mcp".
 **Fix:** `GET` and `DELETE` return 405 with `Allow: POST`.
+
+## 12. Trend wording had to live in one file for two languages (13 Oct)
+**Doing:** writing the Python trends agent, which must produce the same family sentences as
+the TypeScript phrase templates.
+**Problem:** two copies of fixed wording would drift, and the wording is a safety rule.
+**Fix:** moved the banned list, trend templates and per-metric phrases into
+`packages/core/src/trend-phrases.json`, read by both sides, with a test that the TypeScript
+functions and the shared templates agree. Importing JSON in ESM needed `with { type: "json" }`.
+
+## 13. A weekly share built from five stories is too noisy to flag (13 Oct)
+**Doing:** flagging `retell_rate` on the simulated history.
+**Problem:** with five stories a week the share moves in steps of 0.2, so random draws gave
+weeks of 0.8, 0.6, 0.2, 0.0 during a steady drift, and four weeks in a row never happened.
+The same lumpiness made `orientation_asks` swing by more than 3 SD with no real change,
+because its baseline spread was close to zero.
+**Fix:** the generator now sets how many of a week's stories are retells instead of drawing
+each one; count-based metrics get a minimum spread. Real data will have the same problem: a
+person who tells two stories a week cannot produce a stable weekly share.
+
+## 14. A once-a-week sample needs a large change to show (13 Oct)
+**Doing:** using the weekly photo description as the comparable sample for text markers (§7.1b).
+**Problem:** one sample a week, with a 5% floor on the spread, did not flag the vocabulary drift
+the spec describes (0.72 to 0.63) four weeks running.
+**Fix:** the simulated drift was made larger (to 0.59). This is a property of the method, not
+only of the demo: with one sample a week, only a clear change is visible.
+
+## 15. No `uv`, and Python 3.12 not installed (13 Oct)
+**Doing:** running the Python tests.
+**Problem:** the machine has Python 3.11 and 3.13 and no `uv`; the spec's commands use `uv`.
+**Fix:** a plain `venv` on 3.13 with `pytest`. The agents so far use only the standard
+library, so nothing else was needed. `uv sync` has not been run on this project.

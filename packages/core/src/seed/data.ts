@@ -162,5 +162,5 @@ export const DEVICES: Device[] = [
 
 export const CONSENT: Consent = {
   id: "c-gurdev", personId: "p-gurdev", trackingOn: true, fullVoiceOn: false,
-  byElderAt: "2026-08-01T05:30:00.000Z", byFamilyAt: "2026-08-01T05:35:00.000Z",
+  byElderAt: "2026-07-18T05:30:00.000Z", byFamilyAt: "2026-07-18T05:35:00.000Z",
 };

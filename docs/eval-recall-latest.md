@@ -57,5 +57,16 @@ Answerable: 6/6 right story quoted
 Unanswerable: 4/4 nothingRecorded
 Invented content: 0
 
-recall() time on this machine: p50 268 ms, p95 593 ms, max 758 ms
+### Retell detection on a reworded story
+
+| Retold sentence | Closest stored story | Similarity | RETELLS (≥ 0.85) |
+|---|---|---|---|
+| There was only one well in Rampur for the whole village. | well | 0.86 | yes |
+| Each morning I went there with my sister Nimmo and we filled the brass pots. | well | 0.96 | yes |
+| The rope was rough and cut our hands in the winter. | well | 0.98 | yes |
+| One time Nimmo dropped the bucket in the well and we both ran away. | well | 0.98 | yes |
+
+4/4 reworded sentences linked as retells; a story counts as retold when any sentence links.
+
+recall() time on this machine: p50 144 ms, p95 548 ms, max 559 ms
 Grounding eval: PASS · held-out: all correct

@@ -261,15 +261,24 @@ describe("routines (scenario I)", () => {
 
 describe("consent and family views", () => {
   it("pause_tracking turns tracking off and speech_trend then shows nothing", async () => {
+    await ctx.graph.remove("TrendCard", "tc-2026-10-12");
     expect((await D.speechTrend(ctx)).say).toBe(P.trendNotReady("Gurdev"));
     expect((await D.pauseTracking(ctx)).say).toBe("Okay, I've stopped tracking your speech. You can turn it back on with Simran any time.");
     expect((await ctx.graph.find<Consent>("Consent"))[0]).toMatchObject({ trackingOn: false });
     expect((await D.speechTrend(ctx)).say).toBe(P.trackingOff("Gurdev"));
   });
+  it("scenario G: the seeded trend card is the simulated history, labelled as such", async () => {
+    const r = await D.speechTrend(ctx);
+    expect(r.card).toMatchObject({ kind: "change", simulated: true, since: "August", weeks: 12 });
+    expect(r.say).toBe(P.trendChange("Gurdev", ["mean_pause_s", "mattr", "named_recall", "retell_rate"], "August"));
+    const sets = await ctx.graph.find<{ simulated: boolean }>("MarkerSet");
+    expect(sets).toHaveLength(72);
+    expect(sets.every((s) => s.simulated)).toBe(true);
+  });
   it("speech_trend returns the stored card verbatim", async () => {
     const say = P.trendChange("Gurdev", ["mean_pause_s", "named_recall"], "August");
     await ctx.graph.upsert("TrendCard", {
-      id: "tc-1", personId: "p-gurdev", createdAt: "2026-10-12T00:00:00.000Z", kind: "change", say,
+      id: "tc-1", personId: "p-gurdev", createdAt: "2026-10-13T00:00:00.000Z", kind: "change", say,
       changes: ["mean_pause_s", "named_recall"], since: "August", weeks: 8, simulated: true,
     });
     const r = await D.speechTrend(ctx);

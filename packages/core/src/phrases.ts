@@ -1,17 +1,17 @@
 // Every sentence Recollect speaks or shows comes from here (CLAUDE.md §8).
 // No model writes memory, medicine or trend wording. Wording never varies with repeat counts.
 
+// Trend wording is shared with the Python trends agent, so both read the same file.
+import trend from "./trend-phrases.json" with { type: "json" };
+
 /** §1.2 — banned in every family card, report and spoken line (case-insensitive). */
-export const BANNED_CLAIMS = [
-  "diagnos", "dementia detected", "alzheimer's detected", "you have", "signs of dementia",
-  "risk score", "cognitive decline detected", "screening result",
-];
+export const BANNED_CLAIMS: string[] = trend.bannedClaims;
 /** §1.5 — banned in any medicine response (case-insensitive). */
 export const BANNED_MEDICINE = [
   "safe to", "you can take", "it's fine", "no problem", "stop taking", "increase", "decrease",
   "double", "skip",
 ];
-export const NOT_MEDICAL = "This is not a medical assessment.";
+export const NOT_MEDICAL: string = trend.notMedical;
 
 export function findBanned(text: string, list: string[]): string[] {
   const t = text.toLowerCase();
@@ -74,22 +74,9 @@ export const photoThanks = () => "Thank you, I loved hearing that.";
 export const noPhotoYet = (admin: string) => `There's no photo chosen yet. ${admin} can pick one for us.`;
 
 // --- family only: never spoken to the elder ---
-export const CHANGE_PHRASES: Record<string, string> = {
-  mean_pause_s: "pauses longer",
-  pause_rate: "pauses more often",
-  speech_rate_wpm: "speaks more slowly",
-  mattr: "uses fewer different words",
-  vague_rate: "uses more vague words",
-  pronoun_noun_ratio: "uses more pronouns in place of names",
-  mean_utt_len: "speaks in shorter sentences",
-  idea_density: "packs less detail into each sentence",
-  self_corrections: "corrects themselves more often",
-  named_recall: "names familiar people less often",
-  retell_rate: "retells the same stories more often",
-  new_entity_rate: "brings up fewer new people and places",
-  orientation_asks: "asks about the day, people and tablets more often",
-  evening_orientation_share: "asks more of those questions in the evening",
-};
+export const CHANGE_PHRASES: Record<string, string> = Object.fromEntries(
+  Object.entries(trend.metrics).map(([metric, m]) => [metric, m.phrase]));
+export const TREND_TEMPLATES: Record<string, string> = trend.templates;
 const listOf = (items: string[]) =>
   items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
 export const trendStable = (name: string, weeks: number) =>

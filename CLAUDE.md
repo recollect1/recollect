@@ -596,7 +596,29 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   `packages/ui-cards` exists. `GET /mcp` returns 405 (stateless server).
 - **ONNX threads.** Both local models run with `ONNX_THREADS` threads (default 2), spinning off,
   and never concurrently (friction log 5).
-- **Agents so far:** only `agents/extract/validate.py` (§9.1 step 2) with its property test. The
-  Bedrock call, graph writes, story prompts, markers, trends and synth are not written.
-- **Not built yet:** the rest of `agents/`, `apps/alexa-sim`, `apps/family`, `packages/ui-cards`, `skill/`.
+- **Agents so far** are pure functions with tests and no graph or AWS access:
+  `extract/validate.py` (§9.1 step 2), `markers/` (§7.1–7.3 maths), `synth/` (§12),
+  `trends/` (§9.3, including the doctor report). The worker that polls `Job` nodes, calls
+  Bedrock and writes to the graph is not written. No Strands or AgentCore code exists yet.
+- **Trend wording is shared.** `packages/core/src/trend-phrases.json` holds the banned list, the
+  trend templates and, per metric, its change phrase, worse direction and chart label.
+  `phrases.ts` and `agents/common/phrases.py` both read it; a TS test checks they agree.
+  It adds `long_pause_rate` and `phonation_ratio` phrases.
+- **Simulated history.** `python -m synth` writes `data/simulated/markers.json`; `python -m trends`
+  writes `trend.json` and `doctor-report.html` beside it. The seed loads the marker sets and the
+  card into the graph (`loadSimulated`), so `speech_trend` works without the Python side
+  running. The history starts Mon 20 Jul 2026; seed consent dates moved to 18 Jul to precede it.
+  The mattr drift is 0.13 (not subtle) so a once-a-week photo sample can show it.
+- **Trends (§9.3).** `retell_rate` is the share of a week's stories that are retells, not a
+  count. Per-week metrics (`retell_rate`, `orientation_asks`, `evening_orientation_share`) take
+  their baseline from the first 4 weekly values, since 14 days gives only two. Robust SD has a
+  floor (5% of the median, or a fixed minimum for count-based metrics). The photo series is
+  used for text markers once 8 photo sessions exist (4 for its baseline, 4 recent), not 4.
+  `since` is the month in which the earliest flagged run began. Bedrock is not used to format
+  the report: it is templates only.
+- **Markers (§7.1).** Parts of speech come from closed word lists and suffix rules; no spaCy.
+- **Doctor report route.** `GET /report/doctor` with the family token serves the generated HTML.
+- **Not built yet:** agent worker, `apps/alexa-sim`, `apps/family`, `packages/ui-cards`,
+  two-step consent switch-on, "delete everything" endpoint, night-time family alert.
+- **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.
 - **Not passing yet:** `pnpm test:latency` (see README, Latency).

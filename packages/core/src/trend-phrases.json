@@ -1,0 +1,30 @@
+{
+  "notMedical": "This is not a medical assessment.",
+  "bannedClaims": [
+    "diagnos", "dementia detected", "alzheimer's detected", "you have", "signs of dementia",
+    "risk score", "cognitive decline detected", "screening result"
+  ],
+  "templates": {
+    "trendStable": "{name}'s speech has stayed close to their usual pattern over the last {weeks} weeks. {notMedical}",
+    "trendChange": "Since {since}, {name} {changes}. Worth mentioning at the next check-up. {notMedical}",
+    "trendNotReady": "There isn't a trend for {name} yet. Recollect needs a few weeks of conversations first. {notMedical}"
+  },
+  "metrics": {
+    "mean_pause_s": { "phrase": "pauses longer", "worse": "up", "label": "Mean pause length (seconds)" },
+    "pause_rate": { "phrase": "pauses more often", "worse": "up", "label": "Pauses per minute of speech" },
+    "long_pause_rate": { "phrase": "has more long pauses", "worse": "up", "label": "Pauses of 2 seconds or more per minute" },
+    "phonation_ratio": { "phrase": "spends less of the time speaking", "worse": "down", "label": "Share of the time spent speaking" },
+    "speech_rate_wpm": { "phrase": "speaks more slowly", "worse": "down", "label": "Speech rate (words per minute)" },
+    "mattr": { "phrase": "uses fewer different words", "worse": "down", "label": "Vocabulary variety (moving type-token ratio)" },
+    "vague_rate": { "phrase": "uses more vague words", "worse": "up", "label": "Vague words per 100 words" },
+    "pronoun_noun_ratio": { "phrase": "uses more pronouns in place of names", "worse": "up", "label": "Pronouns per noun" },
+    "mean_utt_len": { "phrase": "speaks in shorter sentences", "worse": "down", "label": "Words per sentence" },
+    "idea_density": { "phrase": "packs less detail into each sentence", "worse": "down", "label": "Idea density (per 10 words)" },
+    "self_corrections": { "phrase": "corrects themselves more often", "worse": "up", "label": "Self-corrections per 100 words" },
+    "named_recall": { "phrase": "names familiar people less often", "worse": "down", "label": "Familiar people and places referred to by name (share)" },
+    "retell_rate": { "phrase": "retells the same stories more often", "worse": "up", "label": "Stories that repeat an earlier one (share per week)" },
+    "new_entity_rate": { "phrase": "brings up fewer new people and places", "worse": "down", "label": "New people, places and events per story" },
+    "orientation_asks": { "phrase": "asks about the day, people and tablets more often", "worse": "up", "label": "Orientation questions per day" },
+    "evening_orientation_share": { "phrase": "asks more of those questions in the evening", "worse": "up", "label": "Share of orientation questions asked 16:00–22:00" }
+  }
+}

@@ -2,13 +2,14 @@
 // Pass = the right story is quoted for every answerable question, nothingRecorded for every
 // unanswerable one, and every spoken quote is a verbatim passage of a stored story.
 // The held-out set is printed too but does not decide pass/fail: thresholds were not tuned on it.
-import { createEmbedder } from "../src/embed.ts";
+import { cosine, createEmbedder } from "../src/embed.ts";
 import { MemoryGraph } from "../src/graph.ts";
 import { nothingRecorded } from "../src/phrases.ts";
 import { recall } from "../src/recall.ts";
 import { createReranker } from "../src/rerank.ts";
 import { STORIES } from "../src/seed/data.ts";
 import { seed } from "../src/seed/index.ts";
+import { RETELL_MIN_SIMILARITY } from "../src/stories.ts";
 import { systemClock } from "../src/time.ts";
 import { HELD_OUT, QUESTIONS } from "./eval-questions.ts";
 
@@ -44,6 +45,27 @@ async function run(title: string, questions: [string, string | null][]) {
 
 const ok = await run("Grounding eval (30 questions, thresholds tuned on this set)", QUESTIONS);
 const heldOutOk = await run("Held-out check (10 questions, not used for tuning)", HELD_OUT);
+
+// Retell detection (§7.2, scenario F): the well story told again in slightly different words.
+// Informational: reports how many retold sentences reach the RETELLS similarity of 0.85.
+const RETOLD = [
+  "There was only one well in Rampur for the whole village.",
+  "Each morning I went there with my sister Nimmo and we filled the brass pots.",
+  "The rope was rough and cut our hands in the winter.",
+  "One time Nimmo dropped the bucket in the well and we both ran away.",
+];
+console.log("\n### Retell detection on a reworded story\n");
+console.log("| Retold sentence | Closest stored story | Similarity | RETELLS (≥ 0.85) |");
+console.log("|---|---|---|---|");
+let retells = 0;
+for (const sentence of RETOLD) {
+  const v = await ctx.embedder.embed(sentence);
+  const best = ctx.index.all().map((q) => ({ q, sim: cosine(v, q.embedding ?? []) })).sort((a, b) => b.sim - a.sim)[0]!;
+  if (best.sim >= RETELL_MIN_SIMILARITY) retells++;
+  console.log(`| ${sentence} | ${best.q.storyKey} | ${best.sim.toFixed(2)} | ${best.sim >= RETELL_MIN_SIMILARITY ? "yes" : "no"} |`);
+}
+console.log(`\n${retells}/${RETOLD.length} reworded sentences linked as retells; a story counts as retold when any sentence links.`);
+
 times.sort((a, b) => a - b);
 const pct = (p: number) => (times[Math.min(times.length - 1, Math.floor(p * times.length))] ?? 0).toFixed(0);
 console.log(`\nrecall() time on this machine: p50 ${pct(0.5)} ms, p95 ${pct(0.95)} ms, max ${pct(1)} ms`);

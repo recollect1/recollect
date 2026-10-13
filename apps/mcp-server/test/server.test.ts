@@ -141,7 +141,14 @@ describe("MCP server (§10)", () => {
   it("family tools: speech_trend, this_is_me; elder tools: pause_tracking, story_prompt, whats_today", async () => {
     const elder = await connect(tokens.elder);
     const family = await connect(tokens.family);
-    expect((await call(family, "speech_trend")).say).toBe(phrases.trendNotReady("Gurdev"));
+    const trend = await call(family, "speech_trend");
+    expect(trend.say).toMatch(/^Since August, Gurdev pauses longer.*This is not a medical assessment.$/);
+    expect(trend.data.card).toMatchObject({ simulated: true });
+    const report = new URL("/report/doctor", url);
+    expect((await fetch(report, { headers: { authorization: `Bearer ${tokens.elder}` } })).status).toBe(401);
+    const html = await (await fetch(report, { headers: { authorization: `Bearer ${tokens.family}` } })).text();
+    expect(html).toContain("Simulated data");
+    expect(html).toContain(phrases.NOT_MEDICAL);
     expect((await call(family, "this_is_me")).data.card).toMatchObject({ name: "Gurdev" });
     expect((await call(elder, "whats_today")).say).toMatch(/^It's Tuesday, 13 October\. Harpreet comes at 10:00\./);
     expect((await call(elder, "story_prompt")).say).toBe("You mentioned your sister Nimmo. Would you like to tell me more?");

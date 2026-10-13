@@ -14,9 +14,10 @@ One memory graph does three jobs:
 Built for Amazon's "Build, Ship, Shape" hackathon — Alexa+ track, AWS Builder mini-challenge.
 All people, stories and speech histories in this repository are **fictional**.
 
-> **Status (13 Oct 2026): work in progress.** The core package and the MCP server are built and
-> tested. The background agents, simulator, family page, MCP Apps cards and Agent Skill are not
-> built yet. See [What exists today](#what-exists-today).
+> **Status (13 Oct 2026): work in progress.** The core package, the MCP server, the marker and
+> trend maths, the simulated history, the doctor report and the Agent Skill are built and tested.
+> The agent worker (Bedrock, graph writes), simulator, family page and MCP Apps cards are not
+> built yet, and nothing has run against FalkorDB or AWS. See [What exists today](#what-exists-today).
 
 ## The two analysis modes
 
@@ -37,7 +38,34 @@ A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has t
 | FalkorDB adapter (`FalkorGraph`) | Written, **not yet run** — no Docker on the build machine |
 | Latency test (`pnpm test:latency`) | Written; **not yet passing** — see [Latency](#latency) |
 | `agents/extract/validate.py` — span, orphan-relation and entity-resolution checks | Built, tested (`pytest`) |
-| Rest of `agents/` (Bedrock extraction call, markers, trends, synth), `apps/alexa-sim`, `apps/family`, `packages/ui-cards`, `skill/` | Not built yet |
+| `agents/markers` — text, graph and timing marker maths | Built, tested |
+| `agents/synth` — simulated 12-week history (`data/simulated/markers.json`) | Built, tested |
+| `agents/trends` — baseline, sustained-change flags, family card, printable doctor report | Built, tested |
+| `skill/SKILL.md` — Agent Skill with six example exchanges | Written |
+| Agent worker (Bedrock extraction call, graph writes), audio capture for timing markers | Not built yet |
+| `apps/alexa-sim`, `apps/family`, `packages/ui-cards` | Not built yet |
+
+Picking this up? Start with [docs/handoff.md](docs/handoff.md).
+
+### How change tracking decides
+
+`agents/trends/detect.py`. The baseline is the person's own first 14 days (at least 5
+conversations): a median and a robust spread per marker. Each week's value is the median of that
+week. A marker is flagged only when it has been 1.5 robust standard deviations worse than
+baseline for **four weeks in a row**, and the family is told only when **two or more** markers
+are flagged. One bad day, one bad week or one noisy marker never raises a card. Tested on
+synthetic histories: stable, one bad week, three bad weeks, drift on one marker, drift that
+recovered, and a change for the better all raise nothing.
+
+The demo history is **simulated** and labelled so everywhere it appears. On it, the card reads:
+"Since August, Gurdev pauses longer, uses fewer different words, names familiar people less
+often and retells the same stories more often. Worth mentioning at the next check-up. This is
+not a medical assessment." The report is at `data/simulated/doctor-report.html`.
+
+Limits: parts of speech come from word lists and suffix rules, not a tagger, so
+`pronoun_noun_ratio` and `idea_density` are rough; they are only ever compared with the same
+person's earlier values. None of this has been run on real speech, and no marker has clinical
+validity.
 
 ## Setup
 

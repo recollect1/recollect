@@ -50,6 +50,16 @@ describe("phrases", () => {
       "Since August, Gurdev pauses longer and names familiar people less often. " +
       "Worth mentioning at the next check-up. This is not a medical assessment.");
   });
+  it("matches the shared templates the Python trends agent fills in", () => {
+    const fill = (t: string, v: Record<string, string>) => t.replace(/\{(\w+)\}/g, (_, k: string) => v[k] ?? "");
+    const T = P.TREND_TEMPLATES, notMedical = P.NOT_MEDICAL;
+    expect(P.trendStable("Gurdev", 8)).toBe(fill(T.trendStable!, { name: "Gurdev", weeks: "8", notMedical }));
+    expect(P.trendNotReady("Gurdev")).toBe(fill(T.trendNotReady!, { name: "Gurdev", notMedical }));
+    expect(P.trendChange("Gurdev", ["mattr", "retell_rate"], "September")).toBe(fill(T.trendChange!, {
+      name: "Gurdev", since: "September", notMedical,
+      changes: "uses fewer different words and retells the same stories more often",
+    }));
+  });
   it("produces no empty placeholders", () => {
     for (const s of everything) expect(s).not.toMatch(/undefined|null|\{|\}|  /);
   });

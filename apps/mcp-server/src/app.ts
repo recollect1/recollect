@@ -1,9 +1,12 @@
 // HTTP front for the MCP server: POST /mcp (Streamable HTTP, stateless), /healthz, demo clock.
+import { existsSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
 import { localAt, type Ctx, type DemoClock } from "@recollect/core";
 import { buildServer, type ToolLog, type ToolRole } from "./tools.ts";
+
+const DOCTOR_REPORT = new URL("../../../data/simulated/doctor-report.html", import.meta.url);
 
 export interface AppOptions {
   ctx: Ctx;
@@ -63,6 +66,13 @@ export function createApp(opts: AppOptions): App {
           else demoClock.set(new Date(body.at));
         }
         return json(res, 200, { now: ctx.clock.now().toISOString() });
+      }
+
+      // The printable doctor report written by the trends agent. Family only.
+      if (path === "/report/doctor") {
+        if (role !== "family") return json(res, 401, { error: "family token required" });
+        if (!existsSync(DOCTOR_REPORT)) return json(res, 404, { error: "no report yet — run the trends agent" });
+        return void res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(readFileSync(DOCTOR_REPORT));
       }
 
       if (path !== "/mcp") return json(res, 404, { error: "not found" });
