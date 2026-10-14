@@ -651,8 +651,10 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   `pause_tracking`; there is no spoken "turn it back on" (by design). Polls every 15 s (no SSE).
 - **`pnpm dev`** runs `scripts/dev.mjs`: loads `.env` and starts the MCP server, the simulator
   (backend + Vite) and the family page. `pnpm dev:server` runs the MCP server alone.
-- **Not built yet:**
-  two-step consent switch-on, "delete everything" endpoint, night-time family alert.
+- **Not built yet (14 Oct):** night-time family alert (P1), audio capture and timing markers in
+  the simulator (P1), live graph panel (P1), AgentCore deployment of the worker, deploy to Railway.
+  **Needs a human:** Bedrock model access and IAM keys (the worker and the simulator's voice loop
+  have not run against Bedrock), Railway login, microphone test, Claude Desktop clip, video.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.
 - **Latency:** `pnpm test:latency` passes locally on FalkorDB (14 Oct, worst p95 38 ms); not yet
   run against a deployed server.
