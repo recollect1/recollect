@@ -18,7 +18,7 @@ All people, stories and speech histories in this repository are **fictional**.
 > trend maths, the simulated history, the doctor report and the Agent Skill are built and tested.
 > The core suite also passes against FalkorDB. The agent worker (Strands on Bedrock, graph
 > writes) is built and tested with a scripted extractor, but has not run against Bedrock yet.
-> The simulator is built (not yet run against Bedrock); the family page is not built yet. See [What exists today](#what-exists-today).
+> The simulator and family page are built; nothing has run against Bedrock yet. See [What exists today](#what-exists-today).
 
 ## The two analysis modes
 
@@ -47,7 +47,7 @@ A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has t
 | Audio capture for timing markers | Not built yet |
 | `packages/ui-cards` — MCP Apps cards: story, today, who's-who, trend, photo | Built; served by the MCP server, tested |
 | `apps/alexa-sim` — Echo-Show-style simulator: real MCP client, Bedrock Converse loop speaking `say` verbatim, story mode, cards, latency strip, simulated home, demo clock | Built; Converse loop tested with a stubbed Bedrock sender; **not yet run against Bedrock** |
-| `apps/family` | Not built yet |
+| `apps/family` — family page: today, speech changes + doctor report, stories, people, medicines, weekly photo, This is me, two-step consent, delete everything | Built; backend tested in memory and on FalkorDB |
 
 Picking this up? Start with [docs/handoff.md](docs/handoff.md).
 

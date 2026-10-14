@@ -188,7 +188,8 @@ export async function factCandidates(ctx: Ctx): Promise<string[]> {
     const quotes = (await graph.into<Quote>(["Entity", e.id], "MENTIONS")).map((m) => m.node).filter((q) => !q.private);
     const stories = new Set(quotes.map((q) => q.sessionId)).size;
     if (stories < 2) continue;
-    const fact = `Often talks about ${e.name}`;
+    // Proper names as written; relation words ("father", "mother") read as hers.
+    const fact = `Often talks about ${/^[a-z]/.test(e.name) ? `her ${e.name}` : e.name}`;
     if (!approved.has(fact)) out.push(fact);
   }
   return out.sort();

@@ -641,7 +641,17 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   buttons (proxy to `POST /demo/clock`), one-sentence replies while `shortReplies` is set. `?debug`
   adds real direct tool calls. Not built yet: audio capture (P1 timing markers), live graph panel
   (P1). **Not yet run against Bedrock.**
-- **Not built yet:** `apps/family`,
+- **Family page (`apps/family`, 14 Oct).** Vite/React; reads and writes through `/api/family/*` on the
+  MCP server (family token; the Vite dev proxy adds it so the browser never holds it). Sections:
+  today, speech changes (trend card, "Simulated data" label, doctor report link), stories (private
+  ones counted, not shown) and prompts, people (status lines, photos), medicines, weekly photo,
+  "This is me" (edit, approve story-derived facts, print), consent. **Two-step consent** is done on
+  this page: step 1 records that she said yes (the family confirms it, ideally with her present),
+  step 2 is the admin's own yes; turning off clears both. She can turn it off herself with
+  `pause_tracking`; there is no spoken "turn it back on" (by design). Polls every 15 s (no SSE).
+- **`pnpm dev`** runs `scripts/dev.mjs`: loads `.env` and starts the MCP server, the simulator
+  (backend + Vite) and the family page. `pnpm dev:server` runs the MCP server alone.
+- **Not built yet:**
   two-step consent switch-on, "delete everything" endpoint, night-time family alert.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.
 - **Latency:** `pnpm test:latency` passes locally on FalkorDB (14 Oct, worst p95 38 ms); not yet

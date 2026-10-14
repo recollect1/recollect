@@ -4,14 +4,17 @@
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@9.15.9",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "dev": "pnpm --filter @recollect/mcp-server dev",
+    "dev": "node scripts/dev.mjs",
     "test": "vitest run",
     "typecheck": "pnpm -r typecheck",
     "seed": "pnpm --filter @recollect/core seed",
     "eval:recall": "pnpm --filter @recollect/core eval:recall",
-    "test:latency": "pnpm --filter @recollect/mcp-server test:latency"
+    "test:latency": "pnpm --filter @recollect/mcp-server test:latency",
+    "dev:server": "pnpm --filter @recollect/mcp-server dev"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
