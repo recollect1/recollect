@@ -18,7 +18,7 @@ All people, stories and speech histories in this repository are **fictional**.
 > trend maths, the simulated history, the doctor report and the Agent Skill are built and tested.
 > The core suite also passes against FalkorDB. The agent worker (Strands on Bedrock, graph
 > writes) is built and tested with a scripted extractor, but has not run against Bedrock yet.
-> The simulator and family page are not built yet. See [What exists today](#what-exists-today).
+> The simulator is built (not yet run against Bedrock); the family page is not built yet. See [What exists today](#what-exists-today).
 
 ## The two analysis modes
 
@@ -46,7 +46,8 @@ A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has t
 | `agents/worker` + `agents/extract/agent.py` — Strands Agent on Bedrock extracts entities; validated graph writes, story prompts, marker sets | Built, tested (scripted extractor, in memory and on FalkorDB); **not yet run against Bedrock** |
 | Audio capture for timing markers | Not built yet |
 | `packages/ui-cards` — MCP Apps cards: story, today, who's-who, trend, photo | Built; served by the MCP server, tested |
-| `apps/alexa-sim`, `apps/family` | Not built yet |
+| `apps/alexa-sim` — Echo-Show-style simulator: real MCP client, Bedrock Converse loop speaking `say` verbatim, story mode, cards, latency strip, simulated home, demo clock | Built; Converse loop tested with a stubbed Bedrock sender; **not yet run against Bedrock** |
+| `apps/family` | Not built yet |
 
 Picking this up? Start with [docs/handoff.md](docs/handoff.md).
 

@@ -31,6 +31,9 @@ export const privateKept = () => "Alright, I'll keep that just for you.";
 export const storyPromptFor = (entityName: string) =>
   trend.templates.storyPromptFor.replace("{entity}", entityName);
 export const storyPromptOpen = () => "Would you like to tell me a story from when you were young?";
+// Simulator story mode (§13): spoken before listening, and if nothing was heard.
+export const listeningForStory = () => `I'm listening. Take your time, and say "that's all" when you're done.`;
+export const didNotCatchStory = () => "I didn't catch the story. Would you like to try again?";
 
 // --- medicine ---
 export const doseTaken = (name: string, time: string) => `Yes, you took your ${name} at ${time} today.`;

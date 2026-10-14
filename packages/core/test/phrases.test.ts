@@ -19,6 +19,7 @@ const everything = [
   P.fromTheirWords("I came to Patiala in 1966.", "Gurdev", "3 August 2026", "family"),
   P.nothingRecorded("that"),
   P.storySaved(), P.privateKept(), P.storyPromptFor("your brother Jagdish"), P.storyPromptOpen(),
+  P.listeningForStory(), P.didNotCatchStory(),
   P.today("Sunday", 18, "October", P.visitorCalls("Aman"), P.noMoreDoses()),
   P.today("Sunday", 18, "October", P.noVisitors(), P.noMoreDoses()),
   P.personStatus("Aman", "is in London and calls you on Sundays"),
@@ -46,6 +47,7 @@ describe("phrases", () => {
     expect(P.doseTaken("BP tablet", "8:10")).toBe("Yes, you took your BP tablet at 8:10 today.");
     expect(P.nothingRecorded("that")).toBe(
       "I don't have anything saved about that yet. Would you like to tell me about it?");
+    expect(P.listeningForStory()).toBe(`I'm listening. Take your time, and say "that's all" when you're done.`);
     expect(P.storyPromptFor("your sister Nimmo")).toBe(
       "You mentioned your sister Nimmo. Would you like to tell me more?");
     expect(P.trendChange("Gurdev", ["mean_pause_s", "named_recall"], "August")).toBe(

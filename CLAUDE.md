@@ -633,7 +633,15 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   the report: it is templates only.
 - **Markers (§7.1).** Parts of speech come from closed word lists and suffix rules; no spaCy.
 - **Doctor report route.** `GET /report/doctor` with the family token serves the generated HTML.
-- **Not built yet:** `apps/alexa-sim`, `apps/family`,
+- **Simulator (`apps/alexa-sim`, 14 Oct).** Node backend (holds AWS keys and MCP tokens) + Vite/React
+  page. MCP SDK v1 client per role; Bedrock Converse loop (≤ 4 tool calls) that speaks a tool's `say`
+  verbatim and discards model text; a memory/medicine/today question answered without a tool is
+  retried with `toolChoice: any`. Story mode, push-to-talk (en-IN), cards via AppBridge with a
+  `structuredContent` fallback, latency strip, simulated home panel from `routine_state`, demo clock
+  buttons (proxy to `POST /demo/clock`), one-sentence replies while `shortReplies` is set. `?debug`
+  adds real direct tool calls. Not built yet: audio capture (P1 timing markers), live graph panel
+  (P1). **Not yet run against Bedrock.**
+- **Not built yet:** `apps/family`,
   two-step consent switch-on, "delete everything" endpoint, night-time family alert.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.
 - **Latency:** `pnpm test:latency` passes locally on FalkorDB (14 Oct, worst p95 38 ms); not yet
