@@ -75,6 +75,8 @@ can be told live.
 **Problem:** FalkorDB could not be started locally, so nothing could be tested against it.
 **Fix:** core talks to a small graph interface with two adapters. Tests and the eval run on the
 in-memory adapter. The FalkorDB adapter is written but has not been run.
+**Update (14 Oct):** run on a machine with Docker. `pnpm seed` and all 35 core tests passed
+against FalkorDB with no adapter changes.
 
 ## 11. Stateless Streamable HTTP and GET (13 Oct)
 **Doing:** serving `POST /mcp` with a fresh server and transport per request, so each request can
@@ -113,3 +115,19 @@ only of the demo: with one sample a week, only a clear change is visible.
 **Problem:** the machine has Python 3.11 and 3.13 and no `uv`; the spec's commands use `uv`.
 **Fix:** a plain `venv` on 3.13 with `pytest`. The agents so far use only the standard
 library, so nothing else was needed. `uv sync` has not been run on this project.
+
+## 16. `pnpm seed` ignores `.env` (14 Oct)
+**Doing:** seeding FalkorDB after `cp .env.example .env`, which sets `FALKORDB_URL`.
+**Expected:** the seed writes to FalkorDB. **Actual:** "FALKORDB_URL is not set. Nothing to seed",
+exit 1. The package scripts run plain `tsx`, which does not read `.env`.
+**Workaround:** `FALKORDB_URL=redis://localhost:6379 pnpm seed` (as the handoff says).
+**Suggestion:** load `.env` in the scripts (`tsx --env-file-if-exists=../../.env`) so the
+documented setup works as written.
+
+## 17. onnxruntime aborts when `pnpm eval:recall` exits (14 Oct)
+**Doing:** running the grounding eval on macOS (Apple silicon, Node 22).
+**Expected:** a clean exit after the results. **Actual:** the eval prints PASS, then the process
+dies with `libc++abi: terminating due to uncaught exception of type std::__1::system_error: mutex
+lock failed: Invalid argument`. It happens when the process exits while an ONNX session is live.
+**Workaround:** none needed for the result, but the non-zero exit would fail CI.
+**Suggestion:** call `dispose()` on both pipelines (embedder and cross-encoder) before exit.

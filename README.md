@@ -14,10 +14,10 @@ One memory graph does three jobs:
 Built for Amazon's "Build, Ship, Shape" hackathon — Alexa+ track, AWS Builder mini-challenge.
 All people, stories and speech histories in this repository are **fictional**.
 
-> **Status (13 Oct 2026): work in progress.** The core package, the MCP server, the marker and
+> **Status (14 Oct 2026): work in progress.** The core package, the MCP server, the marker and
 > trend maths, the simulated history, the doctor report and the Agent Skill are built and tested.
-> The agent worker (Bedrock, graph writes), simulator, family page and MCP Apps cards are not
-> built yet, and nothing has run against FalkorDB or AWS. See [What exists today](#what-exists-today).
+> The core suite also passes against FalkorDB. The agent worker (Bedrock, graph writes),
+> simulator, family page and MCP Apps cards are not built yet, and nothing has run against AWS. See [What exists today](#what-exists-today).
 
 ## The two analysis modes
 
@@ -35,7 +35,7 @@ A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has t
 | `packages/core` — graph port, schema, phrase templates, grounded recall, daily tools, seed | Built, tested |
 | `apps/mcp-server` — Streamable HTTP MCP server, 15 tools, role tokens | Built, tested with a real MCP client |
 | Grounding eval (`pnpm eval:recall`) | Passing, table below |
-| FalkorDB adapter (`FalkorGraph`) | Written, **not yet run** — no Docker on the build machine |
+| FalkorDB adapter (`FalkorGraph`) | Built; seed and the 35-test core suite pass against FalkorDB (`FALKORDB_URL=redis://localhost:6379 pnpm test`) |
 | Latency test (`pnpm test:latency`) | Written; **not yet passing** — see [Latency](#latency) |
 | `agents/extract/validate.py` — span, orphan-relation and entity-resolution checks | Built, tested (`pytest`) |
 | `agents/markers` — text, graph and timing marker maths | Built, tested |

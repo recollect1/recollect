@@ -566,7 +566,8 @@ Recorded as the code was written. Each has a friction-log entry where one applie
 
 - **Graph access (§3, §6).** Core talks to a small `Graph` interface (`packages/core/src/graph.ts`)
   with two adapters: `FalkorGraph` (Cypher) and `MemoryGraph` (tests, the eval, and local dev when
-  `FALKORDB_URL` is empty). **`FalkorGraph` has not been run yet** — no Docker on the build machine.
+  `FALKORDB_URL` is empty). `FalkorGraph` first ran on 14 Oct: the seed and the core suite pass on
+  FalkorDB unchanged (`core.test.ts` uses graph `recollect_test` when `FALKORDB_URL` is set).
 - **Recall (§11).** Entity overlap is counted per story, not per sentence, so "She cooked it
   slowly" still belongs to the mother named a sentence earlier. After the §11 score, a local
   cross-encoder (`Xenova/ms-marco-MiniLM-L-6-v2`, a classifier, same library as the embedder)

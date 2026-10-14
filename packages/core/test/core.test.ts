@@ -1,10 +1,11 @@
 // Runs offline on the in-memory graph with the hashing embedder. Recall quality on the real
 // embedding model is measured separately by `pnpm eval:recall`.
-import { beforeEach, describe, expect, it } from "vitest";
+// With FALKORDB_URL set, the same suite runs against FalkorDB (graph "recollect_test").
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { Ctx } from "../src/ctx.ts";
 import * as D from "../src/daily.ts";
 import { HashEmbedder } from "../src/embed.ts";
-import { MemoryGraph } from "../src/graph.ts";
+import { FalkorGraph, MemoryGraph, type Graph } from "../src/graph.ts";
 import * as P from "../src/phrases.ts";
 import { LexicalReranker } from "../src/rerank.ts";
 import { recall } from "../src/recall.ts";
@@ -20,10 +21,17 @@ const ist = (hhmm: string, day = "2026-10-13") => new Date(`${day}T${hhmm}:00+05
 
 let ctx: Ctx;
 let clock: DemoClock;
+let graph: Graph;
 beforeEach(async () => {
   clock = new DemoClock();
   clock.set(ist("09:00"));
-  ctx = await seed(new MemoryGraph(), clock, new HashEmbedder(), new LexicalReranker());
+  const url = process.env.FALKORDB_URL;
+  graph = url ? await FalkorGraph.connect(url, "recollect_test") : new MemoryGraph();
+  await graph.clear();
+  ctx = await seed(graph, clock, new HashEmbedder(), new LexicalReranker());
+});
+afterEach(async () => {
+  await graph.close();
 });
 
 describe("seed (§5)", () => {
