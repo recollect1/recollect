@@ -36,7 +36,7 @@ A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has t
 | `apps/mcp-server` — Streamable HTTP MCP server, 15 tools, role tokens | Built, tested with a real MCP client |
 | Grounding eval (`pnpm eval:recall`) | Passing, table below |
 | FalkorDB adapter (`FalkorGraph`) | Built; seed and the 35-test core suite pass against FalkorDB (`FALKORDB_URL=redis://localhost:6379 pnpm test`) |
-| Latency test (`pnpm test:latency`) | Written; **not yet passing** — see [Latency](#latency) |
+| Latency test (`pnpm test:latency`) | Passing locally on FalkorDB; deployed run still to do — see [Latency](#latency) |
 | `agents/extract/validate.py` — span, orphan-relation and entity-resolution checks | Built, tested (`pytest`) |
 | `agents/markers` — text, graph and timing marker maths | Built, tested |
 | `agents/synth` — simulated 12-week history (`data/simulated/markers.json`) | Built, tested |
@@ -124,13 +124,28 @@ Limits: 40 questions on six stories is a small test, and the thresholds are fitt
 
 Budget: p95 under 250 ms and no call at 500 ms or over, per tool, measured through a real MCP client.
 
-Measured locally on a laptop on battery (in-memory graph), 50 calls per tool: every tool except
-`recall_memory` was inside the budget in round trip (p95 13–253 ms; `whats_today` was 3 ms over).
-`recall_memory` was **not**: when it finds an answer it ran at seconds, not milliseconds, under
-sustained load. In isolation the two local models take about 6 ms (embedding) and 25–60 ms
-(relevance check), but Windows power throttling slowed the process roughly tenfold after a second
-or two of continuous work. **The latency test has not passed yet.** It needs a run on mains power
-and, as the spec requires, against the deployed server.
+Measured 14 Oct 2026 on a MacBook (Apple silicon, mains power) against FalkorDB in Docker,
+50 calls per tool, round trip through the MCP SDK client:
+
+| Tool | p50 ms | p95 ms | max ms | server p95 ms |
+|---|---|---|---|---|
+| remember_story | 3 | 7 | 16 | 6 |
+| recall_memory (found) | 9 | 12 | 14 | 9 |
+| recall_memory (nothing saved) | 1 | 2 | 4 | 1 |
+| whats_today | 2 | 8 | 14 | 7 |
+| check_dose | 2 | 8 | 9 | 8 |
+| log_dose | 1 | 7 | 8 | 6 |
+| where_is | 2 | 10 | 11 | 9 |
+| who_is | 2 | 11 | 12 | 10 |
+| keep_private | 24 | 38 | 39 | 37 |
+| pause_tracking | 1 | 1 | 2 | 1 |
+| story_prompt | 1 | 1 | 2 | 0 |
+| photo_moment | 1 | 1 | 1 | 1 |
+| routine_state | 1 | 1 | 3 | 1 |
+
+**Passes locally.** An earlier run on a Windows laptop on battery did not pass: power throttling
+slowed `recall_memory` roughly tenfold under sustained load (friction log 6). The spec asks for a
+run against the deployed server; that is still to do.
 
 ## Safety and consent
 

@@ -622,4 +622,5 @@ Recorded as the code was written. Each has a friction-log entry where one applie
 - **Not built yet:** agent worker, `apps/alexa-sim`, `apps/family`, `packages/ui-cards`,
   two-step consent switch-on, "delete everything" endpoint, night-time family alert.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.
-- **Not passing yet:** `pnpm test:latency` (see README, Latency).
+- **Latency:** `pnpm test:latency` passes locally on FalkorDB (14 Oct, worst p95 38 ms); not yet
+  run against a deployed server.
