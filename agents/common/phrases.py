@@ -40,3 +40,8 @@ def trend_change(name: str, metrics: list[str], since: str) -> str:
 
 def trend_not_ready(name: str) -> str:
     return _TEMPLATES["trendNotReady"].format(name=name, notMedical=NOT_MEDICAL)
+
+
+def story_prompt_for(entity: str) -> str:
+    """Spoken story prompt (§9.1 step 4); same template as storyPromptFor in phrases.ts."""
+    return _TEMPLATES["storyPromptFor"].format(entity=entity)

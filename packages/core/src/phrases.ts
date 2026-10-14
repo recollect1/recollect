@@ -27,8 +27,9 @@ export const nothingRecorded = (topic: string) =>
   `I don't have anything saved about ${topic} yet. Would you like to tell me about it?`;
 export const storySaved = () => "Thank you, I've kept that.";
 export const privateKept = () => "Alright, I'll keep that just for you.";
+// Shared with the Python extract worker, which writes story prompts (§9.1 step 4).
 export const storyPromptFor = (entityName: string) =>
-  `You mentioned ${entityName}. Would you like to tell me more?`;
+  trend.templates.storyPromptFor.replace("{entity}", entityName);
 export const storyPromptOpen = () => "Would you like to tell me a story from when you were young?";
 
 // --- medicine ---

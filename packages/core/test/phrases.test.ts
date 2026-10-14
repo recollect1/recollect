@@ -46,6 +46,8 @@ describe("phrases", () => {
     expect(P.doseTaken("BP tablet", "8:10")).toBe("Yes, you took your BP tablet at 8:10 today.");
     expect(P.nothingRecorded("that")).toBe(
       "I don't have anything saved about that yet. Would you like to tell me about it?");
+    expect(P.storyPromptFor("your sister Nimmo")).toBe(
+      "You mentioned your sister Nimmo. Would you like to tell me more?");
     expect(P.trendChange("Gurdev", ["mean_pause_s", "named_recall"], "August")).toBe(
       "Since August, Gurdev pauses longer and names familiar people less often. " +
       "Worth mentioning at the next check-up. This is not a medical assessment.");

@@ -597,10 +597,20 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   `packages/ui-cards` exists. `GET /mcp` returns 405 (stateless server).
 - **ONNX threads.** Both local models run with `ONNX_THREADS` threads (default 2), spinning off,
   and never concurrently (friction log 5).
-- **Agents so far** are pure functions with tests and no graph or AWS access:
-  `extract/validate.py` (§9.1 step 2), `markers/` (§7.1–7.3 maths), `synth/` (§12),
-  `trends/` (§9.3, including the doctor report). The worker that polls `Job` nodes, calls
-  Bedrock and writes to the graph is not written. No Strands or AgentCore code exists yet.
+- **Agents.** Pure functions with tests: `extract/validate.py` (§9.1 step 2), `markers/`
+  (§7.1–7.3 maths), `synth/` (§12), `trends/` (§9.3, including the doctor report).
+  **Worker** (`python -m worker`, 14 Oct): polls `Job` nodes every 2 s; per session runs the
+  Strands extract agent (`extract/agent.py`: `Agent` + `BedrockModel`, Pydantic structured
+  output, one fresh agent per quote, temperature 0), then `validate` + `resolve`, writes
+  `Entity`/`MENTIONS {span}`/`RELATED`/`SAME_AS`, story prompts (§9.1 step 4) and a `MarkerSet`
+  (§9.2, only while `Consent.trackingOn`). It waits until the MCP server has embedded the
+  session, skips extraction for `photo_desc`, retries twice then sets `Job.failed`. Seeded jobs are
+  marked done by the seed (their mentions are hand-written). The MCP server reloads its recall
+  index when the count of done jobs changes (3 s timer). Tested with a scripted extractor
+  (tests only) in memory and on FalkorDB; **not yet run against Bedrock** (needs AWS access).
+  It runs as a plain process (the spec's Railway fallback); no AgentCore code yet.
+- **`storyPromptFor`** wording moved into `trend-phrases.json` (`templates.storyPromptFor`) so the
+  Python worker and `phrases.ts` use the same template.
 - **Trend wording is shared.** `packages/core/src/trend-phrases.json` holds the banned list, the
   trend templates and, per metric, its change phrase, worse direction and chart label.
   `phrases.ts` and `agents/common/phrases.py` both read it; a TS test checks they agree.
@@ -619,7 +629,7 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   the report: it is templates only.
 - **Markers (§7.1).** Parts of speech come from closed word lists and suffix rules; no spaCy.
 - **Doctor report route.** `GET /report/doctor` with the family token serves the generated HTML.
-- **Not built yet:** agent worker, `apps/alexa-sim`, `apps/family`, `packages/ui-cards`,
+- **Not built yet:** `apps/alexa-sim`, `apps/family`, `packages/ui-cards`,
   two-step consent switch-on, "delete everything" endpoint, night-time family alert.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.
 - **Latency:** `pnpm test:latency` passes locally on FalkorDB (14 Oct, worst p95 38 ms); not yet

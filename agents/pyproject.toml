@@ -6,7 +6,10 @@ license = "MIT"
 requires-python = ">=3.12"
 # Added as each agent is wired up: strands-agents, boto3, falkordb (extract, worker);
 # numpy, soundfile, webrtcvad (timing markers). Nothing here needs them yet.
-dependencies = []
+dependencies = [
+    "falkordb>=1.7.1",
+    "strands-agents>=1.60.0",
+]
 
 [dependency-groups]
 dev = ["pytest>=8"]
