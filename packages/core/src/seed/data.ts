@@ -137,10 +137,27 @@ export const STORIES: SeedStory[] = [
   },
 ];
 
+// Simple drawings, inlined as data URIs (like the avatars) so MCP Apps cards, which have no
+// network access, can show them. No real photos (§1.7).
+const drawing = (svg: string) => "data:image/svg+xml;utf8," + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260">${svg}</svg>`);
+const figure = (x: number, h: number, colour: string) =>
+  `<circle cx="${x}" cy="${222 - h}" r="13" fill="#c08a64"/>` +
+  `<rect x="${x - 15}" y="${236 - h}" width="30" height="${h - 14}" rx="12" fill="${colour}"/>`;
+const COURTYARD = drawing(
+  `<rect width="400" height="260" fill="#f3e3c3"/><rect y="200" width="400" height="60" fill="#c9a66b"/>` +
+  `<rect x="30" y="60" width="340" height="140" fill="#e2b98c" stroke="#8a5a3a" stroke-width="3"/>` +
+  `<rect x="170" y="110" width="60" height="90" fill="#7a4a2a"/>` +
+  [60, 110, 290, 340].map((x) => `<circle cx="${x}" cy="200" r="5" fill="#f2a93b"/><path d="M${x} 186q4 6 0 9q-4-3 0-9" fill="#e8562a"/>`).join("") +
+  figure(95, 120, "#7a4d8c") + figure(145, 95, "#3d6b8e") + figure(255, 110, "#8a5a44") + figure(305, 130, "#4d8c6a"));
+const AMAN = drawing(
+  `<rect width="400" height="260" fill="#dfe9f2"/><rect y="190" width="400" height="70" fill="#9fb5c7"/>` +
+  `<rect x="250" y="70" width="18" height="120" fill="#5d6b78"/><circle cx="259" cy="62" r="16" fill="#e7c66b"/>` +
+  figure(170, 150, "#3d6b8e"));
+
 export const PHOTOS: (Photo & { depicts: string[] })[] = [
-  { id: "ph-family", url: "/photos/family-courtyard.svg",
-    caption: "The family in the courtyard, Diwali", depicts: ["e-aman", "e-simran"] },
-  { id: "ph-aman", url: "/photos/aman.svg", caption: "Aman", depicts: ["e-aman"] },
+  { id: "ph-family", url: COURTYARD, caption: "The family in the courtyard, Diwali", depicts: ["e-aman", "e-simran"] },
+  { id: "ph-aman", url: AMAN, caption: "Aman", depicts: ["e-aman"] },
 ];
 export const WEEKLY_PHOTO_ID = "ph-family";
 

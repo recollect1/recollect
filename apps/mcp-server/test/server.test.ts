@@ -71,6 +71,29 @@ describe("MCP server (§10)", () => {
     for (const t of elderTools) expect(t.description, t.name).toMatch(/Read the `say` field exactly as written\.$/);
   });
 
+  it("declares MCP Apps cards and serves them as single-file HTML (§10)", async () => {
+    const want: Record<string, string> = {
+      recall_memory: "ui://recollect/story-card", whats_today: "ui://recollect/today-card",
+      who_is: "ui://recollect/who-card", photo_moment: "ui://recollect/photo-card",
+    };
+    const elder = await connect(tokens.elder);
+    const tools = (await elder.listTools()).tools;
+    for (const [name, uri] of Object.entries(want)) {
+      const meta = tools.find((t) => t.name === name)?._meta as { ui?: { resourceUri?: string } } | undefined;
+      expect(meta?.ui?.resourceUri, name).toBe(uri);
+    }
+    const family = await connect(tokens.family);
+    const trend = (await family.listTools()).tools.find((t) => t.name === "speech_trend");
+    expect((trend?._meta as { ui?: { resourceUri?: string } }).ui?.resourceUri).toBe("ui://recollect/trend-card");
+    for (const uri of [...Object.values(want), "ui://recollect/trend-card"]) {
+      const r = await elder.readResource({ uri });
+      const c = r.contents[0] as { mimeType?: string; text?: string };
+      expect(c.mimeType, uri).toBe("text/html;profile=mcp-app");
+      expect(c.text).toMatch(/^<!doctype html>/i);
+      expect(c.text).not.toMatch(/<script[^>]+src=|<link[^>]+href="http/); // no network inside a card
+    }
+  });
+
   it("a family token cannot call elder tools", async () => {
     const family = await connect(tokens.family);
     const r = await family.callTool({ name: "log_dose", arguments: { medicine: "BP tablet" } }).catch((e) => ({ isError: true, e }));

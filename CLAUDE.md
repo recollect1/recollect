@@ -593,8 +593,12 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   `noVisitors`, `nextDose`, `noMoreDoses`, `storyPromptFor`, `storyPromptOpen`, `noPhotoYet`,
   `trendNotReady`, `trackingOff`, `familySummary`, `repeatLine`, `thisIsMeReady`,
   `thisIsMeMissing`. The family admin's name is a parameter, not the literal "Simran".
-- **MCP Apps cards (§10)** are not declared yet: tools return `structuredContent` only until
-  `packages/ui-cards` exists. `GET /mcp` returns 405 (stateless server).
+- **MCP Apps cards (§10).** `packages/ui-cards` builds five single-file cards (story, today, who,
+  trend, photo) with `@modelcontextprotocol/ext-apps` **1.7.x**, which works with the v1 MCP SDK
+  this server uses (ext-apps 2.x needs SDK v2). The five tools declare them via
+  `_meta.ui.resourceUri`; `whats_today` also returns `admin` for the card's call button. Seed
+  photos are inline SVG drawings (data URIs): the `/photos/...` URLs pointed at files that did
+  not exist, and cards cannot fetch anyway. `GET /mcp` returns 405 (stateless server).
 - **ONNX threads.** Both local models run with `ONNX_THREADS` threads (default 2), spinning off,
   and never concurrently (friction log 5).
 - **Agents.** Pure functions with tests: `extract/validate.py` (§9.1 step 2), `markers/`
@@ -629,7 +633,7 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   the report: it is templates only.
 - **Markers (§7.1).** Parts of speech come from closed word lists and suffix rules; no spaCy.
 - **Doctor report route.** `GET /report/doctor` with the family token serves the generated HTML.
-- **Not built yet:** `apps/alexa-sim`, `apps/family`, `packages/ui-cards`,
+- **Not built yet:** `apps/alexa-sim`, `apps/family`,
   two-step consent switch-on, "delete everything" endpoint, night-time family alert.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.
 - **Latency:** `pnpm test:latency` passes locally on FalkorDB (14 Oct, worst p95 38 ms); not yet

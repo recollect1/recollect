@@ -131,3 +131,12 @@ dies with `libc++abi: terminating due to uncaught exception of type std::__1::sy
 lock failed: Invalid argument`. It happens when the process exits while an ONNX session is live.
 **Workaround:** none needed for the result, but the non-zero exit would fail CI.
 **Suggestion:** call `dispose()` on both pipelines (embedder and cross-encoder) before exit.
+
+## 18. MCP Apps 2.x requires the v2 MCP SDK (14 Oct)
+**Doing:** adding MCP Apps cards to a server built on `@modelcontextprotocol/sdk` 1.32.
+**Expected:** the latest `@modelcontextprotocol/ext-apps` works with the SDK named in its docs.
+**Actual:** ext-apps 2.x is typed against the v2 split SDK (`@modelcontextprotocol/server`,
+`client`, `core`) and peers on zod 4; using it would mean migrating the server. Nothing in the
+install output says so; it shows up in the type imports.
+**Workaround:** pinned ext-apps `^1.7.5`, whose peer range is `@modelcontextprotocol/sdk ^1.29`.
+**Suggestion:** state the required SDK major in the ext-apps README and as a peer dependency.

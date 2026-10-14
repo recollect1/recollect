@@ -1,5 +1,6 @@
 // Recollect MCP tools, CLAUDE.md §10. No LLM call happens in any handler (§1.3): every `say`
 // comes from packages/core phrase templates and stored quotes.
+import { registerAppResource, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import {
@@ -7,6 +8,7 @@ import {
   recall, rememberStory, routineState, speechTrend, storyPrompt, thisIsMe, whatsToday, whereIs, whoIs,
   logAsk, type Ctx,
 } from "@recollect/core";
+import { CARDS, cardHtml, type CardName } from "@recollect/ui-cards";
 import { z, type ZodRawShape } from "zod";
 
 export type ToolRole = "elder" | "family";
@@ -27,9 +29,17 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
   const { ctx, background, log } = deps;
   const server = new McpServer({ name: "recollect", version: "0.1.0" });
 
+  // MCP Apps cards (§10): single-file HTML resources; tools point at them with _meta.ui.resourceUri.
+  for (const [name, uri] of Object.entries(CARDS) as [CardName, string][]) {
+    registerAppResource(server, `${name} card`, uri, { description: `Recollect ${name} card` }, async () => ({
+      contents: [{ uri, mimeType: RESOURCE_MIME_TYPE, text: cardHtml(name) }],
+    }));
+  }
+
   function tool<S extends ZodRawShape>(
     name: string, roles: ToolRole[], description: string, inputSchema: S,
     run: (args: z.objectOutputType<S, z.ZodTypeAny>) => Promise<Payload>,
+    card?: CardName,
   ): void {
     if (!roles.includes(role)) return;
     const handler = async (args: z.objectOutputType<S, z.ZodTypeAny>): Promise<CallToolResult> => {
@@ -53,7 +63,8 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
       }
     };
     // The SDK's callback type is conditional on the schema generic; the shapes match at runtime.
-    server.registerTool(name, { description: `${description} ${SAY}`, inputSchema }, handler as never);
+    const _meta = card ? { ui: { resourceUri: CARDS[card] }, "ui/resourceUri": CARDS[card] } : undefined;
+    server.registerTool(name, { description: `${description} ${SAY}`, inputSchema, ...(_meta ? { _meta } : {}) }, handler as never);
   }
 
   tool("remember_story", ["elder"],
@@ -80,15 +91,15 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
       const r = await recall(ctx, question, role);
       if (role === "elder") background(() => logAsk(ctx, "recall", question));
       return { say: r.say, found: r.found, quotes: r.quotes, speaker: ctx.elder.name };
-    });
+    }, "story");
 
   tool("whats_today", ["elder"],
     "Tell her what day it is, who is coming today and which tablet is next. Use for 'what day is it' " +
     "and 'what is happening today', every time she asks.",
     {}, async () => {
       const r = await whatsToday(ctx);
-      return { say: r.say, ...r.card };
-    });
+      return { say: r.say, ...r.card, admin: ctx.admin.name };
+    }, "today");
 
   tool("check_dose", ["elder"],
     "Answer 'did I take my tablet?' from today's log. Gives no advice about medicines.",
@@ -117,7 +128,8 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
       name: z.string().optional().describe("The name or relation she asked about."),
       photoId: z.string().optional().describe("The photo on screen, if she asked 'who is this?'."),
     },
-    async ({ name, photoId }) => ({ ...(await whoIs(ctx, { ...(name ? { name } : {}), ...(photoId ? { photoId } : {}) }, role)) }));
+    async ({ name, photoId }) => ({ ...(await whoIs(ctx, { ...(name ? { name } : {}), ...(photoId ? { photoId } : {}) }, role)) }),
+    "who");
 
   tool("keep_private", ["elder"],
     "Keep the story she just told private, when she says 'keep this private' or 'don't tell anyone'.",
@@ -140,7 +152,7 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
       const { sessionId } = r;
       if (sessionId) background(() => processSession(ctx, sessionId));
       return { ...r };
-    });
+    }, "photo");
 
   tool("routine_state", BOTH,
     "The current home routine (evening, night or none), whether replies should be kept to one short " +
@@ -160,7 +172,7 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
     "For family: the latest stored note on how her speech compares with her own usual pattern. This is " +
     "not a medical assessment and must never be presented as one.",
     { weeks: z.number().int().positive().optional().describe("How many recent weeks the family wants to see.") },
-    async () => ({ ...(await speechTrend(ctx)) }));
+    async () => ({ ...(await speechTrend(ctx)) }), "trend");
 
   tool("this_is_me", ["family"],
     "For family: her printable 'This is me' page for carers and hospitals, built from what the family wrote and approved.",
