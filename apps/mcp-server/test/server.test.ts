@@ -94,6 +94,21 @@ describe("MCP server (§10)", () => {
     }
   });
 
+  it("family page REST: family token only; delete-everything needs a typed confirmation", async () => {
+    const base = url.origin;
+    const get = (path: string, token: string) => fetch(`${base}${path}`, { headers: { authorization: `Bearer ${token}` } });
+    const post = (path: string, token: string, body: unknown) => fetch(`${base}${path}`, {
+      method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify(body),
+    });
+    expect((await get("/api/family/overview", tokens.elder)).status).toBe(401);
+    const overview = await (await get("/api/family/overview", tokens.family)).json() as { people: { id: string }[] };
+    expect(overview.people.map((p) => p.id)).toContain("p-aman");
+    expect((await post("/api/family/status", tokens.family, { personId: "p-aman", statusLine: "is home for Diwali" })).status).toBe(200);
+    expect((await call(await connect(tokens.elder), "where_is", { person: "Aman" })).say).toBe("Aman is home for Diwali.");
+    expect((await post("/api/family/delete-everything", tokens.family, {})).status).toBe(400);
+    expect((await post("/api/family/medicine", tokens.family, { name: "X", times: ["99:00"] })).status).toBe(400);
+  });
+
   it("a family token cannot call elder tools", async () => {
     const family = await connect(tokens.family);
     const r = await family.callTool({ name: "log_dose", arguments: { medicine: "BP tablet" } }).catch((e) => ({ isError: true, e }));

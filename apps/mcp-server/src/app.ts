@@ -4,6 +4,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
 import { localAt, type Ctx, type DemoClock } from "@recollect/core";
+import { familyApi } from "./family-api.ts";
 import { buildServer, type ToolLog, type ToolRole } from "./tools.ts";
 
 const DOCTOR_REPORT = new URL("../../../data/simulated/doctor-report.html", import.meta.url);
@@ -73,6 +74,14 @@ export function createApp(opts: AppOptions): App {
         if (role !== "family") return json(res, 401, { error: "family token required" });
         if (!existsSync(DOCTOR_REPORT)) return json(res, 404, { error: "no report yet — run the trends agent" });
         return void res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(readFileSync(DOCTOR_REPORT));
+      }
+
+      // Family page REST (§13). Family token only.
+      if (path.startsWith("/api/family/")) {
+        if (role !== "family") return json(res, 401, { error: "family token required" });
+        const body = req.method === "POST" ? await readJson(req) : undefined;
+        if (await familyApi(ctx, req, res, path, body, json)) return;
+        return json(res, 404, { error: "not found" });
       }
 
       if (path !== "/mcp") return json(res, 404, { error: "not found" });
