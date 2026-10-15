@@ -478,6 +478,9 @@ as a creative feature; mention it in the submission.
 - [ ] `docs/friction-log.md` ≥ 8 entries, written as issues happen (up to 10% bonus).
 - [ ] `docs/feature-requests.md` — consented acoustic features for care add-ons; a public
       Alexa+ web simulator for builders.
+- [x] **Open Source** mini-challenge: `mcp-latency` (https://github.com/yash4428/mcp-latency), a
+      new MIT CLI that measures MCP tool latency against the Alexa+ budget. Devpost fields in
+      `docs/open-source.md`.
 
 ---
 
