@@ -679,7 +679,13 @@ Recorded as the code was written. Each has a friction-log entry where one applie
 - **Deploy (15 Oct).** `deploy/` has Dockerfiles for the MCP server, web (simulator at `/` and family
   page at `/family` in one Node service behind `WEB_PASSWORD`, proxying `/api/family/*` and
   `/report/doctor` with the family token), worker and AgentCore (arm64). Steps in `docs/deploy.md`.
-- **Not deployed yet (15 Oct):** AgentCore, Railway.
+- **Trends on the live graph (§9.3, 15 Oct).** `python -m trends --graph` (`agents/trends/live.py`)
+  reads every MarkerSet and AskEvent/DoseEvent from FalkorDB, runs the same analysis, and writes the
+  TrendCard, TrendFlags (`ABOUT` the elder) and a `DoctorReport{html}` node; nothing while tracking is
+  off. The worker runs it weekly and for `trends` jobs (family page "Recalculate now").
+  `/report/doctor` serves the graph's report, falling back to the demo file.
+- **Not built yet (15 Oct):** weekly photo scheduling (§9.4 P0; `photo_moment` is on demand only).
+- **Not deployed yet (15 Oct):** AgentCore, hosting (Railway or AWS), no Bedrock call made yet.
   **Needs a human:** Bedrock model access and IAM keys (the worker and the simulator's voice loop
   have not run against Bedrock), Railway login, microphone test, Claude Desktop clip, video.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.
