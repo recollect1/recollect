@@ -78,6 +78,7 @@ export const nightPlaceReassure = (place: string) =>
 export const weeklyPhotoPrompt = (name: string) =>
   `${name}, would you tell me about this photo? There's no right or wrong answer.`;
 export const photoThanks = () => "Thank you, I loved hearing that.";
+export const photoLater = () => "Alright, we can look at it another time.";
 export const noPhotoYet = (admin: string) => `There's no photo chosen yet. ${admin} can pick one for us.`;
 
 // --- family only: never spoken to the elder ---

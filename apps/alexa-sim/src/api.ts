@@ -64,6 +64,9 @@ export interface RoutineState {
   greeting?: string;
   localTime: string;
   devices: { id: string; kind: 'light' | 'speaker'; room: string; state: string }[];
+  /** This week's photo should be offered now (calm late-morning window, not yet described). */
+  photoDue: boolean;
+  week: string;
 }
 
 /** GET /api/graph on the MCP server (§13 live panel). */

@@ -10,6 +10,9 @@ import { listenForStory, listenOnce, recognitionSupported, speak, stopSpeaking, 
 
 type Phase = 'idle' | 'listening' | 'story' | 'thinking' | 'speaking';
 
+/** "Not now" to the weekly photo: back off gently, offer again next week. */
+const NOT_NOW = /^\s*(no|nah|not now|not today|later|maybe later|another time)/i;
+
 interface Line {
   who: 'user' | 'recollect' | 'system';
   text: string;
@@ -57,6 +60,9 @@ export function App() {
   }, [showGraph]);
   const [status, setStatus] = useState<Record<string, any> | null>(null);
   const [storyNext, setStoryNext] = useState(false); // typed story mode
+  // Weekly photo (§9.4): after the photo is offered, her next words are its description.
+  const [photoNext, setPhotoNext] = useState(false);
+  const offeredWeek = useRef<string | null>(null);
   const stopRef = useRef<(() => void) | null>(null);
   const logRef = useRef<HTMLOListElement>(null);
 
@@ -106,10 +112,34 @@ export function App() {
     const t = utterance.trim();
     if (!t) return;
     setLines((l) => [...l, { who: 'user', text: t }]);
+    if (photoNext && role === 'elder') {
+      setPhotoNext(false);
+      if (NOT_NOW.test(t)) {
+        const reply = P.photoLater();
+        setLines((l) => [...l, { who: 'recollect', text: reply, source: 'say' }]);
+        return say(reply);
+      }
+      setPhase('thinking');
+      try { handleResult(await api.direct('elder', 'photo_moment', { text: t })); } catch (e) { fail(e); }
+      return;
+    }
     if (role === 'elder' && STORY_TRIGGER.test(t)) return startStory();
     setPhase('thinking');
     try { handleResult(await api.turn(role, t, routine?.shortReplies ?? false)); } catch (e) { fail(e); }
-  }, [role, routine, handleResult, fail]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [role, routine, photoNext, handleResult, fail]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Offer this week's photo once, when routine_state says it is a calm moment for it. The offer is
+  // a real photo_moment tool call; it is never made in the evening, at night or mid-conversation.
+  useEffect(() => {
+    if (!routine?.photoDue || role !== 'elder' || phase !== 'idle' || offeredWeek.current === routine.week) return;
+    offeredWeek.current = routine.week;
+    setLines((l) => [...l, { who: 'system', text: 'A calm part of the day: offering this week’s photo.' }]);
+    setPhase('thinking');
+    api.direct('elder', 'photo_moment', {}).then((r) => {
+      handleResult(r);
+      if (r.calls[0]?.structuredContent?.photo) setPhotoNext(true);
+    }).catch(fail);
+  }, [routine, role, phase, handleResult, fail]);
 
   function startStory() {
     const prompt = P.listeningForStory();
@@ -176,6 +206,7 @@ export function App() {
     setRole(r);
     setCard(null);
     setStoryNext(false);
+    setPhotoNext(false);
     setPhase('idle');
     setLines((l) => [...l, { who: 'system', text: `Now speaking as ${ROLES.find((x) => x.role === r)!.label}.` }]);
   }

@@ -3,10 +3,10 @@
 import type { Ctx } from "./ctx.ts";
 import * as P from "./phrases.ts";
 import { newId, normalise } from "./text.ts";
-import { fmtHHMM, fmtTime, localAt, localDayBounds, localParts, minutesOfDay, parseHHMM } from "./time.ts";
+import { fmtHHMM, fmtTime, isoWeek, localAt, localDayBounds, localParts, minutesOfDay, parseHHMM } from "./time.ts";
 import type {
   AskEvent, AskIntent, Consent, Device, DoseEvent, Entity, Medicine, Person, Profile, RoutineEvent,
-  Schedule, Session, TrendCard, Visit,
+  Schedule, Session, TrendCard, Visit, WeeklyPhoto,
 } from "./types.ts";
 
 /** How long before a slot's time a dose still counts towards that slot. */
@@ -183,10 +183,20 @@ export async function pauseTracking(ctx: Ctx): Promise<{ say: string }> {
 export const EVENING_START = "17:00"; // dusk − 30 min when known; 17:00 otherwise
 const EVENING_END = "22:00";
 const NIGHT_END = "05:00";
+/**
+ * Weekly photo (§9.4): offered in a calm late-morning window, never in the evening or at night,
+ * on any day of the week until that week's description has been saved. So it is offered at most
+ * once a week, and a missed day simply moves it to the next.
+ */
+export const PHOTO_WINDOW = ["11:00", "12:00"] as const;
 
 export interface RoutineState {
   routine: "evening" | "night" | "none"; shortReplies: boolean; greeting?: string;
   devices: Device[]; localTime: string;
+  /** True when the simulator should offer this week's photo now (photo_moment). */
+  photoDue: boolean;
+  /** ISO week in household time, so a client offers the photo once per week. */
+  week: string;
 }
 
 export async function routineState(ctx: Ctx): Promise<RoutineState> {
@@ -220,9 +230,18 @@ export async function routineState(ctx: Ctx): Promise<RoutineState> {
     const profile = await graph.get<Profile>("Profile", elder.id);
     greeting = P.eveningHello(elder.name, profile?.calms[0] ?? "Shall we put on your music?");
   }
+  const week = isoWeek(now, household.tz);
+  let photoDue = false;
+  if (routine === "none" && min >= parseHHMM(PHOTO_WINDOW[0]) && min < parseHHMM(PHOTO_WINDOW[1])) {
+    // A photo has been chosen (any WeeklyPhoto entry), and this week's has no saved description.
+    // Choosing a photo on the family page also writes this week's entry, without a session.
+    const entries = await graph.find<WeeklyPhoto>("WeeklyPhoto");
+    photoDue = entries.length > 0 && !entries.some((e) => e.week === week && e.sessionId);
+  }
   return {
     routine, shortReplies: routine === "evening", ...(greeting ? { greeting } : {}),
     devices: devices.sort((a, b) => a.id.localeCompare(b.id)), localTime: fmtTime(now, household.tz),
+    photoDue, week,
   };
 }
 

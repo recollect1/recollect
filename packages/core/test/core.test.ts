@@ -240,6 +240,37 @@ describe("weekly photo (scenario J)", () => {
   });
 });
 
+describe("weekly photo scheduling (§9.4)", () => {
+  // 13 October 2026 is a Tuesday; ISO week 2026-W42 runs Monday 12 to Sunday 18 October.
+  it("is due only in the calm 11:00–12:00 window", async () => {
+    for (const [at, due] of [["10:59", false], ["11:00", true], ["11:45", true], ["12:00", false], ["17:30", false], ["03:00", false]] as const) {
+      clock.set(ist(at));
+      expect((await D.routineState(ctx)).photoDue, at).toBe(due);
+    }
+    clock.set(ist("11:15"));
+    expect((await D.routineState(ctx)).week).toBe("2026-W42");
+  });
+  it("stops being due once this week's description is saved, and is due again next week", async () => {
+    clock.set(ist("11:15"));
+    await photoMoment(ctx, "That is our courtyard at Diwali, with all the little lamps lit.");
+    expect((await D.routineState(ctx)).photoDue).toBe(false);
+    clock.set(ist("11:15", "2026-10-15"));
+    expect((await D.routineState(ctx)).photoDue).toBe(false);
+    clock.set(ist("11:15", "2026-10-19"));
+    expect((await D.routineState(ctx)).photoDue).toBe(true);
+  });
+  it("only offering the photo, without a description, leaves it due", async () => {
+    clock.set(ist("11:15"));
+    await photoMoment(ctx);
+    expect((await D.routineState(ctx)).photoDue).toBe(true);
+  });
+  it("is not due when no photo has been chosen", async () => {
+    clock.set(ist("11:15"));
+    for (const w of await ctx.graph.find<{ id: string }>("WeeklyPhoto")) await ctx.graph.remove("WeeklyPhoto", w.id);
+    expect((await D.routineState(ctx)).photoDue).toBe(false);
+  });
+});
+
 describe("routines (scenario I)", () => {
   it("daytime: nothing running", async () => {
     const s = await D.routineState(ctx);

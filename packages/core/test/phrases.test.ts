@@ -27,7 +27,7 @@ const everything = [
   P.whoIsUnknown("Simran"), P.trackingPaused("Simran"),
   P.eveningHello("Gurdev", "Shall we put on your music?"), P.nightReassure("Gurdev"),
   P.nightPlaceReassure("market"), P.goingOutDaytime("Simran"), P.nightAlert("Gurdev", "3:04", "market"),
-  P.nightAlert("Gurdev", "3:04"), P.weeklyPhotoPrompt("Gurdev"), P.photoThanks(), P.noPhotoYet("Simran"),
+  P.nightAlert("Gurdev", "3:04"), P.weeklyPhotoPrompt("Gurdev"), P.photoThanks(), P.photoLater(), P.noPhotoYet("Simran"),
   P.trendStable("Gurdev", 8), P.trendChange("Gurdev", allMetrics, "August"),
   P.trendNotReady("Gurdev"), P.trackingOff("Gurdev"), P.REPEATS_NORMAL,
   P.thisIsMeReady("Gurdev"), P.thisIsMeMissing("Gurdev"),

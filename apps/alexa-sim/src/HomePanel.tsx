@@ -1,9 +1,11 @@
 import type { RoutineState } from './api.ts';
 
 // Simulated home (§13): the lights and speaker the routine agent controls, plus a demo clock
-// that can jump to 17:00 (evening calm, scenario I) or 03:00 (night, scenario K).
+// that can jump to 11:15 (weekly photo, scenario J), 17:00 (evening calm, scenario I) or
+// 03:00 (night, scenario K).
 const JUMPS: { at?: string; label: string }[] = [
   { at: '09:00', label: 'Morning 09:00' },
+  { at: '11:15', label: 'Photo time 11:15' },
   { at: '17:00', label: 'Evening 17:00' },
   { at: '03:00', label: 'Night 03:00' },
   { label: 'Real time' },

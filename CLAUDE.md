@@ -594,7 +594,7 @@ Recorded as the code was written. Each has a friction-log entry where one applie
 - **Extra phrase templates** beyond §8: `medicineUnknown`, `visitorComes`, `visitorCalls`,
   `noVisitors`, `nextDose`, `noMoreDoses`, `storyPromptFor`, `storyPromptOpen`, `noPhotoYet`,
   `trendNotReady`, `trackingOff`, `familySummary`, `repeatLine`, `thisIsMeReady`,
-  `thisIsMeMissing`. The family admin's name is a parameter, not the literal "Simran".
+  `thisIsMeMissing`, `photoLater`. The family admin's name is a parameter, not the literal "Simran".
 - **MCP Apps cards (§10).** `packages/ui-cards` builds five single-file cards (story, today, who,
   trend, photo) with `@modelcontextprotocol/ext-apps` **1.7.x**, which works with the v1 MCP SDK
   this server uses (ext-apps 2.x needs SDK v2). The five tools declare them via
@@ -686,7 +686,16 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   TrendCard, TrendFlags (`ABOUT` the elder) and a `DoctorReport{html}` node; nothing while tracking is
   off. The worker runs it weekly and for `trends` jobs (family page "Recalculate now").
   `/report/doctor` serves the graph's report, falling back to the demo file.
-- **Not built yet (15 Oct):** weekly photo scheduling (§9.4 P0; `photo_moment` is on demand only).
+- **Weekly photo scheduling (§9.4, 15 Oct).** `routine_state` returns `photoDue` (and `week`): true in
+  the 11:00–12:00 window (`PHOTO_WINDOW`), outside the evening and night routines, while a photo is
+  chosen and this ISO week has no saved description. So it is offered at most once a week, and a
+  missed day moves it to the next. The simulator offers it once per week with a real `photo_moment`
+  call and treats her next words as the description, like story mode; "not now" gets `photoLater`
+  and no save. Demo clock button "Photo time 11:15" (scenario J).
+- **Claude Desktop (§13).** `apps/mcp-server/src/desktop-bridge.ts`: a stdio MCP server that Claude
+  Desktop launches; it forwards every request to the real server over Streamable HTTP with the
+  bearer token added (`RECOLLECT_TOKEN`). Setup in `docs/claude-desktop.md`. Tested over stdio; not
+  yet tried in the Claude Desktop app.
 - **Not deployed yet (15 Oct):** AgentCore, hosting (Railway or AWS), no Bedrock call made yet.
   **Needs a human:** Bedrock model access and IAM keys (the worker and the simulator's voice loop
   have not run against Bedrock), Railway login, microphone test, Claude Desktop clip, video.
