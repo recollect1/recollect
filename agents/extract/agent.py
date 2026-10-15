@@ -20,7 +20,9 @@ SYSTEM = (
     "people, places, events and things it names. Copy each `span` character for character from "
     "the sentence: the exact words used, never a paraphrase. Do not include the speaker, and do "
     "not include pronouns such as he, she, they or it. Give a `year` only when the sentence states "
-    "one for that entity. Relations use the entity names and a short snake_case label such as "
+    "one for that entity. An event is a named occasion such as a wedding, a visit or a festival, "
+    "never a verb on its own; a year is only ever the `year` of an entity, never an entity itself. "
+    "Relations use the entity names and a short snake_case label such as "
     "brother_of, lived_in, bought or located_in. If the sentence names nothing, return empty lists."
 )
 

@@ -98,3 +98,12 @@ def test_edit_distance():
     assert edit_distance("jagdish", "jagdish") == 0
     assert edit_distance("jagdish", "jagdeesh") == 2
     assert edit_distance("patiala", "ludhiana") == 3  # cut off at limit + 1
+
+
+def test_drops_bare_numbers_as_entities():
+    out = validate(QUOTE, Extraction(
+        [Proposed("event", "1968", "1968"), Proposed("thing", "radio", "a radio", 1968)],
+        [Relation("radio", "1968", "in")],
+    ))
+    assert [(e.name, e.year) for e in out.entities] == [("radio", 1968)]
+    assert out.relations == []

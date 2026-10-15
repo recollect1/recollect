@@ -85,11 +85,17 @@ def main() -> None:
     log(msg="worker started", extractor=extractor.name if extractor else None, poll_s=POLL_S)
     last_trends_check = 0.0
     while True:
-        run_once(store, extractor)
-        # Trend jobs are checked every poll; the weekly rule at most once a minute.
-        if store.pending_jobs(TRENDS_QUEUE) or time.time() - last_trends_check > 60:
-            last_trends_check = time.time()
-            run_trends_jobs(store)
+        try:
+            run_once(store, extractor)
+            # Trend jobs are checked every poll; the weekly rule at most once a minute.
+            if store.pending_jobs(TRENDS_QUEUE) or time.time() - last_trends_check > 60:
+                last_trends_check = time.time()
+                run_trends_jobs(store)
+        except Exception as e:  # noqa: BLE001
+            # e.g. the graph does not exist yet because nothing has been seeded: wait and retry
+            # rather than exit (§9: agent failures never affect anything else).
+            log(msg="poll failed; retrying", error=str(e)[:300])
+            time.sleep(10)
         time.sleep(POLL_S)
 
 

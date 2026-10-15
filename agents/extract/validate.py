@@ -64,6 +64,9 @@ def validate(quote: str, extraction: Extraction) -> Extraction:
             continue
         if e.span not in quote:
             continue
+        # A bare number ("1968") is a year or a count, never a person, place, event or thing.
+        if _norm(e.name).replace(" ", "").isdigit():
+            continue
         key = (_norm(e.name), e.span)
         if key in seen:
             continue
