@@ -36,7 +36,11 @@ export interface ThisIsMe {
   card?: { name: string; profile: Profile; people: { name: string; relation: string }[] };
 }
 
+export interface Alert { id: string; at: string; say: string; acknowledged: boolean; sms?: boolean }
+
 export const api = {
+  alerts: () => req<Alert[]>('GET', '/api/family/alerts'),
+  ackAlert: (id: string) => req('POST', '/api/family/alert-ack', { id }),
   overview: () => req<Overview>('GET', '/api/family/overview'),
   today: () => req<Today>('GET', '/api/family/today'),
   stories: () => req<{ stories: Story[]; privateCount: number; prompts: { id: string; text: string }[] }>('GET', '/api/family/stories'),

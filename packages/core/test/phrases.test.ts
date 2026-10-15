@@ -26,7 +26,8 @@ const everything = [
   P.whoIs("Aman", "grandson, Simran's son", "Aman is in London."), P.whoIs("Aman", "grandson"),
   P.whoIsUnknown("Simran"), P.trackingPaused("Simran"),
   P.eveningHello("Gurdev", "Shall we put on your music?"), P.nightReassure("Gurdev"),
-  P.nightPlaceReassure("market"), P.weeklyPhotoPrompt("Gurdev"), P.photoThanks(), P.noPhotoYet("Simran"),
+  P.nightPlaceReassure("market"), P.goingOutDaytime("Simran"), P.nightAlert("Gurdev", "3:04", "market"),
+  P.nightAlert("Gurdev", "3:04"), P.weeklyPhotoPrompt("Gurdev"), P.photoThanks(), P.noPhotoYet("Simran"),
   P.trendStable("Gurdev", 8), P.trendChange("Gurdev", allMetrics, "August"),
   P.trendNotReady("Gurdev"), P.trackingOff("Gurdev"), P.REPEATS_NORMAL,
   P.thisIsMeReady("Gurdev"), P.thisIsMeMissing("Gurdev"),
@@ -47,6 +48,9 @@ describe("phrases", () => {
     expect(P.doseTaken("BP tablet", "8:10")).toBe("Yes, you took your BP tablet at 8:10 today.");
     expect(P.nothingRecorded("that")).toBe(
       "I don't have anything saved about that yet. Would you like to tell me about it?");
+    expect(P.nightAlert("Gurdev", "3:04", "market")).toBe(
+      "Gurdev was awake at 3:04 and wanted to go to the market. Recollect reassured her and turned on the night light. " +
+      "Recollect is not an emergency service. If she may be in danger, call local emergency services.");
     expect(P.listeningForStory()).toBe(`I'm listening. Take your time, and say "that's all" when you're done.`);
     expect(P.storyPromptFor("your sister Nimmo")).toBe(
       "You mentioned your sister Nimmo. Would you like to tell me more?");

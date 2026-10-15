@@ -24,6 +24,7 @@ const DEBUG_CALLS: { role: Role; name: string; args: Record<string, unknown>; la
   { role: 'family', name: 'recall_memory', args: { question: 'How did Grandma come to Patiala?' }, label: 'recall (family): Patiala' },
   { role: 'elder', name: 'recall_memory', args: { question: 'What was my school like?' }, label: 'recall: school (nothing saved)' },
   { role: 'elder', name: 'photo_moment', args: {}, label: 'photo_moment' },
+  { role: 'elder', name: 'night_reassure', args: { text: 'I need to go to the market' }, label: 'night: go to the market' },
   { role: 'elder', name: 'story_prompt', args: {}, label: 'story_prompt' },
   { role: 'family', name: 'speech_trend', args: {}, label: 'speech_trend (family)' },
 ];

@@ -5,11 +5,12 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import {
   checkDose, familySummary, keepPrivate, localAt, logDose, pauseTracking, photoMoment, processSession,
-  recall, rememberStory, routineState, speechTrend, storyPrompt, thisIsMe, whatsToday, whereIs, whoIs,
+  nightReassure, recall, rememberStory, routineState, speechTrend, storyPrompt, thisIsMe, whatsToday, whereIs, whoIs,
   logAsk, type Ctx,
 } from "@recollect/core";
 import { CARDS, cardHtml, type CardName } from "@recollect/ui-cards";
 import { z, type ZodRawShape } from "zod";
+import { sendAlertSms } from "./sms.ts";
 
 export type ToolRole = "elder" | "family";
 const SAY = "Read the `say` field exactly as written.";
@@ -134,6 +135,17 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
     },
     async ({ name, photoId }) => ({ ...(await whoIs(ctx, { ...(name ? { name } : {}), ...(photoId ? { photoId } : {}) }, role)) }),
     "who");
+
+  tool("night_reassure", ["elder"],
+    "Use when she wants to go somewhere or leave the house, especially at night ('I need to go to the market', " +
+    "'I'm going out'). Pass her words. Reassures her calmly; at night it turns on the night light and tells her " +
+    "family if needed. Never argue with her or correct her.",
+    { text: z.string().min(1).describe("What she said, exactly as spoken.") },
+    async ({ text }) => {
+      const r = await nightReassure(ctx, text);
+      if (r.alert) { const alert = r.alert; background(() => sendAlertSms(ctx, alert)); }
+      return { say: r.say, night: r.night, alerted: Boolean(r.alert) };
+    });
 
   tool("keep_private", ["elder"],
     "Keep the story she just told private, when she says 'keep this private' or 'don't tell anyone'.",

@@ -2,7 +2,7 @@
 // MCP tools, because they are admin screens rather than things anyone says to Alexa.
 import type { IncomingMessage, ServerResponse } from "node:http";
 import {
-  approveFact, changeConsent, chooseWeeklyPhoto, deleteEverything, factCandidates, familyOverview, familyStories,
+  acknowledgeAlert, approveFact, changeConsent, familyAlerts, chooseWeeklyPhoto, deleteEverything, factCandidates, familyOverview, familyStories,
   familySummary, FamilyError, saveMedicine, saveProfile, setStatusLine, speechTrend, thisIsMe, type Ctx,
 } from "@recollect/core";
 import { z } from "zod";
@@ -34,6 +34,11 @@ export async function familyApi(
       case "GET /api/family/today": return json(res, 200, await familySummary(ctx)), true;
       case "GET /api/family/stories": return json(res, 200, await familyStories(ctx)), true;
       case "GET /api/family/trend": return json(res, 200, await speechTrend(ctx)), true;
+      case "GET /api/family/alerts": return json(res, 200, await familyAlerts(ctx)), true;
+      case "POST /api/family/alert-ack": {
+        await acknowledgeAlert(ctx, z.object({ id: z.string() }).parse(body).id);
+        return json(res, 200, { ok: true }), true;
+      }
       case "GET /api/family/this-is-me":
         return json(res, 200, { ...(await thisIsMe(ctx)), candidates: await factCandidates(ctx) }), true;
       case "POST /api/family/status": {

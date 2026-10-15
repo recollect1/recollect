@@ -17,6 +17,7 @@
     "@recollect/core": "workspace:*",
     "zod": "^3.25.0",
     "@modelcontextprotocol/ext-apps": "^1.7.5",
-    "@recollect/ui-cards": "workspace:*"
+    "@recollect/ui-cards": "workspace:*",
+    "@aws-sdk/client-sns": "^3.900.0"
   }
 }

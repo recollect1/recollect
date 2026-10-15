@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, type Medicine, type Overview, type Person, type Profile, type Story, type ThisIsMe, type Today, type Trend } from './api.ts';
+import { api, type Alert, type Medicine, type Overview, type Person, type Profile, type Story, type ThisIsMe, type Today, type Trend } from './api.ts';
 
 // The family page (§13): setup, consent, stories, today, trends, "This is me".
 // Trends are family-only and never spoken to her. Simulated data is always labelled.
 
 interface Data {
+  alerts: Alert[];
   overview: Overview; today: Today; trend: Trend; me: ThisIsMe;
   stories: { stories: Story[]; privateCount: number; prompts: { id: string; text: string }[] };
 }
@@ -15,10 +16,10 @@ export function App() {
 
   const load = useCallback(async () => {
     try {
-      const [overview, today, stories, trend, me] = await Promise.all([
-        api.overview(), api.today(), api.stories(), api.trend(), api.thisIsMe(),
+      const [overview, today, stories, trend, me, alerts] = await Promise.all([
+        api.overview(), api.today(), api.stories(), api.trend(), api.thisIsMe(), api.alerts(),
       ]);
-      setData({ overview, today, stories, trend, me });
+      setData({ overview, today, stories, trend, me, alerts });
       setError(null);
     } catch (e) {
       setError(`Recollect is not reachable (${(e as Error).message}). Check that the server is running, then reload.`);
@@ -33,7 +34,8 @@ export function App() {
 
   if (error) return <main className="shell"><p className="banner">{error}</p></main>;
   if (!data) return <main className="shell"><p className="muted">Loading…</p></main>;
-  const { overview, today, stories, trend, me } = data;
+  const { overview, today, stories, trend, me, alerts } = data;
+  const openAlerts = alerts.filter((a) => !a.acknowledged);
   const first = overview.elder.name;
 
   return (
@@ -47,6 +49,18 @@ export function App() {
           <a href="#me">This is me</a><a href="#consent">Consent</a>
         </nav>
       </header>
+
+      {openAlerts.length > 0 && (
+        <section className="alerts" aria-live="polite" aria-label="Alerts">
+          {openAlerts.map((a) => (
+            <div key={a.id} className="alert">
+              <p>{a.say}</p>
+              <p className="small muted">{new Date(a.at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}{a.sms ? ' · text message sent' : ''}</p>
+              <button onClick={() => void api.ackAlert(a.id).then(load)}>I've seen this</button>
+            </div>
+          ))}
+        </section>
+      )}
 
       <section id="today" className="block">
         <h2>Today <span className="muted small">{today.date}</span></h2>

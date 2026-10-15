@@ -9,6 +9,7 @@ export * from "./recall.ts";
 export * from "./stories.ts";
 export * from "./daily.ts";
 export * from "./family.ts";
+export * from "./night.ts";
 export * as phrases from "./phrases.ts";
 export { seed, loadSimulated, type SeedOptions } from "./seed/index.ts";
 export * as seedData from "./seed/data.ts";

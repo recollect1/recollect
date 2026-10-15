@@ -653,7 +653,13 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   `pause_tracking`; there is no spoken "turn it back on" (by design). Polls every 15 s (no SSE).
 - **`pnpm dev`** runs `scripts/dev.mjs`: loads `.env` and starts the MCP server, the simulator
   (backend + Vite) and the family page. `pnpm dev:server` runs the MCP server alone.
-- **Not built yet (14 Oct):** night-time family alert (P1), audio capture and timing markers in
+- **Night reassurance (§9.4 P1, 15 Oct).** Elder tool `night_reassure {text}` (the routine table had no
+  tool for it). 00:00–05:00: `nightReassure` (+ `nightPlaceReassure` when she names a place), bedroom
+  light dim, `AskEvent` intent `night_out`. Two asks within 30 min or "I'm going out" → one
+  `FamilyAlert` node (shown on the family page with an acknowledge button) + an escalated night
+  `RoutineEvent`; SMS through Amazon SNS in the background only when `SNS_TOPIC_ARN` is set.
+  Daytime: `goingOutDaytime`. New phrases `goingOutDaytime`, `nightAlert`, `NOT_EMERGENCY`.
+- **Not built yet (15 Oct):** audio capture and timing markers in
   the simulator (P1), live graph panel (P1), AgentCore deployment of the worker, deploy to Railway.
   **Needs a human:** Bedrock model access and IAM keys (the worker and the simulator's voice loop
   have not run against Bedrock), Railway login, microphone test, Claude Desktop clip, video.

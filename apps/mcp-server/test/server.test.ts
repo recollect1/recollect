@@ -9,7 +9,7 @@ import { createApp, type App } from "../src/app.ts";
 
 const tokens = { elder: "test-elder", family: "test-family" };
 const ELDER_TOOLS = [
-  "check_dose", "keep_private", "log_dose", "pause_tracking", "photo_moment", "recall_memory",
+  "check_dose", "keep_private", "log_dose", "night_reassure", "pause_tracking", "photo_moment", "recall_memory",
   "remember_story", "routine_state", "story_prompt", "whats_today", "where_is", "who_is",
 ];
 const FAMILY_TOOLS = [
@@ -111,6 +111,19 @@ describe("MCP server (§10)", () => {
     expect((await call(await connect(tokens.elder), "where_is", { person: "Aman" })).say).toBe("Aman is home for Diwali.");
     expect((await post("/api/family/delete-everything", tokens.family, {})).status).toBe(400);
     expect((await post("/api/family/medicine", tokens.family, { name: "X", times: ["99:00"] })).status).toBe(400);
+  });
+
+  it("scenario K: 03:00 market twice → reassured both times, one family alert", async () => {
+    clock.set(new Date("2026-10-14T03:00:00+05:30"));
+    const elder = await connect(tokens.elder);
+    const a = await call(elder, "night_reassure", { text: "I need to go to the market" });
+    const b = await call(elder, "night_reassure", { text: "I need to go to the market" });
+    expect(a.say).toBe(b.say);
+    expect(a.say).toContain("The market opens in the morning.");
+    expect([a.data.alerted, b.data.alerted]).toEqual([false, true]);
+    const alerts = await (await fetch(`${url.origin}/api/family/alerts`, { headers: { authorization: `Bearer ${tokens.family}` } })).json() as { say: string }[];
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]!.say).toContain("not an emergency service");
   });
 
   it("a family token cannot call elder tools", async () => {

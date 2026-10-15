@@ -24,7 +24,7 @@ const SYSTEM = [
 const SHORT = 'It is evening: reply in one short sentence.';
 
 /** Utterances that must be answered from a tool, never from the model. */
-const GROUNDED = /\b(remember|story|stories|when did|how did|who('s| was| is)|where (is|was|did)|tell me about|tablet|medicine|pill|dose|did i take|took my|what day|today|date|coming|visit|private|photo|tracking)\b/i;
+const GROUNDED = /\b(remember|story|stories|when did|how did|who('s| was| is)|where (is|was|did)|tell me about|tablet|medicine|pill|dose|did i take|took my|what day|today|date|coming|visit|private|photo|tracking|going out|go out|go to the|market|leave|leaving)\b/i;
 
 type Sender = (cmd: ConverseCommand) => Promise<ConverseCommandOutput>;
 let bedrock: BedrockRuntimeClient | null = null;

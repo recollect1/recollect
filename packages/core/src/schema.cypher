@@ -20,6 +20,7 @@ CREATE INDEX FOR (n:Profile) ON (n.id);
 CREATE INDEX FOR (n:WeeklyPhoto) ON (n.id);
 CREATE INDEX FOR (n:Device) ON (n.id);
 CREATE INDEX FOR (n:RoutineEvent) ON (n.id);
+CREATE INDEX FOR (n:FamilyAlert) ON (n.id);
 CREATE INDEX FOR (n:Job) ON (n.id);
 CREATE INDEX FOR (n:Entity) ON (n.name);
 CREATE INDEX FOR (n:Quote) ON (n.saidAt);

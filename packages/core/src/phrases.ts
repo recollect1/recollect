@@ -68,6 +68,9 @@ export const trackingPaused = (admin: string) =>
 export const eveningHello = (name: string, offer: string) => `It's evening, ${name}. ${offer}`;
 export const nightReassure = (name: string) =>
   `It's night time, ${name}, and everyone is asleep. You're safe at home. Let's rest until morning.`;
+/** Daytime answer when she wants to go out: never a refusal, never a test. */
+export const goingOutDaytime = (admin: string) =>
+  `Of course. Let's ask ${admin} to come with you.`;
 export const nightPlaceReassure = (place: string) =>
   `The ${place} opens in the morning. We can go after breakfast.`;
 
@@ -90,6 +93,11 @@ export const trendChange = (name: string, metrics: string[], since: string) =>
   `Worth mentioning at the next check-up. ${NOT_MEDICAL}`;
 export const trendNotReady = (name: string) =>
   `There isn't a trend for ${name} yet. Recollect needs a few weeks of conversations first. ${NOT_MEDICAL}`;
+// Night-time family alert (§9.4, P1). Family page only; never spoken to her.
+export const NOT_EMERGENCY = "Recollect is not an emergency service. If she may be in danger, call local emergency services.";
+export const nightAlert = (name: string, time: string, place?: string) =>
+  `${name} was awake at ${time} and wanted to go ${place ? `to the ${place}` : "out"}. ` +
+  `Recollect reassured her and turned on the night light. ${NOT_EMERGENCY}`;
 export const trackingOff = (name: string) =>
   `Change tracking is turned off for ${name}, so there is no trend to show.`;
 export const REPEATS_NORMAL = "Repeats are normal; Recollect answers the same way every time.";
