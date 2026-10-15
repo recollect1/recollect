@@ -20,6 +20,8 @@ All people, stories and speech histories in this repository are **fictional**.
 > against Amazon Bedrock (the extract agent and the simulator's voice loop are tested with stand-ins),
 > AgentCore and Railway deployment, a real-microphone test. See [What exists today](#what-exists-today).
 
+![Architecture](docs/architecture.png)
+
 ## The two analysis modes
 
 A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has two modes:
