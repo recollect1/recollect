@@ -158,3 +158,29 @@ launcher killed only the shells it had started; on Windows their children (tsx, 
 **Fix:** `scripts/dev.mjs` skips the worker with a message when `FALKORDB_URL` is empty, falls back
 to `agents/.venv` when `uv` is missing, and stops each child's whole process tree with `taskkill /T`
 on Windows. The Ctrl+C path on Windows has not been exercised by hand yet.
+
+## 21. First Bedrock run: Anthropic models were gated, Nova Pro worked (15 Oct)
+**Doing:** the first live run of the simulator's Converse loop and the Strands extract agent, on
+Shambhvi's AWS account in `us-east-1`.
+**Problem:** `list-foundation-models` listed Claude Haiku 4.5 and 5.5 as ACTIVE, but calling them
+failed. Haiku 4.5: `ResourceNotFoundException: Model use case details have not been submitted for
+this account`. Haiku 5.5: `AccessDeniedException: … is not available for this account`. Neither
+shows up until you call the model.
+**Fix:** Amazon Nova models need no form. Nova Pro (`us.amazon.nova-pro-v1:0`) for both the voice
+loop and extraction. To use Claude later, submit the Anthropic use-case form in the Bedrock console.
+
+## 22. Nova 2 Lite returned `null` where the schema wanted a list (15 Oct)
+**Doing:** structured extraction with Strands (`structured_output(ExtractionOut, …)`) on Nova 2 Lite.
+**Problem:** the first sentence failed Pydantic validation (`entities: Input should be a valid list,
+input_value=None`), and after allowing `null` it found nothing on sentences that clearly name people
+and things. Nova Pro on the same sentences found father, Patiala, the radio and 1968.
+**Fix:** `ExtractionOut` treats `null` as an empty list (so a model quirk cannot fail a job), and
+extraction uses Nova Pro.
+
+## 23. "Your next tablet" named a dose missed nine hours earlier (15 Oct)
+**Doing:** the first live voice-loop run, at 17:34, asking "What day is it today?".
+**Problem:** the answer ended "Your next tablet is your sugar tablet, at 8:00": the first unmarked
+dose of the day, however long ago. For someone with memory loss that invites a late or double dose.
+The unit tests ran at 09:00, where the old rule happened to be right.
+**Fix:** "next tablet" names only a dose that is upcoming or at most 60 minutes late; missed doses
+stay on the family page. Tested at 17:30, 20:45 and 21:30.

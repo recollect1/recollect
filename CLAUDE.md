@@ -613,7 +613,8 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   session, skips extraction for `photo_desc`, retries twice then sets `Job.failed`. Seeded jobs are
   marked done by the seed (their mentions are hand-written). The MCP server reloads its recall
   index when the count of done jobs changes (3 s timer). Tested with a scripted extractor
-  (tests only) in memory and on FalkorDB; **not yet run against Bedrock** (needs AWS access).
+  (tests only) in memory and on FalkorDB. The extract agent itself ran live on Bedrock on 15 Oct
+  (Nova Pro, seed sentences); the full worker loop with Bedrock on FalkorDB is not yet run.
   It runs as a plain process (the spec's Railway fallback); no AgentCore code yet.
 - **`storyPromptFor`** wording moved into `trend-phrases.json` (`templates.storyPromptFor`) so the
   Python worker and `phrases.ts` use the same template.
@@ -642,7 +643,9 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   `structuredContent` fallback, latency strip, simulated home panel from `routine_state`, demo clock
   buttons (proxy to `POST /demo/clock`), one-sentence replies while `shortReplies` is set. `?debug`
   adds real direct tool calls. Not built yet: audio capture (P1 timing markers), live graph panel
-  (P1). **Not yet run against Bedrock.**
+  (P1). **Ran live on Bedrock on 15 Oct** (`us.amazon.nova-pro-v1:0`): every demo question called the
+  right tool and spoke its `say` verbatim. Anthropic models were not usable on the account yet
+  (use-case form not submitted; friction log 21), so Nova Pro is the default for chat and extraction.
 - **Family page (`apps/family`, 14 Oct).** Vite/React; reads and writes through `/api/family/*` on the
   MCP server (family token; the Vite dev proxy adds it so the browser never holds it). Sections:
   today, speech changes (trend card, "Simulated data" label, doctor report link), stories (private
@@ -696,9 +699,11 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   Desktop launches; it forwards every request to the real server over Streamable HTTP with the
   bearer token added (`RECOLLECT_TOKEN`). Setup in `docs/claude-desktop.md`. Tested over stdio; not
   yet tried in the Claude Desktop app.
-- **Not deployed yet (15 Oct):** AgentCore, hosting (Railway or AWS), no Bedrock call made yet.
-  **Needs a human:** Bedrock model access and IAM keys (the worker and the simulator's voice loop
-  have not run against Bedrock), Railway login, microphone test, Claude Desktop clip, video.
+- **"Next tablet" (§1.5).** `whats_today` names only a dose that is upcoming or at most 60 minutes
+  late; a long-missed dose is never offered as "next" (friction log 23).
+- **Not deployed yet (15 Oct):** AgentCore, hosting (Railway or AWS).
+  **Needs a human:** the Anthropic use-case form if Claude models are wanted on Bedrock, a hosting
+  login (Railway) or approval to create AWS resources, microphone test, Claude Desktop clip, video.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.
 - **Latency:** `pnpm test:latency` passes locally on FalkorDB (14 Oct, worst p95 38 ms); not yet
   run against a deployed server.

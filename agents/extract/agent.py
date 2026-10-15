@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from typing import Literal, Protocol
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from strands import Agent
 from strands.models.bedrock import BedrockModel
 
@@ -41,6 +41,12 @@ class ExtractedRelation(BaseModel):
 class ExtractionOut(BaseModel):
     entities: list[ExtractedEntity] = Field(default_factory=list)
     relations: list[ExtractedRelation] = Field(default_factory=list)
+
+    @field_validator("entities", "relations", mode="before")
+    @classmethod
+    def _null_is_empty(cls, value: object) -> object:
+        # Some Bedrock models (Nova 2 Lite) return null for "nothing found" instead of [].
+        return [] if value is None else value
 
 
 class Extractor(Protocol):

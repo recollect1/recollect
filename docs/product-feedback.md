@@ -34,28 +34,35 @@ not yet called the real AWS service.
 - **Would build again:** yes. A card that shows her own words next to the spoken answer is the clearest
   way to show that nothing is invented.
 
-## Amazon Bedrock (Converse API) — *pending a live run*
+## Amazon Bedrock (Converse API) — live run 15 Oct (Amazon Nova Pro)
 
 - **Used for:** (1) the simulator's conversation loop: MCP `tools/list` mapped to Converse `toolConfig`,
   up to 4 tool calls a turn, a tool's `say` spoken verbatim; (2) the model behind the Strands extract agent.
-- **Worked well (so far):** Converse's tool-use shape maps one to one onto MCP tools, so the bridge is
-  about 30 lines. `toolChoice: { any: {} }` gives a clean way to force a tool when the model tries to
-  answer a memory question from its own knowledge; the loop is tested for that with a stubbed sender.
-- **Needs work:** command `input` is held by reference, so a test that inspects `messages` after the
-  call sees later mutations (clone before logging). Model access and billing setup are a separate step
-  from the SDK; the error a new builder sees should point there.
-- **Live run:** not yet — needs model access and an IAM key on the team's account.
+- **Worked well:** Converse's tool-use shape maps one to one onto MCP tools, so the bridge is about 30
+  lines. On the first live run with Nova Pro, all ten demo questions (dose log and check, who's-who,
+  where-is twice, today, nothing-saved, two memory questions, the family trend) called the right tool,
+  and small talk got a plain reply without one. About 1.5–2.4 s per turn including the tool call.
+  `toolChoice: { any: {} }` gives a clean way to force a tool when the model tries to answer a memory
+  question itself.
+- **Needs work:** model access is the hard part, and it is invisible until you call the model.
+  `list-foundation-models` showed Claude Haiku 4.5 and 5.5 as ACTIVE, but the calls failed with "Model
+  use case details have not been submitted" and "not available for this account" (friction log 21).
+  A per-account "can I call this?" flag in the listing would save the guesswork. Command `input` is
+  held by reference, so a test that inspects `messages` after the call sees later mutations.
+- **Would build again:** yes; Nova Pro needed no extra access step.
 
-## Strands Agents SDK (1.60) — *pending a live run*
+## Strands Agents SDK (1.60) — live run 15 Oct (Nova Pro)
 
 - **Used for:** the extract agent (`agents/extract/agent.py`): `Agent(model=BedrockModel(...))` with
   `structured_output(ExtractionOut, prompt)` returning a Pydantic object, one fresh agent per sentence so
   no history leaks between stories, temperature 0.
-- **Worked well:** typed structured output removed all JSON parsing; the `Agent` and `BedrockModel`
-  signatures were easy to discover from the installed package.
-- **Needs work:** `Agent.__init__` takes over thirty parameters; a short "structured extraction"
-  recipe in the README would help. `callback_handler=None` is needed to stop console streaming in a
-  background worker, which is easy to miss.
+- **Worked well:** typed structured output removed all JSON parsing. Live on Nova Pro it found the
+  people, places, things and years in the seed sentences, about 1–3 s per sentence; every span passed
+  the "exact words she said" check.
+- **Needs work:** with Nova 2 Lite, `structured_output` raised a Pydantic error because the model
+  returned `null` for a list (friction log 22); the schema now accepts it, but the failure surfaced deep
+  in the model adapter. `Agent.__init__` takes over thirty parameters; a short "structured extraction"
+  recipe would help. `callback_handler=None` is needed to stop console streaming in a background worker.
 - **Would build again:** yes, for the typed output alone.
 
 ## Amazon Bedrock AgentCore Runtime (`bedrock-agentcore` 1.24) — *pending deployment*

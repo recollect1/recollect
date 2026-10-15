@@ -139,6 +139,16 @@ describe("today", () => {
     expect(r.say).toBe("It's Tuesday, 13 October. Harpreet comes at 10:00. Your next tablet is your BP tablet, at 8:00.");
     expect(r.card.doses).toHaveLength(4);
   });
+  it("never names a long-missed dose as the next tablet (§1.5)", async () => {
+    clock.set(ist("17:30"));
+    expect((await D.whatsToday(ctx)).say).toContain("Your next tablet is your BP tablet, at 20:00.");
+    clock.set(ist("20:45"));
+    expect((await D.whatsToday(ctx)).say).toContain("Your next tablet is your BP tablet, at 20:00.");
+    clock.set(ist("21:30"));
+    expect((await D.whatsToday(ctx)).say).toContain(P.noMoreDoses());
+    // The missed morning doses still show, unmarked, on the card and the family page.
+    expect((await D.whatsToday(ctx)).card.doses.filter((d) => !d.taken)).toHaveLength(4);
+  });
   it("on Sunday the helper is off and Aman calls", async () => {
     clock.set(ist("09:00", "2026-10-18"));
     expect((await D.whatsToday(ctx)).say).toContain("It's Sunday, 18 October. Aman calls today.");

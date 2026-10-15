@@ -11,6 +11,12 @@ import type {
 
 /** How long before a slot's time a dose still counts towards that slot. */
 const SLOT_GRACE_MIN = 90;
+/**
+ * "Your next tablet" names only a dose that is coming up or at most this late. An older missed
+ * dose is never offered as "next": that could prompt a late or double dose. Missed doses show on
+ * the family page instead (§1.5).
+ */
+const NEXT_DOSE_LATE_MIN = 60;
 
 export async function logAsk(ctx: Ctx, intent: AskIntent, detail = ""): Promise<void> {
   const ask: AskEvent = { id: newId("ask"), intent, detail, at: ctx.clock.now().toISOString() };
@@ -110,7 +116,8 @@ export async function whatsToday(ctx: Ctx): Promise<{ say: string; card: TodayCa
   const visitorLine = todays.length
     ? todays.map((v) => (v.kind === "call" ? P.visitorCalls(name(v.personId)) : P.visitorComes(name(v.personId), fmtHHMM(v.time)))).join(", and ")
     : P.noVisitors();
-  const next = slots.find((s) => !s.taken);
+  const nowMin = minutesOfDay(ctx.clock.now(), household.tz);
+  const next = slots.find((s) => !s.taken && parseHHMM(s.time) >= nowMin - NEXT_DOSE_LATE_MIN);
   const nextLine = next ? P.nextDose(next.medicine.name, fmtHHMM(next.time)) : P.noMoreDoses();
   await logAsk(ctx, "whats_today");
   return {

@@ -16,9 +16,10 @@ Open Source mini-challenge with [`mcp-latency`](https://github.com/yash4428/mcp-
 All people, stories and speech histories in this repository are **fictional**.
 
 > **Status (15 Oct 2026).** Everything in the spec is built and tested on FalkorDB, including the P1
-> features (night reassurance, timing markers, live graph panel). **Not yet done:** a live run
-> against Amazon Bedrock (the extract agent and the simulator's voice loop are tested with stand-ins),
-> AgentCore and Railway deployment, a real-microphone test. See [What exists today](#what-exists-today).
+> features (night reassurance, timing markers, live graph panel). The simulator's voice loop and the
+> extract agent first ran live on Amazon Bedrock (Amazon Nova Pro) on 15 Oct. **Not yet done:** the
+> worker's extraction end to end on FalkorDB with Bedrock, AgentCore and hosted deployment, a
+> real-microphone test. See [What exists today](#what-exists-today).
 
 ![Architecture](docs/architecture.png)
 
@@ -45,14 +46,14 @@ A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has t
 | `agents/synth` — simulated 12-week history (`data/simulated/markers.json`) | Built, tested |
 | `agents/trends` — baseline, sustained-change flags, family card, printable doctor report | Built, tested |
 | `skill/SKILL.md` — Agent Skill with six example exchanges | Written |
-| `agents/worker` + `agents/extract/agent.py` — Strands Agent on Bedrock extracts entities; validated graph writes, story prompts, marker sets; markers-only without Bedrock | Built, tested (scripted extractor, in memory and on FalkorDB); **not yet run against Bedrock** |
+| `agents/worker` + `agents/extract/agent.py` — Strands Agent on Bedrock extracts entities; validated graph writes, story prompts, marker sets; markers-only without Bedrock | Built, tested (scripted extractor, in memory and on FalkorDB). The extract agent ran live on Bedrock (Nova Pro, 15 Oct) on seed sentences; the full worker loop with Bedrock is **not yet run** |
 | `agents/agentcore_app.py` — the extract agent as a Bedrock AgentCore Runtime agent | Built; `/ping` and `/invocations` checked locally; **not yet deployed to AgentCore** |
 | Full-voice mode — consented story audio → `agents/markers/vad.py` → timing markers, audio deleted | Built, tested on synthetic audio; **not yet tried with a real microphone** |
 | Night reassurance + family alert (`night_reassure`, optional SMS via Amazon SNS) | Built, tested |
 | Live memory graph panel in the simulator | Built |
 | `deploy/` — Dockerfiles for the MCP server, web (simulator + family page, password protected), worker, AgentCore | Built; worker image run locally; **not yet deployed** |
 | `packages/ui-cards` — MCP Apps cards: story, today, who's-who, trend, photo | Built; served by the MCP server, tested |
-| `apps/alexa-sim` — Echo-Show-style simulator: real MCP client, Bedrock Converse loop speaking `say` verbatim, story mode, cards, latency strip, simulated home, demo clock | Built; Converse loop tested with a stubbed Bedrock sender; **not yet run against Bedrock** |
+| `apps/alexa-sim` — Echo-Show-style simulator: real MCP client, Bedrock Converse loop speaking `say` verbatim, story mode, cards, latency strip, simulated home, demo clock | Built; ran live on Bedrock (Nova Pro, 15 Oct): every demo question picked the right tool and spoke its `say` verbatim |
 | `apps/family` — family page: today, speech changes + doctor report, stories, people, medicines, weekly photo, This is me, two-step consent, delete everything | Built; backend tested in memory and on FalkorDB |
 
 Picking this up? Start with [docs/handoff.md](docs/handoff.md).
