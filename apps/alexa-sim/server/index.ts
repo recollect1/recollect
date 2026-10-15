@@ -26,6 +26,33 @@ setInterval(() => {
 
 const RoleSchema = z.enum(["elder", "family"]);
 
+app.get("/healthz", (_req, res) => { res.json({ ok: true }); });
+
+// Production (§13): this one "web" service serves the simulator and the family page, and holds the
+// tokens and AWS keys. Neither page may be public, so everything sits behind a password.
+const WEB_PASSWORD = process.env.WEB_PASSWORD;
+if (process.env.NODE_ENV === "production" && !WEB_PASSWORD) {
+  console.error("Set WEB_PASSWORD: in production the simulator and family page require a password.");
+  process.exit(1);
+}
+if (WEB_PASSWORD) {
+  app.use((req, res, next) => {
+    const [user, pass] = Buffer.from((req.headers.authorization ?? "").replace(/^Basic /, ""), "base64").toString().split(":");
+    if (pass === WEB_PASSWORD && user) return next();
+    res.set("WWW-Authenticate", 'Basic realm="Recollect"').status(401).send("Password required");
+  });
+}
+
+// The family page calls /api/family/* and /report/doctor; add the family token here (server side).
+async function toMcpAsFamily(req: express.Request, res: express.Response) {
+  const r = await fetch(`${MCP_ORIGIN}${req.originalUrl}`, {
+    method: req.method,
+    headers: { authorization: `Bearer ${tokenFor("family")}`, ...(req.method === "POST" ? { "content-type": "application/json" } : {}) },
+    ...(req.method === "POST" ? { body: JSON.stringify(req.body ?? {}) } : {}),
+  });
+  res.status(r.status).type(r.headers.get("content-type") ?? "application/json").send(Buffer.from(await r.arrayBuffer()));
+}
+
 const handle = (fn: (req: express.Request, res: express.Response) => Promise<unknown>) =>
   (req: express.Request, res: express.Response) => {
     fn(req, res).catch((e) => {
@@ -35,6 +62,9 @@ const handle = (fn: (req: express.Request, res: express.Response) => Promise<unk
       res.status(502).json({ error: "upstream", message: String(e?.message ?? e) });
     });
   };
+
+app.all(/^\/api\/family\//, handle(toMcpAsFamily));
+app.get("/report/doctor", handle(toMcpAsFamily));
 
 app.get("/api/status", handle(async (_req, res) => {
   const out: Record<string, unknown> = { mcpUrl: MCP_URL, chatModel: CHAT_MODEL || null };
@@ -129,9 +159,16 @@ app.post("/api/clock", handle(async (req, res) => {
 }));
 
 const dist = new URL("../dist/", import.meta.url).pathname;
-if (process.env.NODE_ENV === "production" && existsSync(dist)) {
-  app.use(express.static(dist));
-  app.get(/^(?!\/api\/).*/, (_req, res) => res.sendFile(`${dist}index.html`));
+const familyDist = new URL("../../family/dist/", import.meta.url).pathname;
+if (process.env.NODE_ENV === "production") {
+  if (existsSync(familyDist)) {
+    app.use("/family", express.static(familyDist));
+    app.get(/^\/family(\/.*)?$/, (_req, res) => res.sendFile(`${familyDist}index.html`));
+  }
+  if (existsSync(dist)) {
+    app.use(express.static(dist));
+    app.get(/^(?!\/api\/).*/, (_req, res) => res.sendFile(`${dist}index.html`));
+  }
 }
 
 app.listen(PORT, () => {

@@ -76,6 +76,11 @@ class StrandsExtractor:
         )
 
 
-def extractor_from_env() -> StrandsExtractor | None:
+def extractor_from_env() -> Extractor | None:
+    """AgentCore Runtime when AGENTCORE_RUNTIME_ARN is set; else Strands on Bedrock directly; else none."""
+    arn = os.environ.get("AGENTCORE_RUNTIME_ARN")
+    if arn and os.environ.get("AGENTCORE_SELF") != "1":  # the runtime itself must not call itself
+        from extract.agentcore import AgentCoreExtractor
+        return AgentCoreExtractor(arn)
     model_id = os.environ.get("BEDROCK_EXTRACT_MODEL_ID")
     return StrandsExtractor(model_id) if model_id else None

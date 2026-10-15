@@ -672,7 +672,14 @@ Recorded as the code was written. Each has a friction-log entry where one applie
 - **Live graph panel (§13 P1, 15 Oct).** `GET /api/graph` (either token; private stories left out for
   family) from `packages/core/src/graph-view.ts`: stories, entities, mentions, RELATED and story-level
   RETELLS. The simulator panel polls it every 3 s while open (no SSE).
-- **Not built yet (15 Oct):** AgentCore deployment of the worker, deploy to Railway.
+- **AgentCore (15 Oct).** `agents/agentcore_app.py` wraps the extract agent in `BedrockAgentCoreApp`
+  (`/invocations` takes `{quote, known_names}`, returns validated entities); the worker uses it via
+  `InvokeAgentRuntime` (`extract/agentcore.py`) when `AGENTCORE_RUNTIME_ARN` is set, else Strands on
+  Bedrock directly. Only the extract agent runs there; markers stay in the worker (no model needed).
+- **Deploy (15 Oct).** `deploy/` has Dockerfiles for the MCP server, web (simulator at `/` and family
+  page at `/family` in one Node service behind `WEB_PASSWORD`, proxying `/api/family/*` and
+  `/report/doctor` with the family token), worker and AgentCore (arm64). Steps in `docs/deploy.md`.
+- **Not deployed yet (15 Oct):** AgentCore, Railway.
   **Needs a human:** Bedrock model access and IAM keys (the worker and the simulator's voice loop
   have not run against Bedrock), Railway login, microphone test, Claude Desktop clip, video.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.

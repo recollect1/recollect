@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 # Added as each agent is wired up: strands-agents, boto3, falkordb (extract, worker);
 # numpy, soundfile, webrtcvad (timing markers). Nothing here needs them yet.
 dependencies = [
+    "bedrock-agentcore>=1.24.1",
     "falkordb>=1.7.1",
     "numpy>=2.5.4",
     "strands-agents>=1.60.0",

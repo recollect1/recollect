@@ -11,14 +11,14 @@ One memory graph does three jobs:
    with the person's **own baseline**. Recollect tells the family, gently, when a sustained change
    is worth mentioning to a doctor. **It never diagnoses. This is not a medical assessment.**
 
-Built for Amazon's "Build, Ship, Shape" hackathon — Alexa+ track, AWS Builder mini-challenge.
+Built for Amazon's "Build, Ship, Shape" hackathon — Alexa+ track, AWS Builder mini-challenge, and the
+Open Source mini-challenge with [`mcp-latency`](https://github.com/yash4428/mcp-latency).
 All people, stories and speech histories in this repository are **fictional**.
 
-> **Status (14 Oct 2026): work in progress.** The core package, the MCP server, the marker and
-> trend maths, the simulated history, the doctor report and the Agent Skill are built and tested.
-> The core suite also passes against FalkorDB. The agent worker (Strands on Bedrock, graph
-> writes) is built and tested with a scripted extractor, but has not run against Bedrock yet.
-> The simulator and family page are built; nothing has run against Bedrock yet. See [What exists today](#what-exists-today).
+> **Status (15 Oct 2026).** Everything in the spec is built and tested on FalkorDB, including the P1
+> features (night reassurance, timing markers, live graph panel). **Not yet done:** a live run
+> against Amazon Bedrock (the extract agent and the simulator's voice loop are tested with stand-ins),
+> AgentCore and Railway deployment, a real-microphone test. See [What exists today](#what-exists-today).
 
 ## The two analysis modes
 
@@ -34,7 +34,7 @@ A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has t
 | Part | State |
 |---|---|
 | `packages/core` — graph port, schema, phrase templates, grounded recall, daily tools, seed | Built, tested |
-| `apps/mcp-server` — Streamable HTTP MCP server, 15 tools, role tokens | Built, tested with a real MCP client |
+| `apps/mcp-server` — Streamable HTTP MCP server, 16 tools, role tokens, MCP Apps cards, family REST, `/api/graph` | Built, tested with a real MCP client |
 | Grounding eval (`pnpm eval:recall`) | Passing, table below |
 | FalkorDB adapter (`FalkorGraph`) | Built; seed and the 35-test core suite pass against FalkorDB (`FALKORDB_URL=redis://localhost:6379 pnpm test`) |
 | Latency test (`pnpm test:latency`) | Passing locally on FalkorDB; deployed run still to do — see [Latency](#latency) |
@@ -43,8 +43,12 @@ A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has t
 | `agents/synth` — simulated 12-week history (`data/simulated/markers.json`) | Built, tested |
 | `agents/trends` — baseline, sustained-change flags, family card, printable doctor report | Built, tested |
 | `skill/SKILL.md` — Agent Skill with six example exchanges | Written |
-| `agents/worker` + `agents/extract/agent.py` — Strands Agent on Bedrock extracts entities; validated graph writes, story prompts, marker sets | Built, tested (scripted extractor, in memory and on FalkorDB); **not yet run against Bedrock** |
-| Audio capture for timing markers | Not built yet |
+| `agents/worker` + `agents/extract/agent.py` — Strands Agent on Bedrock extracts entities; validated graph writes, story prompts, marker sets; markers-only without Bedrock | Built, tested (scripted extractor, in memory and on FalkorDB); **not yet run against Bedrock** |
+| `agents/agentcore_app.py` — the extract agent as a Bedrock AgentCore Runtime agent | Built; `/ping` and `/invocations` checked locally; **not yet deployed to AgentCore** |
+| Full-voice mode — consented story audio → `agents/markers/vad.py` → timing markers, audio deleted | Built, tested on synthetic audio; **not yet tried with a real microphone** |
+| Night reassurance + family alert (`night_reassure`, optional SMS via Amazon SNS) | Built, tested |
+| Live memory graph panel in the simulator | Built |
+| `deploy/` — Dockerfiles for the MCP server, web (simulator + family page, password protected), worker, AgentCore | Built; worker image run locally; **not yet deployed** |
 | `packages/ui-cards` — MCP Apps cards: story, today, who's-who, trend, photo | Built; served by the MCP server, tested |
 | `apps/alexa-sim` — Echo-Show-style simulator: real MCP client, Bedrock Converse loop speaking `say` verbatim, story mode, cards, latency strip, simulated home, demo clock | Built; Converse loop tested with a stubbed Bedrock sender; **not yet run against Bedrock** |
 | `apps/family` — family page: today, speech changes + doctor report, stories, people, medicines, weekly photo, This is me, two-step consent, delete everything | Built; backend tested in memory and on FalkorDB |
@@ -74,11 +78,11 @@ validity.
 ## Setup
 
 ```
-pnpm i
-cp .env.example .env          # set ELDER_TOKEN and FAMILY_TOKEN
+pnpm i && (cd agents && uv sync)
+cp .env.example .env          # set ELDER_TOKEN and FAMILY_TOKEN; DEMO_CLOCK=1 for the demo
 docker compose up -d falkordb
 pnpm seed
-pnpm dev                      # MCP server on http://localhost:8787/mcp
+pnpm dev                      # MCP server :8787, simulator :5173, family page :5174, agent worker
 ```
 
 No Docker? Leave `FALKORDB_URL` empty and `pnpm dev` runs on an in-memory graph seeded at boot
@@ -171,9 +175,15 @@ person's own earlier speech and makes no claim of clinical validity.
 
 ## AWS integrations
 
-Planned, not built yet: Strands Agents SDK for the background agents (`agents/`), Amazon Bedrock
-for extraction and report formatting, Bedrock AgentCore Runtime for hosting them. This section will
-list file paths once they exist.
+| Service | What it does in Recollect | Code |
+|---|---|---|
+| **Strands Agents SDK** | The extract agent: one `Agent` per sentence with `BedrockModel`, Pydantic structured output, temperature 0. It only *proposes* people, places, events and things; `extract/validate.py` decides what reaches the graph. | `agents/extract/agent.py` |
+| **Amazon Bedrock** (Converse) | (1) The extract agent's model. (2) The Alexa+ simulator's conversation loop: MCP tools mapped to Bedrock `toolConfig`, ≤ 4 tool calls a turn, a tool's `say` spoken verbatim, `toolChoice: any` forced when a memory or medicine question is answered without a tool. | `agents/extract/agent.py`, `apps/alexa-sim/server/converse.ts` |
+| **Bedrock AgentCore Runtime** | Hosts the extract agent (`BedrockAgentCoreApp`, `/invocations`); the worker calls it with `InvokeAgentRuntime` when `AGENTCORE_RUNTIME_ARN` is set. | `agents/agentcore_app.py`, `agents/extract/agentcore.py`, `deploy/agentcore.Dockerfile` |
+| **Amazon SNS** | Optional SMS to the family for a night-time alert, sent in the background. | `apps/mcp-server/src/sms.ts` |
+
+No model is called inside an MCP tool handler, and no model writes a memory, medicine or trend
+sentence. Deployment steps: [docs/deploy.md](docs/deploy.md).
 
 ## License
 
