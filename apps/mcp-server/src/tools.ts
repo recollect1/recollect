@@ -14,6 +14,9 @@ import { z, type ZodRawShape } from "zod";
 export type ToolRole = "elder" | "family";
 const SAY = "Read the `say` field exactly as written.";
 const BOTH: ToolRole[] = ["elder", "family"];
+// MCP annotations. readOnlyHint only where nothing is written: the elder's tools all log asks
+// (silently, for the family view) or update routine/device state, so they are not read-only.
+const READ_ONLY = new Set(["family_summary", "speech_trend", "this_is_me"]);
 
 export interface ToolLog { tool: string; ms: number; ok: boolean }
 export interface ServerDeps {
@@ -64,7 +67,8 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
     };
     // The SDK's callback type is conditional on the schema generic; the shapes match at runtime.
     const _meta = card ? { ui: { resourceUri: CARDS[card] }, "ui/resourceUri": CARDS[card] } : undefined;
-    server.registerTool(name, { description: `${description} ${SAY}`, inputSchema, ...(_meta ? { _meta } : {}) }, handler as never);
+    const annotations = { readOnlyHint: READ_ONLY.has(name), openWorldHint: false };
+    server.registerTool(name, { description: `${description} ${SAY}`, inputSchema, annotations, ...(_meta ? { _meta } : {}) }, handler as never);
   }
 
   tool("remember_story", ["elder"],

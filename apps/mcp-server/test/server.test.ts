@@ -83,7 +83,11 @@ describe("MCP server (§10)", () => {
       expect(meta?.ui?.resourceUri, name).toBe(uri);
     }
     const family = await connect(tokens.family);
-    const trend = (await family.listTools()).tools.find((t) => t.name === "speech_trend");
+    const familyTools = (await family.listTools()).tools;
+    expect(familyTools.filter((t) => t.annotations?.readOnlyHint).map((t) => t.name).sort())
+      .toEqual(["family_summary", "speech_trend", "this_is_me"]);
+    expect(tools.every((t) => t.annotations?.readOnlyHint === false)).toBe(true); // elder tools all write something
+    const trend = familyTools.find((t) => t.name === "speech_trend");
     expect((trend?._meta as { ui?: { resourceUri?: string } }).ui?.resourceUri).toBe("ui://recollect/trend-card");
     for (const uri of [...Object.values(want), "ui://recollect/trend-card"]) {
       const r = await elder.readResource({ uri });
