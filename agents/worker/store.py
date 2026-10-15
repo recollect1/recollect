@@ -57,10 +57,12 @@ class FalkorStore:
         )
 
     # --- worker queries ---
-    def pending_jobs(self, queue: str, limit: int = 5) -> list[dict[str, Any]]:
+    def pending_jobs(self, queue: str, limit: int = 5, markers_only: bool = False) -> list[dict[str, Any]]:
+        """Open jobs. In markers-only mode (no Bedrock), skip jobs whose markers already ran."""
+        extra = " AND coalesce(n.markersDone, false) = false" if markers_only else ""
         return self._nodes(
-            "MATCH (n:Job) WHERE n.queue = $queue AND n.done = false AND coalesce(n.failed, false) = false "
-            "RETURN n ORDER BY n.at LIMIT $limit",
+            "MATCH (n:Job) WHERE n.queue = $queue AND n.done = false AND coalesce(n.failed, false) = false"
+            f"{extra} RETURN n ORDER BY n.at LIMIT $limit",
             {"queue": queue, "limit": limit},
         )
 

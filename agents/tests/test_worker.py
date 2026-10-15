@@ -152,3 +152,62 @@ def test_against_falkordb():
     rows = store._g.ro_query("MATCH (q:Quote)-[m:MENTIONS]->(e:Entity) RETURN q.text, m.span").result_set
     assert rows and all(span in text for text, span in rows)
     store._g.delete()
+
+
+def _wav(path, parts):
+    import wave
+
+    import numpy as np
+
+    from tests.test_vad import RATE, recording
+    audio = recording(parts)
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(RATE)
+        w.writeframes((np.clip(audio, -1, 1) * 32767).astype("<i2").tobytes())
+
+
+def test_full_voice_adds_timing_markers_and_deletes_the_audio(tmp_path, monkeypatch):
+    from worker import process as proc
+    monkeypatch.setattr(proc, "AUDIO_DIR", tmp_path)
+    _wav(tmp_path / "a1.wav", [("speech", 3.0), ("pause", 2.5), ("speech", 2.0)])
+    store = MemoryStore()
+    sid = build(store)
+    store.upsert("Consent", {"id": "c", "personId": "p-gurdev", "trackingOn": True, "fullVoiceOn": True})
+    out = process_session(store, ScriptedExtractor(), sid, audio_ref="a1.wav")
+    ms = store.get("MarkerSet", out["markerSet"])
+    assert ms["long_pause_rate"] > 0 and 0 < ms["phonation_ratio"] < 1 and ms["speech_rate_wpm"] > 0
+    assert not (tmp_path / "a1.wav").exists()
+
+
+def test_audio_is_deleted_unanalysed_without_full_voice_consent(tmp_path, monkeypatch):
+    from worker import process as proc
+    monkeypatch.setattr(proc, "AUDIO_DIR", tmp_path)
+    _wav(tmp_path / "a2.wav", [("speech", 2.0)])
+    store = MemoryStore()
+    sid = build(store)  # trackingOn, fullVoiceOn false
+    out = process_session(store, ScriptedExtractor(), sid, audio_ref="a2.wav")
+    assert "pause_rate" not in store.get("MarkerSet", out["markerSet"])
+    assert not (tmp_path / "a2.wav").exists()
+
+
+def test_audio_ref_cannot_escape_the_audio_folder(tmp_path, monkeypatch):
+    from worker import process as proc
+    monkeypatch.setattr(proc, "AUDIO_DIR", tmp_path / "audio")
+    outside = tmp_path / "keep.wav"
+    outside.write_bytes(b"x")
+    store = MemoryStore()
+    process_session(store, ScriptedExtractor(), build(store), audio_ref="../keep.wav")
+    assert outside.exists()
+
+
+def test_without_bedrock_markers_still_run_and_audio_is_deleted(tmp_path, monkeypatch):
+    from worker import process as proc
+    monkeypatch.setattr(proc, "AUDIO_DIR", tmp_path)
+    _wav(tmp_path / "a3.wav", [("speech", 2.0)])
+    store = MemoryStore()
+    sid = build(store)
+    out = process_session(store, None, sid, audio_ref="a3.wav")
+    assert out["entities"] == [] and out["markerSet"]
+    assert not (tmp_path / "a3.wav").exists()

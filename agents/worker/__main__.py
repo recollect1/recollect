@@ -25,11 +25,12 @@ def log(**fields: object) -> None:
 
 
 def run_once(store: FalkorStore, extractor) -> int:
-    jobs = store.pending_jobs(EXTRACT_QUEUE)
+    markers_only = extractor is None
+    jobs = store.pending_jobs(EXTRACT_QUEUE, markers_only=markers_only)
     for job in jobs:
         t0 = time.perf_counter()
         try:
-            summary = process_session(store, extractor, job["sessionId"])
+            summary = process_session(store, extractor, job["sessionId"], audio_ref=job.get("audioRef"))
         except NotReady:
             continue  # embedded by the MCP server within a moment; not counted as an attempt
         except Exception as e:  # noqa: BLE001 — any failure is retried, then recorded
@@ -38,7 +39,8 @@ def run_once(store: FalkorStore, extractor) -> int:
                                  "lastError": str(e)[:500]})
             log(msg="job failed", job=job["id"], attempts=attempts, error=str(e)[:300])
             continue
-        store.upsert("Job", {"id": job["id"], "done": True})
+        # Without Bedrock the job stays open for extraction later; its markers (and audio) are done.
+        store.upsert("Job", {"id": job["id"], "markersDone": True} if markers_only else {"id": job["id"], "done": True, "markersDone": True})
         log(msg="job done", job=job["id"], session=job["sessionId"], ms=round((time.perf_counter() - t0) * 1000), **summary)
     return len(jobs)
 
@@ -48,10 +50,10 @@ def main() -> None:
     if not url:
         sys.exit("FALKORDB_URL is not set: the worker needs the shared graph.")
     extractor = extractor_from_env()
-    if extractor is None:
-        sys.exit("BEDROCK_EXTRACT_MODEL_ID is not set: the worker needs a Bedrock model for extraction.")
     store = FalkorStore(url)
-    log(msg="worker started", extractor=extractor.name, poll_s=POLL_S)
+    if extractor is None:
+        log(msg="BEDROCK_EXTRACT_MODEL_ID is not set: markers only (no entity extraction until it is)")
+    log(msg="worker started", extractor=extractor.name if extractor else None, poll_s=POLL_S)
     while True:
         run_once(store, extractor)
         time.sleep(POLL_S)

@@ -1,4 +1,5 @@
-import { existsSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import * as P from "@recollect/core/phrases";
 import express from "express";
 import { z } from "zod";
@@ -9,7 +10,19 @@ import { callTool, conn, MCP_ORIGIN, MCP_URL, readResource, tokenFor, type Role 
 
 const PORT = Number(process.env.SIM_PORT ?? 8788);
 const app = express();
-app.use(express.json({ limit: "1mb" }));
+// Story uploads can carry a consented WAV (full-voice mode): ~2 MB a minute at 16 kHz mono.
+app.use(express.json({ limit: "24mb" }));
+/** Shared with the markers agent, which deletes each file after measuring it (§1.6). */
+const AUDIO_DIR = process.env.AUDIO_DIR ?? new URL("../../../.audio/", import.meta.url).pathname;
+// Backstop for §1.6: if the worker is not running, no recording outlives this, analysed or not.
+const AUDIO_TTL_MS = Number(process.env.AUDIO_TTL_MIN ?? 60) * 60_000;
+setInterval(() => {
+  if (!existsSync(AUDIO_DIR)) return;
+  for (const f of readdirSync(AUDIO_DIR)) {
+    const path = `${AUDIO_DIR}${f}`;
+    try { if (Date.now() - statSync(path).mtimeMs > AUDIO_TTL_MS) unlinkSync(path); } catch { /* already gone */ }
+  }
+}, 60_000).unref();
 
 const RoleSchema = z.enum(["elder", "family"]);
 
@@ -43,11 +56,31 @@ app.post("/api/turn", handle(async (req, res) => {
 
 // Story mode: the verbatim transcript goes straight to remember_story — no model in between.
 app.post("/api/story", handle(async (req, res) => {
-  const body = z.object({ text: z.string().max(8000) }).parse(req.body);
+  const body = z.object({ text: z.string().max(8000), audio: z.string().max(23_000_000).optional() }).parse(req.body);
   const text = body.text.trim();
   if (!text) return res.json({ reply: P.didNotCatchStory(), source: "say", calls: [], card: null });
-  const rec = await callTool("elder", "remember_story", { text });
+  let audioRef: string | undefined;
+  // Only when the family has full-voice consent on; otherwise the browser never records.
+  if (body.audio && (await fullVoiceOn())) {
+    const wav = Buffer.from(body.audio, "base64");
+    if (wav.subarray(0, 4).toString("ascii") !== "RIFF") return res.status(400).json({ error: "audio must be WAV" });
+    mkdirSync(AUDIO_DIR, { recursive: true });
+    audioRef = `${randomUUID()}.wav`;
+    writeFileSync(`${AUDIO_DIR}${audioRef}`, wav);
+  }
+  const rec = await callTool("elder", "remember_story", { text, ...(audioRef ? { audioRef } : {}) });
   res.json({ reply: rec.say ?? P.storySaved(), source: "say", calls: [rec], card: null });
+}));
+
+async function fullVoiceOn(): Promise<boolean> {
+  const r = await fetch(`${MCP_ORIGIN}/api/family/overview`, { headers: { authorization: `Bearer ${tokenFor("family")}` } });
+  if (!r.ok) return false;
+  const o = (await r.json()) as { consent?: { trackingOn?: boolean; fullVoiceOn?: boolean } | null };
+  return Boolean(o.consent?.trackingOn && o.consent?.fullVoiceOn);
+}
+
+app.get("/api/full-voice", handle(async (_req, res) => {
+  res.json({ on: await fullVoiceOn() });
 }));
 
 // Called by MCP Apps cards through AppBridge.oncalltool.

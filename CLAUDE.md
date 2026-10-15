@@ -659,8 +659,17 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   `FamilyAlert` node (shown on the family page with an acknowledge button) + an escalated night
   `RoutineEvent`; SMS through Amazon SNS in the background only when `SNS_TOPIC_ARN` is set.
   Daytime: `goingOutDaytime`. New phrases `goingOutDaytime`, `nightAlert`, `NOT_EMERGENCY`.
-- **Not built yet (15 Oct):** audio capture and timing markers in
-  the simulator (P1), live graph panel (P1), AgentCore deployment of the worker, deploy to Railway.
+- **Timing markers / full-voice mode (§7.3 P1, 15 Oct).** The simulator records story-mode audio only
+  when `Consent.fullVoiceOn` (checked server-side again on upload), converts it in the browser to 16 kHz
+  mono WAV, and the backend writes it to `.audio/` with an `audioRef` on the job. The worker runs an
+  energy VAD (`agents/markers/vad.py`, numpy only, no webrtcvad) into `timing_markers`, adds the five
+  timing metrics to the `MarkerSet`, and deletes the file in every case (consent off → deleted
+  unanalysed). The simulator also deletes any audio older than `AUDIO_TTL_MIN` (60). Local only: the
+  audio folder must be shared by the simulator and the worker (production would use S3 with a
+  lifecycle rule). Not yet tested with a real microphone.
+- **Worker without Bedrock** runs markers only (`Job.markersDone`), leaving the job open for
+  extraction once `BEDROCK_EXTRACT_MODEL_ID` is set. `pnpm dev` now also starts the worker.
+- **Not built yet (15 Oct):** live graph panel (P1), AgentCore deployment of the worker, deploy to Railway.
   **Needs a human:** Bedrock model access and IAM keys (the worker and the simulator's voice loop
   have not run against Bedrock), Railway login, microphone test, Claude Desktop clip, video.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.

@@ -8,6 +8,7 @@ requires-python = ">=3.12"
 # numpy, soundfile, webrtcvad (timing markers). Nothing here needs them yet.
 dependencies = [
     "falkordb>=1.7.1",
+    "numpy>=2.5.4",
     "strands-agents>=1.60.0",
 ]
 

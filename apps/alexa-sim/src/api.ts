@@ -45,7 +45,8 @@ const post = <T>(path: string, body: unknown) =>
 export const api = {
   status: () => fetch('/api/status').then((r) => json<Record<string, any>>(r)),
   turn: (role: Role, text: string, shortReplies = false) => post<TurnResult>('/api/turn', { role, text, shortReplies }),
-  story: (text: string) => post<TurnResult>('/api/story', { text }),
+  story: (text: string, audio?: string) => post<TurnResult>('/api/story', audio ? { text, audio } : { text }),
+  fullVoice: () => fetch('/api/full-voice').then((r) => json<{ on: boolean }>(r)).then((r) => r.on).catch(() => false),
   direct: (role: Role, name: string, args: Record<string, unknown>) => post<TurnResult>('/api/direct', { role, name, args }),
   tool: (role: Role, name: string, args: Record<string, unknown>) => post<ToolCallRecord>('/api/tool', { role, name, args }),
   resource: (role: Role, uri: string) =>

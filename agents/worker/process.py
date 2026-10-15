@@ -8,17 +8,22 @@ Order of work, all after the MCP tool has already answered her:
 
 from __future__ import annotations
 
+import os
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Protocol
 
 from common.phrases import story_prompt_for
 from extract.agent import Extractor
 from extract.validate import Known, resolve, validate
-from markers.graph import KnownEntity, count_references, named_recall, new_entity_rate
-from markers.text import text_markers
+from markers.graph import KnownEntity, count_references, named_recall, new_entity_rate, timing_markers
+from markers.text import text_markers, words_of
+from markers.vad import duration_s, read_wav, voiced_intervals
 
 EXTRACT_QUEUE = "extract"
+#: Where the simulator leaves consented story-mode audio (full-voice mode, §2). Deleted after analysis.
+AUDIO_DIR = Path(os.environ.get("AUDIO_DIR") or Path(__file__).resolve().parents[2] / ".audio")
 MAX_OPEN_PROMPTS = 3
 
 
@@ -42,7 +47,22 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
-def process_session(store: Store, extractor: Extractor, session_id: str, now: str | None = None) -> dict[str, Any]:
+def process_session(store: Store, extractor: Extractor | None, session_id: str, now: str | None = None,
+                    audio_ref: str | None = None) -> dict[str, Any]:
+    try:
+        return _process(store, extractor, session_id, now, audio_ref)
+    finally:
+        # §1.6: audio is analysed then deleted, whatever happened above. Never kept.
+        if audio_ref:
+            _audio_path(audio_ref).unlink(missing_ok=True)
+
+
+def _audio_path(audio_ref: str) -> Path:
+    return AUDIO_DIR / Path(audio_ref).name  # name only: never follow a path out of AUDIO_DIR
+
+
+def _process(store: Store, extractor: Extractor | None, session_id: str, now: str | None,
+             audio_ref: str | None) -> dict[str, Any]:
     now = now or _now()
     session = store.get("Session", session_id)
     if session is None:
@@ -60,7 +80,8 @@ def process_session(store: Store, extractor: Extractor, session_id: str, now: st
     created: list[dict[str, Any]] = []
     written = {"mentions": 0, "relations": 0}
     # Weekly photo descriptions are a marker series, not life stories (§7.1b): no extraction.
-    if session.get("mode") != "photo_desc":
+    # Without a Bedrock model (extractor None) only the markers run; extraction waits for later.
+    if extractor is not None and session.get("mode") != "photo_desc":
         for q in quotes:
             proposed = extractor.extract(q["text"], [k.name for k in known])
             kept = validate(q["text"], proposed)
@@ -87,7 +108,7 @@ def process_session(store: Store, extractor: Extractor, session_id: str, now: st
                     written["relations"] += 1
 
     prompts = 0 if session.get("private") else _story_prompts(store, created)
-    marker_set = _markers(store, session, quotes, people, len(created), elder_id, now)
+    marker_set = _markers(store, session, quotes, people, len(created), elder_id, now, audio_ref)
     return {"entities": [e["name"] for e in created], **written, "prompts": prompts,
             "markerSet": marker_set["id"] if marker_set else None}
 
@@ -107,8 +128,19 @@ def _story_prompts(store: Store, created: list[dict[str, Any]]) -> int:
     return made
 
 
+def _timing(audio_ref: str | None, consent: dict[str, Any], words: int) -> dict[str, float] | None:
+    """§7.3 timing markers, only with full-voice consent and only from a file that exists."""
+    if not audio_ref or not consent.get("fullVoiceOn"):
+        return None
+    path = _audio_path(audio_ref)
+    if not path.exists():
+        return None
+    samples, rate = read_wav(path)
+    return timing_markers(voiced_intervals(samples, rate), duration_s(samples, rate), words)
+
+
 def _markers(store: Store, session: dict[str, Any], quotes: list[dict[str, Any]], people: list[dict[str, Any]],
-             new_entities: int, elder_id: str, now: str) -> dict[str, Any] | None:
+             new_entities: int, elder_id: str, now: str, audio_ref: str | None = None) -> dict[str, Any] | None:
     """§7.1 + §7.2 for her own story sessions, only while change tracking is on (§1.6)."""
     if session.get("speakerId") != elder_id:
         return None
@@ -116,9 +148,11 @@ def _markers(store: Store, session: dict[str, Any], quotes: list[dict[str, Any]]
     if not consent.get("trackingOn"):
         return None
     utterances = [q["text"] for q in quotes]
-    metrics = text_markers(utterances)
-    if metrics is None:  # under 50 words: too short to compare with her baseline
+    metrics = text_markers(utterances)  # None under 50 words: too short to compare with her baseline
+    timing = _timing(audio_ref, consent, sum(len(words_of(u)) for u in utterances))
+    if metrics is None and timing is None:
         return None
+    metrics = {**(metrics or {}), **(timing or {})}
     known_people = [KnownEntity(p["name"], tuple(p.get("aliases") or []), (f"my {p['relation']}",))
                     for p in people if p.get("relation")]
     named, vague = count_references(" ".join(utterances), known_people)

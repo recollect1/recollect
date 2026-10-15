@@ -4,6 +4,7 @@ import { api, ApiError, type CardRef, type Role, type RoutineState, type ToolCal
 import { CardFrame } from './CardFrame.tsx';
 import { HomePanel } from './HomePanel.tsx';
 import { LatencyStrip, latencyClass } from './LatencyStrip.tsx';
+import { startRecording, type Recording } from './audio.ts';
 import { listenForStory, listenOnce, recognitionSupported, speak, stopSpeaking, STORY_TRIGGER } from './speech.ts';
 
 type Phase = 'idle' | 'listening' | 'story' | 'thinking' | 'speaking';
@@ -85,9 +86,9 @@ export function App() {
     setPhase('idle');
   }, []);
 
-  const tellStory = useCallback(async (story: string) => {
+  const tellStory = useCallback(async (story: string, audio?: string) => {
     setPhase('thinking');
-    try { handleResult(await api.story(story)); } catch (e) { fail(e); }
+    try { handleResult(await api.story(story, audio)); } catch (e) { fail(e); }
   }, [handleResult, fail]);
 
   const send = useCallback(async (utterance: string) => {
@@ -108,15 +109,22 @@ export function App() {
       return;
     }
     setPhase('speaking');
-    speak(prompt, () => {
+    speak(prompt, async () => {
       setPhase('story');
+      // Full-voice mode (§2): record alongside recognition, only with the family's consent switch on.
+      let recording: Recording | null = null;
+      if (await api.fullVoice()) {
+        recording = await startRecording().catch(() => null);
+        if (recording) setLines((l) => [...l, { who: 'system', text: 'Full-voice mode is on: recording this story to measure pauses. The audio is deleted after measuring.' }]);
+      }
       const s = listenForStory(setInterim);
       stopRef.current = s.stop;
-      s.done.then((story) => {
+      s.done.then(async (story) => {
         stopRef.current = null;
         setInterim('');
         if (story) setLines((l) => [...l, { who: 'user', text: story }]);
-        void tellStory(story);
+        const audio = recording ? await recording.stop().catch(() => undefined) : undefined;
+        void tellStory(story, audio);
       });
     });
   }
