@@ -11,6 +11,7 @@ dependencies = [
     "falkordb>=1.7.1",
     "numpy>=2.5.4",
     "strands-agents>=1.60.0",
+    "tzdata>=2025.2",  # zoneinfo has no time-zone database of its own on Windows
 ]
 
 [dependency-groups]
