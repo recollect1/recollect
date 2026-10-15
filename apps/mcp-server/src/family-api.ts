@@ -3,7 +3,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import {
   acknowledgeAlert, approveFact, changeConsent, familyAlerts, chooseWeeklyPhoto, deleteEverything, factCandidates, familyOverview, familyStories,
-  familySummary, FamilyError, saveMedicine, saveProfile, setStatusLine, speechTrend, thisIsMe, type Ctx,
+  familySummary, FamilyError, newId, saveMedicine, saveProfile, setStatusLine, speechTrend, thisIsMe, type Ctx,
 } from "@recollect/core";
 import { z } from "zod";
 
@@ -34,6 +34,11 @@ export async function familyApi(
       case "GET /api/family/today": return json(res, 200, await familySummary(ctx)), true;
       case "GET /api/family/stories": return json(res, 200, await familyStories(ctx)), true;
       case "GET /api/family/trend": return json(res, 200, await speechTrend(ctx)), true;
+      case "POST /api/family/trend-refresh": {
+        // Queues the trends agent (§9.3, "on demand"); the Python worker picks it up within seconds.
+        await ctx.graph.upsert("Job", { id: newId("job"), queue: "trends", at: ctx.clock.now().toISOString(), done: false });
+        return json(res, 200, { queued: true }), true;
+      }
       case "GET /api/family/alerts": return json(res, 200, await familyAlerts(ctx)), true;
       case "POST /api/family/alert-ack": {
         await acknowledgeAlert(ctx, z.object({ id: z.string() }).parse(body).id);

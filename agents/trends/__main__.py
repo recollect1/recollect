@@ -2,10 +2,24 @@
 (trend.json) and the printable doctor report (doctor-report.html) next to it.
 
 Run `python -m synth` first. `pnpm seed` and the in-memory dev server load both files.
+
+`uv run python -m trends --graph` runs on the live graph at FALKORDB_URL instead (trends/live.py):
+every MarkerSet in, TrendCard / TrendFlag / DoctorReport out. The worker also runs it weekly.
 """
 
 import json
+import os
+import sys
 from pathlib import Path
+
+if "--graph" in sys.argv:
+    from trends.live import run
+    from worker.store import FalkorStore
+
+    url = os.environ.get("FALKORDB_URL") or sys.exit("FALKORDB_URL is not set")
+    card = run(FalkorStore(url))
+    print(card["say"] if card else "Change tracking is off: nothing written.")
+    sys.exit(0)
 
 from trends.detect import analyse, trend_card
 from trends.report import build_report

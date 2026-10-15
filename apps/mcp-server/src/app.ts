@@ -72,6 +72,9 @@ export function createApp(opts: AppOptions): App {
       // The printable doctor report written by the trends agent. Family only.
       if (path === "/report/doctor") {
         if (role !== "family") return json(res, 401, { error: "family token required" });
+        // Latest report the trends agent wrote to the graph (§9.3); the demo file until it has run.
+        const latest = await ctx.graph.get<{ html?: string }>("DoctorReport", "report-latest");
+        if (latest?.html) return void res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(latest.html);
         if (!existsSync(DOCTOR_REPORT)) return json(res, 404, { error: "no report yet — run the trends agent" });
         return void res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(readFileSync(DOCTOR_REPORT));
       }

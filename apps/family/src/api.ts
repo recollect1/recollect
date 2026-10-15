@@ -39,6 +39,7 @@ export interface ThisIsMe {
 export interface Alert { id: string; at: string; say: string; acknowledged: boolean; sms?: boolean }
 
 export const api = {
+  refreshTrend: () => req('POST', '/api/family/trend-refresh', {}),
   alerts: () => req<Alert[]>('GET', '/api/family/alerts'),
   ackAlert: (id: string) => req('POST', '/api/family/alert-ack', { id }),
   overview: () => req<Overview>('GET', '/api/family/overview'),
