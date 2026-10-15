@@ -1,7 +1,8 @@
 # Product feedback
 
 Draft notes from the build. **A human must confirm every entry before submission** (CLAUDE.md §18.6).
-Sections for ext-apps, Bedrock, Strands and AgentCore are empty until those parts are built.
+Entries marked *pending a live run* describe code that is built and tested with stand-ins but has
+not yet called the real AWS service.
 
 ## MCP TypeScript SDK (`@modelcontextprotocol/sdk` 1.32.1)
 
@@ -15,18 +16,59 @@ Sections for ext-apps, Bedrock, Strands and AgentCore are empty until those part
 - **Wish:** a documented way to read the negotiated protocol version on the server in stateless
   mode. We log it by inspecting the `initialize` request ourselves.
 
-## MCP Apps (`@modelcontextprotocol/ext-apps`)
+## MCP Apps (`@modelcontextprotocol/ext-apps` 1.7.5)
 
-Not used yet.
+- **Used for:** five cards (story, today, who's-who, speech trend, weekly photo) built as single-file
+  HTML with the `App` class; `registerAppResource` on the server; `AppBridge` + `PostMessageTransport`
+  hosting them in the simulator with no MCP client in the browser (`oncalltool` proxied to our backend).
+- **Worked well:** `registerAppResource` and the `_meta.ui.resourceUri` declaration are small and
+  predictable; the View API (`ontoolresult`, `sendMessage`, `setupSizeChangedNotifications`) covered
+  every card, including the today card's "Call Simran" button that messages the host instead of dialling.
+- **Needs work:** ext-apps 2.x is built on the v2 split MCP SDK, which only shows up in its type
+  imports; we pinned 1.7.x to stay on `@modelcontextprotocol/sdk` (friction log 18). The bridge must be
+  connected *before* the card's iframe loads or the card's `initialize` can be lost; the docs do not
+  say so. Single-file cards come out around 235 KB because the protocol layer and zod are bundled.
+  1.7 has no `AppBridge.close()` (2.x does), so teardown differs between majors.
+- **Onboarding:** the type docs have examples; a minimal "host a card in a srcdoc iframe" snippet would
+  have saved an hour.
+- **Would build again:** yes. A card that shows her own words next to the spoken answer is the clearest
+  way to show that nothing is invented.
 
-## Amazon Bedrock
+## Amazon Bedrock (Converse API) — *pending a live run*
 
-Not used yet.
+- **Used for:** (1) the simulator's conversation loop: MCP `tools/list` mapped to Converse `toolConfig`,
+  up to 4 tool calls a turn, a tool's `say` spoken verbatim; (2) the model behind the Strands extract agent.
+- **Worked well (so far):** Converse's tool-use shape maps one to one onto MCP tools, so the bridge is
+  about 30 lines. `toolChoice: { any: {} }` gives a clean way to force a tool when the model tries to
+  answer a memory question from its own knowledge; the loop is tested for that with a stubbed sender.
+- **Needs work:** command `input` is held by reference, so a test that inspects `messages` after the
+  call sees later mutations (clone before logging). Model access and billing setup are a separate step
+  from the SDK; the error a new builder sees should point there.
+- **Live run:** not yet — needs model access and an IAM key on the team's account.
 
-## Strands Agents SDK
+## Strands Agents SDK (1.60) — *pending a live run*
 
-Not used yet.
+- **Used for:** the extract agent (`agents/extract/agent.py`): `Agent(model=BedrockModel(...))` with
+  `structured_output(ExtractionOut, prompt)` returning a Pydantic object, one fresh agent per sentence so
+  no history leaks between stories, temperature 0.
+- **Worked well:** typed structured output removed all JSON parsing; the `Agent` and `BedrockModel`
+  signatures were easy to discover from the installed package.
+- **Needs work:** `Agent.__init__` takes over thirty parameters; a short "structured extraction"
+  recipe in the README would help. `callback_handler=None` is needed to stop console streaming in a
+  background worker, which is easy to miss.
+- **Would build again:** yes, for the typed output alone.
 
-## Bedrock AgentCore
+## Amazon Bedrock AgentCore Runtime (`bedrock-agentcore` 1.24) — *pending deployment*
 
-Not used yet.
+- **Used for:** hosting the extract agent (`agents/agentcore_app.py`, `BedrockAgentCoreApp` +
+  `@app.entrypoint`); the worker calls it with `InvokeAgentRuntime` (`agents/extract/agentcore.py`).
+- **Worked well:** the runtime contract is tiny — `/invocations` and `/ping` on port 8080 — and runs
+  locally unchanged, so the agent was testable before any deployment. `/ping` reports Healthy out of the box.
+- **Needs work:** `runtimeSessionId` has a 33-character minimum; we found it in the service model, not
+  in an error message we had hit. The runtime image must be arm64, which needs `buildx` on x86 CI.
+- **Deployment:** not yet — needs the team's AWS account (ECR, an execution role, model access).
+
+## Amazon SNS — *pending a live run*
+
+- **Used for:** optional SMS to the family when a night-time alert is raised, sent in the background
+  after the tool has answered (`apps/mcp-server/src/sms.ts`). Off unless `SNS_TOPIC_ARN` is set.
