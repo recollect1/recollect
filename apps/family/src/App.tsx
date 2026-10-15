@@ -169,8 +169,21 @@ function TrendSection({ trend, name }: { trend: Trend; name: string }) {
         <p className="trend-say">{trend.say}</p>
         {trend.card && <p className="muted small">Based on the last {trend.card.weeks} weeks.</p>}
         {trend.card && <a className="button-link" href="/report/doctor" target="_blank" rel="noreferrer">Open doctor report</a>}
+        <RefreshTrend />
       </div>
     </section>
+  );
+}
+
+function RefreshTrend() {
+  const [state, setState] = useState<'idle' | 'queued' | 'error'>('idle');
+  return (
+    <p className="small muted">
+      Recollect recalculates this once a week.{' '}
+      <button className="link" disabled={state === 'queued'} onClick={() => void api.refreshTrend().then(() => setState('queued'), () => setState('error'))}>
+        {state === 'queued' ? 'Recalculating — this page updates in a minute' : state === 'error' ? 'Could not start; try again' : 'Recalculate now'}
+      </button>
+    </p>
   );
 }
 

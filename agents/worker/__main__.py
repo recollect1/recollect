@@ -13,6 +13,7 @@ import sys
 import time
 
 from extract.agent import extractor_from_env
+from trends.live import run as run_trends
 from worker.process import EXTRACT_QUEUE, NotReady, process_session
 from worker.store import FalkorStore
 
@@ -45,6 +46,34 @@ def run_once(store: FalkorStore, extractor) -> int:
     return len(jobs)
 
 
+TRENDS_QUEUE = "trends"
+WEEK_S = 7 * 24 * 3600
+
+
+def trends_due(store: FalkorStore) -> bool:
+    """Weekly (§9.3): due when the newest TrendCard is a week old, or never ran on live data."""
+    cards = sorted(store.find("TrendCard"), key=lambda c: c.get("createdAt", ""), reverse=True)
+    if not cards:
+        return True
+    last = cards[0]["createdAt"].replace("Z", "+00:00")
+    from datetime import datetime, timezone
+    return (datetime.now(timezone.utc) - datetime.fromisoformat(last)).total_seconds() >= WEEK_S
+
+
+def run_trends_jobs(store: FalkorStore) -> None:
+    """On demand (family page "Refresh") or weekly. Never touches what she hears."""
+    jobs = store.pending_jobs(TRENDS_QUEUE)
+    if not jobs and not trends_due(store):
+        return
+    try:
+        card = run_trends(store)
+        log(msg="trends", say=card["say"] if card else "tracking off", simulated=card["simulated"] if card else None)
+    except Exception as e:  # noqa: BLE001
+        log(msg="trends failed", error=str(e)[:300])
+    for job in jobs:
+        store.upsert("Job", {"id": job["id"], "done": True})
+
+
 def main() -> None:
     url = os.environ.get("FALKORDB_URL")
     if not url:
@@ -54,8 +83,13 @@ def main() -> None:
     if extractor is None:
         log(msg="BEDROCK_EXTRACT_MODEL_ID is not set: markers only (no entity extraction until it is)")
     log(msg="worker started", extractor=extractor.name if extractor else None, poll_s=POLL_S)
+    last_trends_check = 0.0
     while True:
         run_once(store, extractor)
+        # Trend jobs are checked every poll; the weekly rule at most once a minute.
+        if store.pending_jobs(TRENDS_QUEUE) or time.time() - last_trends_check > 60:
+            last_trends_check = time.time()
+            run_trends_jobs(store)
         time.sleep(POLL_S)
 
 
