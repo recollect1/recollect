@@ -1,0 +1,63 @@
+# Recollect on one EC2 host (docs/deploy-aws.md). Images are built by bootstrap.sh from this repo.
+# Secrets come from .env next to this file, written by bootstrap.sh from SSM Parameter Store.
+# AWS credentials come from the instance role (IMDSv2, hop limit 2), never from keys.
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    restart: unless-stopped
+    volumes: [falkordb-data:/var/lib/falkordb/data]
+    # No published port: reachable only inside this compose network.
+
+  mcp:
+    image: recollect-mcp
+    restart: unless-stopped
+    depends_on: [falkordb]
+    environment:
+      FALKORDB_URL: redis://falkordb:6379
+      ELDER_TOKEN: ${ELDER_TOKEN}
+      FAMILY_TOKEN: ${FAMILY_TOKEN}
+      DEMO_CLOCK: ${DEMO_CLOCK:-1}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      ONNX_THREADS: "2"
+
+  web:
+    image: recollect-web
+    restart: unless-stopped
+    depends_on: [mcp]
+    environment:
+      MCP_SERVER_URL: http://mcp:8787/mcp
+      ELDER_TOKEN: ${ELDER_TOKEN}
+      FAMILY_TOKEN: ${FAMILY_TOKEN}
+      WEB_PASSWORD: ${WEB_PASSWORD}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      BEDROCK_CHAT_MODEL_ID: ${BEDROCK_CHAT_MODEL_ID}
+      AUDIO_DIR: /audio/
+    volumes: [audio:/audio]
+
+  worker:
+    image: recollect-worker
+    restart: unless-stopped
+    depends_on: [falkordb]
+    environment:
+      FALKORDB_URL: redis://falkordb:6379
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      BEDROCK_EXTRACT_MODEL_ID: ${BEDROCK_EXTRACT_MODEL_ID}
+      AGENTCORE_RUNTIME_ARN: ${AGENTCORE_RUNTIME_ARN:-}
+      AUDIO_DIR: /audio/
+    volumes: [audio:/audio]
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [mcp, web]
+    ports: ["80:80", "443:443"]
+    environment:
+      SITE_HOST: ${SITE_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+
+volumes:
+  falkordb-data:
+  audio:
+  caddy-data:

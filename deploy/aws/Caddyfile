@@ -1,0 +1,15 @@
+# HTTPS with an automatic Let's Encrypt certificate for SITE_HOST (e.g. 3-90-12-7.sslip.io).
+# /mcp and /healthz go to the MCP server (bearer token required there); everything else is the
+# password-protected web service (simulator at /, family page at /family).
+{$SITE_HOST} {
+	encode gzip
+	handle /mcp* {
+		reverse_proxy mcp:8787
+	}
+	handle /healthz {
+		reverse_proxy mcp:8787
+	}
+	handle {
+		reverse_proxy web:8080
+	}
+}
