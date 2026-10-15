@@ -121,16 +121,18 @@ library, so nothing else was needed. `uv sync` has not been run on this project.
 **Expected:** the seed writes to FalkorDB. **Actual:** "FALKORDB_URL is not set. Nothing to seed",
 exit 1. The package scripts run plain `tsx`, which does not read `.env`.
 **Workaround:** `FALKORDB_URL=redis://localhost:6379 pnpm seed` (as the handoff says).
-**Suggestion:** load `.env` in the scripts (`tsx --env-file-if-exists=../../.env`) so the
-documented setup works as written.
+**Fix (15 Oct):** the package scripts now run `tsx --env-file-if-exists=../../.env`.
+**Suggestion:** a "missing env var" message could mention that `.env` is not read automatically.
 
 ## 17. onnxruntime aborts when `pnpm eval:recall` exits (14 Oct)
 **Doing:** running the grounding eval on macOS (Apple silicon, Node 22).
 **Expected:** a clean exit after the results. **Actual:** the eval prints PASS, then the process
 dies with `libc++abi: terminating due to uncaught exception of type std::__1::system_error: mutex
 lock failed: Invalid argument`. It happens when the process exits while an ONNX session is live.
-**Workaround:** none needed for the result, but the non-zero exit would fail CI.
-**Suggestion:** call `dispose()` on both pipelines (embedder and cross-encoder) before exit.
+**Fix (15 Oct):** `dispose()` both models, then let Node exit on its own (`process.exitCode`).
+Disposing alone was not enough: `process.exit()` right after `dispose()` still aborted (exit 134).
+**Suggestion (onnxruntime-node):** release sessions in an exit hook, or document that
+`process.exit()` with a live or just-released session aborts the process.
 
 ## 18. MCP Apps 2.x requires the v2 MCP SDK (14 Oct)
 **Doing:** adding MCP Apps cards to a server built on `@modelcontextprotocol/sdk` 1.32.

@@ -16,6 +16,12 @@ const demoClock = process.env.DEMO_CLOCK === "1" ? new DemoClock() : undefined;
 const clock = demoClock ?? systemClock;
 const graph = await openGraph();
 const [embedder, reranker] = [await createEmbedder(), await createReranker()];
+// Release the ONNX sessions on shutdown (tsx watch restarts send SIGTERM); see friction log 17.
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.once(signal, () => {
+    void Promise.allSettled([embedder.dispose?.(), reranker.dispose?.(), graph.close()]).finally(() => process.exit(0));
+  });
+}
 
 let ctx: Ctx;
 if (process.env.FALKORDB_URL) {

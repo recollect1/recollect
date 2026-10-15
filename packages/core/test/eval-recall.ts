@@ -70,4 +70,6 @@ times.sort((a, b) => a - b);
 const pct = (p: number) => (times[Math.min(times.length - 1, Math.floor(p * times.length))] ?? 0).toFixed(0);
 console.log(`\nrecall() time on this machine: p50 ${pct(0.5)} ms, p95 ${pct(0.95)} ms, max ${pct(1)} ms`);
 console.log(`Grounding eval: ${ok ? "PASS" : "FAIL"} · held-out: ${heldOutOk ? "all correct" : "see table"}`);
-process.exit(ok ? 0 : 1);
+await ctx.embedder.dispose?.();
+await ctx.reranker.dispose?.();
+process.exitCode = ok ? 0 : 1; // no process.exit(): it tears down onnxruntime mid-flight (friction log 17)

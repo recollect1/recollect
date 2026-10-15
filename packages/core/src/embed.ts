@@ -1,5 +1,9 @@
 // Local sentence embeddings (§3). Not an LLM: allowed inside tool handlers, warmed at boot.
-export interface Embedder { embed(text: string): Promise<number[]> }
+export interface Embedder {
+  embed(text: string): Promise<number[]>;
+  /** Releases the ONNX session. onnxruntime-node aborts the process if one is live at exit (friction log 17). */
+  dispose?(): Promise<void>;
+}
 
 export const EMBED_MODEL = "Xenova/all-MiniLM-L6-v2";
 
@@ -18,6 +22,7 @@ export async function createEmbedder(): Promise<Embedder> {
   const pipe = await pipeline("feature-extraction", EMBED_MODEL, { dtype: "q8", session_options: onnxSessionOptions() });
   const embedder: Embedder = {
     embed: async (text) => Array.from((await pipe(text, { pooling: "mean", normalize: true })).data as Float32Array),
+    dispose: () => pipe.dispose(),
   };
   await embedder.embed("warm up");
   return embedder;
