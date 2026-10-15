@@ -1,7 +1,15 @@
-# Handoff — state on 15 Oct 2026
+# Handoff — for Shambhvi (Yash, 15 Oct 2026)
 
-The first handoff (13 Oct, Shambhvi → Yash) asked for FalkorDB, latency, the agent worker, cards,
-simulator and family page. All of that is built and tested; this page lists what is left.
+Your 13 Oct handoff asked for FalkorDB, latency, the agent worker, cards, simulator and family page.
+All of that is built and tested, plus the P1 features (night reassurance, timing markers, live graph
+panel), AgentCore packaging and deploy files. Graph Hacks is no longer on the plan; Oct 15–23 is all
+Recollect. This page lists what is left. `CLAUDE.md` §19 has every place the build differs from the
+spec, and `docs/friction-log.md` entries 16–18 are new.
+
+What changed since your last commit, in order: `git log --oneline 3e804ec..main`.
+
+Also new: our Open Source mini-challenge entry, https://github.com/yash4428/mcp-latency (a CLI that
+measures MCP tool latency against the Alexa+ 500 ms budget). Devpost fields: `docs/open-source.md`.
 
 ## Run it
 
