@@ -14,8 +14,8 @@ and for their families. It does three things on one memory graph:
    doctor. It never diagnoses.
 
 Entry: Amazon "Build, Ship, Shape" hackathon — **Alexa+ track** + **AWS Builder**
-mini-challenge. Submit **Oct 23, 2026 evening IST** (deadline Oct 24, 00:30 IST). Graph Hacks
-(a separate project) takes Oct 15–18; do not touch this repo then.
+mini-challenge, plus the **Open Source** mini-challenge (`mcp-latency`, §15). Submit
+**Oct 23, 2026 evening IST** (deadline Oct 24, 00:30 IST).
 
 Read this whole file before writing code. If an installed SDK's real API differs from this
 file, the SDK wins: fix the code, update this file, add a friction-log entry (§15).
@@ -485,12 +485,11 @@ as a creative feature; mention it in the submission.
 
 | Dates | Must be done |
 |---|---|
-| Oct 12–14 | repo + MIT, compose, schema, seed, phrases + tests, core tools, recall + embeddings, extract agent, grounding eval passing, deploy, latency test passing |
-| Oct 15–18 | Graph Hacks only |
-| Oct 19 | markers agent (text + graph + evening-confusion), weekly photo, synth history, trends agent + tests; Amazon office hours 9:30 pm IST if blocked |
-| Oct 20 | simulator (voice, story mode, audio capture, `say` passthrough, latency strip, simulated home), all cards, `who_is`, routine agent (evening) |
-| Oct 21 | family page (consent, people, trends, doctor report, This is me), Agent Skill, Claude Desktop check |
-| Oct 22 | P1 (night reassurance, timing markers, graph panel) if green, polish, record video, README, feedback, friction log |
+| Oct 12–14 | repo + MIT, compose, schema, seed, phrases + tests, core tools, recall + embeddings, extract agent, grounding eval passing, latency test passing, markers, synth history, trends + doctor report, Agent Skill, worker, cards, simulator, family page |
+| Oct 15 | P1: night reassurance + family alert, timing markers from story-mode audio, live graph panel; deploy files; docs (AWS integrations, architecture); Open Source entry `mcp-latency` published |
+| Oct 16–17 | Bedrock live run (worker + simulator voice loop), Railway deploy, `pnpm test:latency` against the deployed URL, Claude Desktop check; Amazon office hours if blocked |
+| Oct 18–21 | microphone test in a real browser, AgentCore deploy of the worker if access allows, polish, video script |
+| Oct 22 | record video, README, feedback, friction log |
 | Oct 23 | submit in the evening; add reviewers; confirm video is public |
 
 Cut first if late: P2 → night reassurance → timing markers (keep text + graph markers) →
