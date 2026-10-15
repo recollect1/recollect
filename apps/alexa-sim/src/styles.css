@@ -110,6 +110,7 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 .graph svg { width: 100%; height: auto; display: block; }
 .edge { stroke: #2a3a5c; stroke-width: 1; }
 .edge.related { stroke: #4b6596; stroke-width: 1.6; }
+.edge.retell { stroke: var(--marigold); stroke-width: 2; stroke-dasharray: 4 3; }
 .node text { fill: var(--ink); font-size: 12px; font-family: var(--ui); paint-order: stroke; stroke: var(--panel); stroke-width: 3px; }
 .pulse { fill: none; stroke-width: 2; }
 

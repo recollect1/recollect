@@ -126,6 +126,14 @@ describe("MCP server (§10)", () => {
     expect(alerts[0]!.say).toContain("not an emergency service");
   });
 
+  it("GET /api/graph needs a token and returns stories with what they name", async () => {
+    expect((await fetch(`${url.origin}/api/graph`)).status).toBe(401);
+    const g = await (await fetch(`${url.origin}/api/graph`, { headers: { authorization: `Bearer ${tokens.family}` } })).json() as
+      { stories: unknown[]; entities: { name: string }[]; mentions: unknown[] };
+    expect(g.stories.length).toBe(6);
+    expect(g.entities.map((e) => e.name)).toContain("Patiala");
+  });
+
   it("a family token cannot call elder tools", async () => {
     const family = await connect(tokens.family);
     const r = await family.callTool({ name: "log_dose", arguments: { medicine: "BP tablet" } }).catch((e) => ({ isError: true, e }));

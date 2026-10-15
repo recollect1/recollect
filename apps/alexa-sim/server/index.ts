@@ -110,6 +110,12 @@ app.post("/api/reset", handle(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// Live graph panel: proxied to the MCP server's /api/graph with the elder token.
+app.get("/api/graph", handle(async (_req, res) => {
+  const r = await fetch(`${MCP_ORIGIN}/api/graph`, { headers: { authorization: `Bearer ${tokenFor("elder")}` } });
+  res.status(r.status).json(await r.json());
+}));
+
 // Demo clock (scenarios I and K): proxied to the MCP server's /demo/clock with the family token.
 app.post("/api/clock", handle(async (req, res) => {
   const body = z.object({ at: z.string().regex(/^\d{1,2}:\d{2}$/).optional() }).parse(req.body ?? {});

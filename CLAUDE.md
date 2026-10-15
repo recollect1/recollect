@@ -669,7 +669,10 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   lifecycle rule). Not yet tested with a real microphone.
 - **Worker without Bedrock** runs markers only (`Job.markersDone`), leaving the job open for
   extraction once `BEDROCK_EXTRACT_MODEL_ID` is set. `pnpm dev` now also starts the worker.
-- **Not built yet (15 Oct):** live graph panel (P1), AgentCore deployment of the worker, deploy to Railway.
+- **Live graph panel (§13 P1, 15 Oct).** `GET /api/graph` (either token; private stories left out for
+  family) from `packages/core/src/graph-view.ts`: stories, entities, mentions, RELATED and story-level
+  RETELLS. The simulator panel polls it every 3 s while open (no SSE).
+- **Not built yet (15 Oct):** AgentCore deployment of the worker, deploy to Railway.
   **Needs a human:** Bedrock model access and IAM keys (the worker and the simulator's voice loop
   have not run against Bedrock), Railway login, microphone test, Claude Desktop clip, video.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.

@@ -53,6 +53,7 @@ export const api = {
     fetch(`/api/resource?role=${role}&uri=${encodeURIComponent(uri)}`).then((r) => json<{ html: string }>(r)),
   reset: (role: Role) => post('/api/reset', { role }),
   clock: (at?: string) => post<{ now: string }>('/api/clock', at ? { at } : {}),
+  graph: () => fetch('/api/graph').then((r) => json<GraphData>(r)),
 };
 
 /** routine_state payload (§9.4): read by the home panel and for short-reply mode. */
@@ -63,4 +64,13 @@ export interface RoutineState {
   greeting?: string;
   localTime: string;
   devices: { id: string; kind: 'light' | 'speaker'; room: string; state: string }[];
+}
+
+/** GET /api/graph on the MCP server (§13 live panel). */
+export interface GraphData {
+  stories: { id: string; label: string; startedAt: string }[];
+  entities: { id: string; name: string; kind: string }[];
+  mentions: { story: string; entity: string }[];
+  related: { from: string; to: string; label: string }[];
+  retells: { from: string; to: string }[];
 }

@@ -1,7 +1,8 @@
 import * as P from '@recollect/core/phrases';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, ApiError, type CardRef, type Role, type RoutineState, type ToolCallRecord, type TurnResult } from './api.ts';
+import { api, ApiError, type CardRef, type GraphData, type Role, type RoutineState, type ToolCallRecord, type TurnResult } from './api.ts';
 import { CardFrame } from './CardFrame.tsx';
+import { GraphPanel } from './GraphPanel.tsx';
 import { HomePanel } from './HomePanel.tsx';
 import { LatencyStrip, latencyClass } from './LatencyStrip.tsx';
 import { startRecording, type Recording } from './audio.ts';
@@ -44,6 +45,16 @@ export function App() {
   const [card, setCard] = useState<CardRef | null>(null);
   const [calls, setCalls] = useState<ToolCallRecord[]>([]);
   const [routine, setRoutine] = useState<RoutineState | null>(null);
+  const [showGraph, setShowGraph] = useState(false);
+  const [graph, setGraph] = useState<GraphData | null>(null);
+  // Poll while the panel is open, so entities appear as the worker writes them.
+  useEffect(() => {
+    if (!showGraph) return;
+    const load = () => void api.graph().then(setGraph).catch(() => {});
+    load();
+    const t = setInterval(load, 3000);
+    return () => clearInterval(t);
+  }, [showGraph]);
   const [status, setStatus] = useState<Record<string, any> | null>(null);
   const [storyNext, setStoryNext] = useState(false); // typed story mode
   const stopRef = useRef<(() => void) | null>(null);
@@ -294,6 +305,18 @@ export function App() {
       </main>
 
       <LatencyStrip calls={calls} />
+
+      <div className="graph-toggle">
+        <button className="link" aria-expanded={showGraph} onClick={() => setShowGraph((s) => !s)}>
+          {showGraph ? 'Hide memory graph' : 'Show memory graph'}
+        </button>
+      </div>
+      {showGraph && (
+        <GraphPanel
+          data={graph}
+          stats={graph ? `${graph.stories.length} stories · ${graph.entities.length} people, places and things · ${graph.retells.length} retold` : ''}
+        />
+      )}
     </div>
   );
 }

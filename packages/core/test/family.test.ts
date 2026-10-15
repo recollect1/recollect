@@ -91,3 +91,17 @@ describe("delete everything (§1.6)", () => {
     expect((await whereIs(ctx, "Aman")).say).toContain("Aman");
   });
 });
+
+describe("graph view (§13 live panel)", () => {
+  it("shows her stories and what they name; hides private stories from the family", async () => {
+    const { graphView } = await import("../src/graph-view.ts");
+    const v = await graphView(ctx, "family");
+    expect(v.stories.length).toBe(6);
+    expect(v.entities.map((e) => e.name)).toContain("Patiala");
+    expect(v.mentions.length).toBeGreaterThan(v.stories.length);
+    await rememberStory(ctx, { text: "Secret about the tin box under the bed." });
+    await keepPrivate(ctx);
+    expect((await graphView(ctx, "family")).stories.length).toBe(6);
+    expect((await graphView(ctx, "elder")).stories.length).toBe(7);
+  });
+});
