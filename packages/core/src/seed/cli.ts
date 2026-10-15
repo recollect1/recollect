@@ -12,8 +12,11 @@ if (!process.env.FALKORDB_URL) {
 }
 const graph = await openGraph();
 await graph.clear();
-const ctx = await seed(graph, systemClock, await createEmbedder(), await createReranker(), {
+const [embedder, reranker] = [await createEmbedder(), await createReranker()];
+const ctx = await seed(graph, systemClock, embedder, reranker, {
   skipStories: (process.env.SEED_SKIP ?? "").split(",").filter(Boolean),
 });
 console.log(`Seeded ${ctx.household.name}: ${ctx.index.size} quotes indexed. All data is fictional.`);
 await graph.close();
+await embedder.dispose?.();
+await reranker.dispose?.();

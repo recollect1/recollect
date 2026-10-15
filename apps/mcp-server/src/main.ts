@@ -16,6 +16,12 @@ const demoClock = process.env.DEMO_CLOCK === "1" ? new DemoClock() : undefined;
 const clock = demoClock ?? systemClock;
 const graph = await openGraph();
 const [embedder, reranker] = [await createEmbedder(), await createReranker()];
+// Release the ONNX sessions on shutdown (tsx watch restarts send SIGTERM); see friction log 17.
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.once(signal, () => {
+    void Promise.allSettled([embedder.dispose?.(), reranker.dispose?.(), graph.close()]).finally(() => process.exit(0));
+  });
+}
 
 let ctx: Ctx;
 if (process.env.FALKORDB_URL) {
@@ -33,6 +39,18 @@ const probe = await recall(ctx, "How did I come to Patiala?", "family");
 console.log(JSON.stringify({
   boot: "recall-test", found: probe.found, ms: Math.round(performance.now() - t0), quotes: ctx.index.size,
 }));
+
+// The Python worker writes entities in another process (§9.1). When it finishes a job, reload the
+// recall index so new names are matched at once. Reading done-job ids is cheap; the reload is not.
+if (process.env.FALKORDB_URL) {
+  let doneJobs = (await graph.find("Job", { done: true })).length;
+  setInterval(async () => {
+    try {
+      const n = (await graph.find("Job", { done: true })).length;
+      if (n !== doneJobs) { doneJobs = n; await ctx.index.load(graph); }
+    } catch (e) { console.error(JSON.stringify({ msg: "index refresh failed", error: String(e) })); }
+  }, 3000).unref();
+}
 
 createApp({ ctx, tokens, ...(demoClock ? { demoClock } : {}) }).http.listen(port, () => {
   console.log(`Recollect MCP server on http://localhost:${port}/mcp`);

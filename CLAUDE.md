@@ -14,8 +14,8 @@ and for their families. It does three things on one memory graph:
    doctor. It never diagnoses.
 
 Entry: Amazon "Build, Ship, Shape" hackathon — **Alexa+ track** + **AWS Builder**
-mini-challenge. Submit **Oct 23, 2026 evening IST** (deadline Oct 24, 00:30 IST). Graph Hacks
-(a separate project) takes Oct 15–18; do not touch this repo then.
+mini-challenge, plus the **Open Source** mini-challenge (`mcp-latency`, §15). Submit
+**Oct 23, 2026 evening IST** (deadline Oct 24, 00:30 IST).
 
 Read this whole file before writing code. If an installed SDK's real API differs from this
 file, the SDK wins: fix the code, update this file, add a friction-log entry (§15).
@@ -478,6 +478,9 @@ as a creative feature; mention it in the submission.
 - [ ] `docs/friction-log.md` ≥ 8 entries, written as issues happen (up to 10% bonus).
 - [ ] `docs/feature-requests.md` — consented acoustic features for care add-ons; a public
       Alexa+ web simulator for builders.
+- [x] **Open Source** mini-challenge: `mcp-latency` (https://github.com/yash4428/mcp-latency), a
+      new MIT CLI that measures MCP tool latency against the Alexa+ budget. Devpost fields in
+      `docs/open-source.md`.
 
 ---
 
@@ -485,12 +488,11 @@ as a creative feature; mention it in the submission.
 
 | Dates | Must be done |
 |---|---|
-| Oct 12–14 | repo + MIT, compose, schema, seed, phrases + tests, core tools, recall + embeddings, extract agent, grounding eval passing, deploy, latency test passing |
-| Oct 15–18 | Graph Hacks only |
-| Oct 19 | markers agent (text + graph + evening-confusion), weekly photo, synth history, trends agent + tests; Amazon office hours 9:30 pm IST if blocked |
-| Oct 20 | simulator (voice, story mode, audio capture, `say` passthrough, latency strip, simulated home), all cards, `who_is`, routine agent (evening) |
-| Oct 21 | family page (consent, people, trends, doctor report, This is me), Agent Skill, Claude Desktop check |
-| Oct 22 | P1 (night reassurance, timing markers, graph panel) if green, polish, record video, README, feedback, friction log |
+| Oct 12–14 | repo + MIT, compose, schema, seed, phrases + tests, core tools, recall + embeddings, extract agent, grounding eval passing, latency test passing, markers, synth history, trends + doctor report, Agent Skill, worker, cards, simulator, family page |
+| Oct 15 | P1: night reassurance + family alert, timing markers from story-mode audio, live graph panel; deploy files; docs (AWS integrations, architecture); Open Source entry `mcp-latency` published |
+| Oct 16–17 | Bedrock live run (worker + simulator voice loop), Railway deploy, `pnpm test:latency` against the deployed URL, Claude Desktop check; Amazon office hours if blocked |
+| Oct 18–21 | microphone test in a real browser, AgentCore deploy of the worker if access allows, polish, video script |
+| Oct 22 | record video, README, feedback, friction log |
 | Oct 23 | submit in the evening; add reviewers; confirm video is public |
 
 Cut first if late: P2 → night reassurance → timing markers (keep text + graph markers) →
@@ -566,7 +568,8 @@ Recorded as the code was written. Each has a friction-log entry where one applie
 
 - **Graph access (§3, §6).** Core talks to a small `Graph` interface (`packages/core/src/graph.ts`)
   with two adapters: `FalkorGraph` (Cypher) and `MemoryGraph` (tests, the eval, and local dev when
-  `FALKORDB_URL` is empty). **`FalkorGraph` has not been run yet** — no Docker on the build machine.
+  `FALKORDB_URL` is empty). `FalkorGraph` first ran on 14 Oct: the seed and the core suite pass on
+  FalkorDB unchanged (`core.test.ts` uses graph `recollect_test` when `FALKORDB_URL` is set).
 - **Recall (§11).** Entity overlap is counted per story, not per sentence, so "She cooked it
   slowly" still belongs to the mother named a sentence earlier. After the §11 score, a local
   cross-encoder (`Xenova/ms-marco-MiniLM-L-6-v2`, a classifier, same library as the embedder)
@@ -592,14 +595,28 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   `noVisitors`, `nextDose`, `noMoreDoses`, `storyPromptFor`, `storyPromptOpen`, `noPhotoYet`,
   `trendNotReady`, `trackingOff`, `familySummary`, `repeatLine`, `thisIsMeReady`,
   `thisIsMeMissing`. The family admin's name is a parameter, not the literal "Simran".
-- **MCP Apps cards (§10)** are not declared yet: tools return `structuredContent` only until
-  `packages/ui-cards` exists. `GET /mcp` returns 405 (stateless server).
+- **MCP Apps cards (§10).** `packages/ui-cards` builds five single-file cards (story, today, who,
+  trend, photo) with `@modelcontextprotocol/ext-apps` **1.7.x**, which works with the v1 MCP SDK
+  this server uses (ext-apps 2.x needs SDK v2). The five tools declare them via
+  `_meta.ui.resourceUri`; `whats_today` also returns `admin` for the card's call button. Seed
+  photos are inline SVG drawings (data URIs): the `/photos/...` URLs pointed at files that did
+  not exist, and cards cannot fetch anyway. `GET /mcp` returns 405 (stateless server).
 - **ONNX threads.** Both local models run with `ONNX_THREADS` threads (default 2), spinning off,
   and never concurrently (friction log 5).
-- **Agents so far** are pure functions with tests and no graph or AWS access:
-  `extract/validate.py` (§9.1 step 2), `markers/` (§7.1–7.3 maths), `synth/` (§12),
-  `trends/` (§9.3, including the doctor report). The worker that polls `Job` nodes, calls
-  Bedrock and writes to the graph is not written. No Strands or AgentCore code exists yet.
+- **Agents.** Pure functions with tests: `extract/validate.py` (§9.1 step 2), `markers/`
+  (§7.1–7.3 maths), `synth/` (§12), `trends/` (§9.3, including the doctor report).
+  **Worker** (`python -m worker`, 14 Oct): polls `Job` nodes every 2 s; per session runs the
+  Strands extract agent (`extract/agent.py`: `Agent` + `BedrockModel`, Pydantic structured
+  output, one fresh agent per quote, temperature 0), then `validate` + `resolve`, writes
+  `Entity`/`MENTIONS {span}`/`RELATED`/`SAME_AS`, story prompts (§9.1 step 4) and a `MarkerSet`
+  (§9.2, only while `Consent.trackingOn`). It waits until the MCP server has embedded the
+  session, skips extraction for `photo_desc`, retries twice then sets `Job.failed`. Seeded jobs are
+  marked done by the seed (their mentions are hand-written). The MCP server reloads its recall
+  index when the count of done jobs changes (3 s timer). Tested with a scripted extractor
+  (tests only) in memory and on FalkorDB; **not yet run against Bedrock** (needs AWS access).
+  It runs as a plain process (the spec's Railway fallback); no AgentCore code yet.
+- **`storyPromptFor`** wording moved into `trend-phrases.json` (`templates.storyPromptFor`) so the
+  Python worker and `phrases.ts` use the same template.
 - **Trend wording is shared.** `packages/core/src/trend-phrases.json` holds the banned list, the
   trend templates and, per metric, its change phrase, worse direction and chart label.
   `phrases.ts` and `agents/common/phrases.py` both read it; a TS test checks they agree.
@@ -618,7 +635,53 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   the report: it is templates only.
 - **Markers (§7.1).** Parts of speech come from closed word lists and suffix rules; no spaCy.
 - **Doctor report route.** `GET /report/doctor` with the family token serves the generated HTML.
-- **Not built yet:** agent worker, `apps/alexa-sim`, `apps/family`, `packages/ui-cards`,
-  two-step consent switch-on, "delete everything" endpoint, night-time family alert.
+- **Simulator (`apps/alexa-sim`, 14 Oct).** Node backend (holds AWS keys and MCP tokens) + Vite/React
+  page. MCP SDK v1 client per role; Bedrock Converse loop (≤ 4 tool calls) that speaks a tool's `say`
+  verbatim and discards model text; a memory/medicine/today question answered without a tool is
+  retried with `toolChoice: any`. Story mode, push-to-talk (en-IN), cards via AppBridge with a
+  `structuredContent` fallback, latency strip, simulated home panel from `routine_state`, demo clock
+  buttons (proxy to `POST /demo/clock`), one-sentence replies while `shortReplies` is set. `?debug`
+  adds real direct tool calls. Not built yet: audio capture (P1 timing markers), live graph panel
+  (P1). **Not yet run against Bedrock.**
+- **Family page (`apps/family`, 14 Oct).** Vite/React; reads and writes through `/api/family/*` on the
+  MCP server (family token; the Vite dev proxy adds it so the browser never holds it). Sections:
+  today, speech changes (trend card, "Simulated data" label, doctor report link), stories (private
+  ones counted, not shown) and prompts, people (status lines, photos), medicines, weekly photo,
+  "This is me" (edit, approve story-derived facts, print), consent. **Two-step consent** is done on
+  this page: step 1 records that she said yes (the family confirms it, ideally with her present),
+  step 2 is the admin's own yes; turning off clears both. She can turn it off herself with
+  `pause_tracking`; there is no spoken "turn it back on" (by design). Polls every 15 s (no SSE).
+- **`pnpm dev`** runs `scripts/dev.mjs`: loads `.env` and starts the MCP server, the simulator
+  (backend + Vite) and the family page. `pnpm dev:server` runs the MCP server alone.
+- **Night reassurance (§9.4 P1, 15 Oct).** Elder tool `night_reassure {text}` (the routine table had no
+  tool for it). 00:00–05:00: `nightReassure` (+ `nightPlaceReassure` when she names a place), bedroom
+  light dim, `AskEvent` intent `night_out`. Two asks within 30 min or "I'm going out" → one
+  `FamilyAlert` node (shown on the family page with an acknowledge button) + an escalated night
+  `RoutineEvent`; SMS through Amazon SNS in the background only when `SNS_TOPIC_ARN` is set.
+  Daytime: `goingOutDaytime`. New phrases `goingOutDaytime`, `nightAlert`, `NOT_EMERGENCY`.
+- **Timing markers / full-voice mode (§7.3 P1, 15 Oct).** The simulator records story-mode audio only
+  when `Consent.fullVoiceOn` (checked server-side again on upload), converts it in the browser to 16 kHz
+  mono WAV, and the backend writes it to `.audio/` with an `audioRef` on the job. The worker runs an
+  energy VAD (`agents/markers/vad.py`, numpy only, no webrtcvad) into `timing_markers`, adds the five
+  timing metrics to the `MarkerSet`, and deletes the file in every case (consent off → deleted
+  unanalysed). The simulator also deletes any audio older than `AUDIO_TTL_MIN` (60). Local only: the
+  audio folder must be shared by the simulator and the worker (production would use S3 with a
+  lifecycle rule). Not yet tested with a real microphone.
+- **Worker without Bedrock** runs markers only (`Job.markersDone`), leaving the job open for
+  extraction once `BEDROCK_EXTRACT_MODEL_ID` is set. `pnpm dev` now also starts the worker.
+- **Live graph panel (§13 P1, 15 Oct).** `GET /api/graph` (either token; private stories left out for
+  family) from `packages/core/src/graph-view.ts`: stories, entities, mentions, RELATED and story-level
+  RETELLS. The simulator panel polls it every 3 s while open (no SSE).
+- **AgentCore (15 Oct).** `agents/agentcore_app.py` wraps the extract agent in `BedrockAgentCoreApp`
+  (`/invocations` takes `{quote, known_names}`, returns validated entities); the worker uses it via
+  `InvokeAgentRuntime` (`extract/agentcore.py`) when `AGENTCORE_RUNTIME_ARN` is set, else Strands on
+  Bedrock directly. Only the extract agent runs there; markers stay in the worker (no model needed).
+- **Deploy (15 Oct).** `deploy/` has Dockerfiles for the MCP server, web (simulator at `/` and family
+  page at `/family` in one Node service behind `WEB_PASSWORD`, proxying `/api/family/*` and
+  `/report/doctor` with the family token), worker and AgentCore (arm64). Steps in `docs/deploy.md`.
+- **Not deployed yet (15 Oct):** AgentCore, Railway.
+  **Needs a human:** Bedrock model access and IAM keys (the worker and the simulator's voice loop
+  have not run against Bedrock), Railway login, microphone test, Claude Desktop clip, video.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.
-- **Not passing yet:** `pnpm test:latency` (see README, Latency).
+- **Latency:** `pnpm test:latency` passes locally on FalkorDB (14 Oct, worst p95 38 ms); not yet
+  run against a deployed server.

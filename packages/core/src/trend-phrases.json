@@ -7,7 +7,8 @@
   "templates": {
     "trendStable": "{name}'s speech has stayed close to their usual pattern over the last {weeks} weeks. {notMedical}",
     "trendChange": "Since {since}, {name} {changes}. Worth mentioning at the next check-up. {notMedical}",
-    "trendNotReady": "There isn't a trend for {name} yet. Recollect needs a few weeks of conversations first. {notMedical}"
+    "trendNotReady": "There isn't a trend for {name} yet. Recollect needs a few weeks of conversations first. {notMedical}",
+    "storyPromptFor": "You mentioned {entity}. Would you like to tell me more?"
   },
   "metrics": {
     "mean_pause_s": { "phrase": "pauses longer", "worse": "up", "label": "Mean pause length (seconds)" },

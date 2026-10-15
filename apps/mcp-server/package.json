@@ -6,13 +6,18 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "dev": "tsx watch src/main.ts",
-    "start": "tsx src/main.ts",
-    "test:latency": "tsx test/latency.ts"
+    "dev": "tsx watch --env-file-if-exists=../../.env src/main.ts",
+    "start": "tsx --env-file-if-exists=../../.env src/main.ts",
+    "test:latency": "tsx --env-file-if-exists=../../.env test/latency.ts",
+    "prestart": "pnpm --filter @recollect/ui-cards build",
+    "predev": "pnpm --filter @recollect/ui-cards build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.0",
     "@recollect/core": "workspace:*",
-    "zod": "^3.25.0"
+    "zod": "^3.25.0",
+    "@modelcontextprotocol/ext-apps": "^1.7.5",
+    "@recollect/ui-cards": "workspace:*",
+    "@aws-sdk/client-sns": "^3.900.0"
   }
 }

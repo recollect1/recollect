@@ -9,7 +9,7 @@ import { createApp, type App } from "../src/app.ts";
 
 const tokens = { elder: "test-elder", family: "test-family" };
 const ELDER_TOOLS = [
-  "check_dose", "keep_private", "log_dose", "pause_tracking", "photo_moment", "recall_memory",
+  "check_dose", "keep_private", "log_dose", "night_reassure", "pause_tracking", "photo_moment", "recall_memory",
   "remember_story", "routine_state", "story_prompt", "whats_today", "where_is", "who_is",
 ];
 const FAMILY_TOOLS = [
@@ -69,6 +69,69 @@ describe("MCP server (§10)", () => {
     expect(elderTools.map((t) => t.name).sort()).toEqual(ELDER_TOOLS);
     expect((await family.listTools()).tools.map((t) => t.name).sort()).toEqual(FAMILY_TOOLS);
     for (const t of elderTools) expect(t.description, t.name).toMatch(/Read the `say` field exactly as written\.$/);
+  });
+
+  it("declares MCP Apps cards and serves them as single-file HTML (§10)", async () => {
+    const want: Record<string, string> = {
+      recall_memory: "ui://recollect/story-card", whats_today: "ui://recollect/today-card",
+      who_is: "ui://recollect/who-card", photo_moment: "ui://recollect/photo-card",
+    };
+    const elder = await connect(tokens.elder);
+    const tools = (await elder.listTools()).tools;
+    for (const [name, uri] of Object.entries(want)) {
+      const meta = tools.find((t) => t.name === name)?._meta as { ui?: { resourceUri?: string } } | undefined;
+      expect(meta?.ui?.resourceUri, name).toBe(uri);
+    }
+    const family = await connect(tokens.family);
+    const familyTools = (await family.listTools()).tools;
+    expect(familyTools.filter((t) => t.annotations?.readOnlyHint).map((t) => t.name).sort())
+      .toEqual(["family_summary", "speech_trend", "this_is_me"]);
+    expect(tools.every((t) => t.annotations?.readOnlyHint === false)).toBe(true); // elder tools all write something
+    const trend = familyTools.find((t) => t.name === "speech_trend");
+    expect((trend?._meta as { ui?: { resourceUri?: string } }).ui?.resourceUri).toBe("ui://recollect/trend-card");
+    for (const uri of [...Object.values(want), "ui://recollect/trend-card"]) {
+      const r = await elder.readResource({ uri });
+      const c = r.contents[0] as { mimeType?: string; text?: string };
+      expect(c.mimeType, uri).toBe("text/html;profile=mcp-app");
+      expect(c.text).toMatch(/^<!doctype html>/i);
+      expect(c.text).not.toMatch(/<script[^>]+src=|<link[^>]+href="http/); // no network inside a card
+    }
+  });
+
+  it("family page REST: family token only; delete-everything needs a typed confirmation", async () => {
+    const base = url.origin;
+    const get = (path: string, token: string) => fetch(`${base}${path}`, { headers: { authorization: `Bearer ${token}` } });
+    const post = (path: string, token: string, body: unknown) => fetch(`${base}${path}`, {
+      method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify(body),
+    });
+    expect((await get("/api/family/overview", tokens.elder)).status).toBe(401);
+    const overview = await (await get("/api/family/overview", tokens.family)).json() as { people: { id: string }[] };
+    expect(overview.people.map((p) => p.id)).toContain("p-aman");
+    expect((await post("/api/family/status", tokens.family, { personId: "p-aman", statusLine: "is home for Diwali" })).status).toBe(200);
+    expect((await call(await connect(tokens.elder), "where_is", { person: "Aman" })).say).toBe("Aman is home for Diwali.");
+    expect((await post("/api/family/delete-everything", tokens.family, {})).status).toBe(400);
+    expect((await post("/api/family/medicine", tokens.family, { name: "X", times: ["99:00"] })).status).toBe(400);
+  });
+
+  it("scenario K: 03:00 market twice → reassured both times, one family alert", async () => {
+    clock.set(new Date("2026-10-14T03:00:00+05:30"));
+    const elder = await connect(tokens.elder);
+    const a = await call(elder, "night_reassure", { text: "I need to go to the market" });
+    const b = await call(elder, "night_reassure", { text: "I need to go to the market" });
+    expect(a.say).toBe(b.say);
+    expect(a.say).toContain("The market opens in the morning.");
+    expect([a.data.alerted, b.data.alerted]).toEqual([false, true]);
+    const alerts = await (await fetch(`${url.origin}/api/family/alerts`, { headers: { authorization: `Bearer ${tokens.family}` } })).json() as { say: string }[];
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]!.say).toContain("not an emergency service");
+  });
+
+  it("GET /api/graph needs a token and returns stories with what they name", async () => {
+    expect((await fetch(`${url.origin}/api/graph`)).status).toBe(401);
+    const g = await (await fetch(`${url.origin}/api/graph`, { headers: { authorization: `Bearer ${tokens.family}` } })).json() as
+      { stories: unknown[]; entities: { name: string }[]; mentions: unknown[] };
+    expect(g.stories.length).toBe(6);
+    expect(g.entities.map((e) => e.name)).toContain("Patiala");
   });
 
   it("a family token cannot call elder tools", async () => {

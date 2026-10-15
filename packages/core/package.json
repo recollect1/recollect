@@ -4,11 +4,14 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts",
+    "./phrases": "./src/phrases.ts"
+  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "seed": "tsx src/seed/cli.ts",
-    "eval:recall": "tsx test/eval-recall.ts"
+    "seed": "tsx --env-file-if-exists=../../.env src/seed/cli.ts",
+    "eval:recall": "tsx --env-file-if-exists=../../.env test/eval-recall.ts"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.0.0",

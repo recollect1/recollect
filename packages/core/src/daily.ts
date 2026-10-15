@@ -234,6 +234,7 @@ const ASK_LABEL: Record<AskIntent, (detail: string) => string> = {
   check_dose: (d) => `about the ${d}`,
   whats_today: () => "what day it is",
   recall: () => "a question about the past",
+  night_out: () => "about going out at night",
 };
 
 export interface FamilySummary {

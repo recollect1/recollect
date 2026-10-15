@@ -75,6 +75,8 @@ can be told live.
 **Problem:** FalkorDB could not be started locally, so nothing could be tested against it.
 **Fix:** core talks to a small graph interface with two adapters. Tests and the eval run on the
 in-memory adapter. The FalkorDB adapter is written but has not been run.
+**Update (14 Oct):** run on a machine with Docker. `pnpm seed` and all 35 core tests passed
+against FalkorDB with no adapter changes.
 
 ## 11. Stateless Streamable HTTP and GET (13 Oct)
 **Doing:** serving `POST /mcp` with a fresh server and transport per request, so each request can
@@ -113,3 +115,30 @@ only of the demo: with one sample a week, only a clear change is visible.
 **Problem:** the machine has Python 3.11 and 3.13 and no `uv`; the spec's commands use `uv`.
 **Fix:** a plain `venv` on 3.13 with `pytest`. The agents so far use only the standard
 library, so nothing else was needed. `uv sync` has not been run on this project.
+
+## 16. `pnpm seed` ignores `.env` (14 Oct)
+**Doing:** seeding FalkorDB after `cp .env.example .env`, which sets `FALKORDB_URL`.
+**Expected:** the seed writes to FalkorDB. **Actual:** "FALKORDB_URL is not set. Nothing to seed",
+exit 1. The package scripts run plain `tsx`, which does not read `.env`.
+**Workaround:** `FALKORDB_URL=redis://localhost:6379 pnpm seed` (as the handoff says).
+**Fix (15 Oct):** the package scripts now run `tsx --env-file-if-exists=../../.env`.
+**Suggestion:** a "missing env var" message could mention that `.env` is not read automatically.
+
+## 17. onnxruntime aborts when `pnpm eval:recall` exits (14 Oct)
+**Doing:** running the grounding eval on macOS (Apple silicon, Node 22).
+**Expected:** a clean exit after the results. **Actual:** the eval prints PASS, then the process
+dies with `libc++abi: terminating due to uncaught exception of type std::__1::system_error: mutex
+lock failed: Invalid argument`. It happens when the process exits while an ONNX session is live.
+**Fix (15 Oct):** `dispose()` both models, then let Node exit on its own (`process.exitCode`).
+Disposing alone was not enough: `process.exit()` right after `dispose()` still aborted (exit 134).
+**Suggestion (onnxruntime-node):** release sessions in an exit hook, or document that
+`process.exit()` with a live or just-released session aborts the process.
+
+## 18. MCP Apps 2.x requires the v2 MCP SDK (14 Oct)
+**Doing:** adding MCP Apps cards to a server built on `@modelcontextprotocol/sdk` 1.32.
+**Expected:** the latest `@modelcontextprotocol/ext-apps` works with the SDK named in its docs.
+**Actual:** ext-apps 2.x is typed against the v2 split SDK (`@modelcontextprotocol/server`,
+`client`, `core`) and peers on zod 4; using it would mean migrating the server. Nothing in the
+install output says so; it shows up in the type imports.
+**Workaround:** pinned ext-apps `^1.7.5`, whose peer range is `@modelcontextprotocol/sdk ^1.29`.
+**Suggestion:** state the required SDK major in the ext-apps README and as a peer dependency.

@@ -1,101 +1,56 @@
-# Handoff — for Yash (written 13 Oct 2026)
+# Handoff — for Shambhvi (Yash, 15 Oct 2026)
 
-Everything here was built and tested **without Docker, FalkorDB, AWS or a microphone**. Your
-machine has Docker, so the first job is to run what could not be run here.
+Your 13 Oct handoff asked for FalkorDB, latency, the agent worker, cards, simulator and family page.
+All of that is built and tested, plus the P1 features (night reassurance, timing markers, live graph
+panel), AgentCore packaging and deploy files. Graph Hacks is no longer on the plan; Oct 15–23 is all
+Recollect. This page lists what is left. `CLAUDE.md` §19 has every place the build differs from the
+spec, and `docs/friction-log.md` entries 16–18 are new.
 
-## Get it running
+What changed since your last commit, in order: `git log --oneline 3e804ec..main`.
 
-```
-corepack enable
-pnpm i
-cp .env.example .env            # set ELDER_TOKEN and FAMILY_TOKEN to two different values
-pnpm test                       # 51 tests, offline
-pnpm eval:recall                # grounding eval, downloads two small models on first run
-(cd agents && uv sync && uv run pytest)    # 29 tests
-```
+Also new: our Open Source mini-challenge entry, https://github.com/yash4428/mcp-latency (a CLI that
+measures MCP tool latency against the Alexa+ 500 ms budget). Devpost fields: `docs/open-source.md`.
 
-Keep the repo on a short path, outside Dropbox/OneDrive (friction log 1 and 7).
-
-## 1. First: run the FalkorDB adapter (never run so far)
-
-`packages/core/src/graph.ts` has two adapters. Every test uses `MemoryGraph`. `FalkorGraph` was
-written against the `falkordb` 6.8 type definitions and has **not been executed once**.
+## Run it
 
 ```
+pnpm i && (cd agents && uv sync)
+cp .env.example .env              # two different tokens; DEMO_CLOCK=1 for the demo
 docker compose up -d falkordb
-pnpm seed                       # needs FALKORDB_URL=redis://localhost:6379 in the environment
-pnpm dev
+pnpm seed
+pnpm dev                          # MCP :8787 · simulator :5173 · family :5174 · worker
 ```
 
-Expect to fix things in `FalkorGraph`. The likely places:
+Tests: `pnpm test` (75, add `FALKORDB_URL=redis://localhost:6379` to run core and family tests on
+FalkorDB), `(cd agents && uv run pytest)` (43), `pnpm eval:recall`, `pnpm test:latency`.
+Simulator debug buttons (real tool calls, no voice model): http://localhost:5173/?debug
 
-- `applySchema` — the `CREATE VECTOR INDEX` statement and the "already indexed" error text.
-- `upsert` — array properties (`aliases`, `daysOfWeek`, `actions`) and `vecf32($embedding)`.
-- Reading nodes back — the code assumes rows shaped `{ n: { labels, properties } }` and that an
-  embedding comes back as a plain number array.
-- `link` — parameters named `p_<key>`.
+## Verified on 14–15 Oct (macOS, Docker)
 
-The quickest check is to run the existing suites against it: make the `beforeEach` in
-`packages/core/test/core.test.ts` use `FalkorGraph.connect(...)` + `clear()` when
-`FALKORDB_URL` is set. When it passes, delete the "has not been run" notes in `README.md` and
-`CLAUDE.md` §19 and add a friction-log entry for whatever was wrong.
+- `FalkorGraph`: seed and every core/family test pass on FalkorDB, unchanged.
+- Latency: every elder tool well under budget, locally and in the `deploy/mcp-server.Dockerfile`
+  container (worst p95 about 15 ms).
+- In the browser: the five MCP Apps cards, evening routine at 17:00, night reassurance and the family
+  alert at 03:00, the family page, the live graph panel.
+- Images: MCP server, web (password gate, family proxy) and worker run locally.
 
-## 2. Latency (not passing yet)
+## Left, needs a person
 
-```
-pnpm dev                                        # terminal 1
-ELDER_TOKEN=<your elder token> pnpm test:latency   # terminal 2
-```
+1. **AWS**: billing, Bedrock model access in `AWS_REGION`, an IAM user key (not root). Then set
+   `BEDROCK_CHAT_MODEL_ID` and `BEDROCK_EXTRACT_MODEL_ID` and try the simulator's voice loop and the
+   worker's extraction live. Nothing has called Bedrock yet.
+2. **AgentCore**: push `deploy/agentcore.Dockerfile` and create the runtime (`docs/deploy.md`).
+3. **Railway**: four services per `docs/deploy.md`; then `pnpm test:latency` against the URL.
+4. **Microphone**: push-to-talk, story mode and full-voice recording in a real browser.
+5. **Claude Desktop** clip, the **video**, the Devpost text, and confirming every friction-log and
+   product-feedback entry.
+6. **GitHub**: add `yash4428` as a collaborator on `recollect1/recollect` so the local commits can be
+   pushed.
 
-On Shambhvi's laptop (battery, power-saving) `recall_memory` ran at seconds under 50 back-to-back
-calls; unthrottled it is about 6 ms to embed plus 25–60 ms for the relevance check. Run it on
-mains power, then against the deployed URL (`MCP_SERVER_URL=...`). The test writes probe data:
-re-seed afterwards. If recall is still over budget, lower `RERANK_K` in `recall.ts` from 4 to 3
-and re-run `pnpm eval:recall` to confirm it still passes.
+## Rules that are easy to break
 
-## 3. What is built
-
-| Area | Where | State |
-|---|---|---|
-| Phrases, banned-word tests | `packages/core/src/phrases.ts`, `trend-phrases.json` | Done |
-| Grounded recall + eval | `packages/core/src/recall.ts`, `rerank.ts`, `test/eval-recall.ts` | Passing 30/30, held-out 10/10 |
-| Daily tools, routines, who's-who, weekly photo | `packages/core/src/daily.ts`, `stories.ts` | Done |
-| MCP server, 15 tools, role tokens, demo clock, doctor-report route | `apps/mcp-server` | Done on the in-memory graph |
-| Extract validation | `agents/extract/validate.py` | Done |
-| Text, graph and timing marker maths | `agents/markers/` | Done (pure functions) |
-| Simulated 12-week history | `agents/synth/`, output in `data/simulated/` | Done |
-| Baseline, flags, family card, doctor report | `agents/trends/` | Done |
-| Agent Skill | `skill/SKILL.md` | Done |
-
-## 4. What is not built, in the order CLAUDE.md wants it
-
-1. **Agent worker** (`agents/worker`): poll `Job` nodes (`done: false`), and for each session
-   - call Bedrock for entities and relations (§9.1 step 1), pass the result through
-     `extract.validate.validate` and `resolve`, write `Entity`, `MENTIONS`, `RELATED`, `SAME_AS`;
-   - gather the session's utterances and call `markers.text.text_markers`, plus the graph
-     markers, and write a `MarkerSet`;
-   - mark the job done. Needs the `falkordb` Python client and AWS keys. Use Strands; if its
-     real API differs from CLAUDE.md, the SDK wins — update the file and log the friction.
-   - After the worker writes entities, the MCP server must refresh its recall index
-     (`ctx.index.load(graph)`); today it only refreshes after its own writes. Add a timer.
-2. **Story prompts from extraction** (§9.1 step 4): use `storyPromptFor` wording only.
-3. **Timing markers from audio** (P1): `markers.graph.timing_markers` takes voiced intervals;
-   the missing piece is the voice-activity detector that produces them, and deleting the audio.
-4. **MCP Apps cards** (`packages/ui-cards`) and declaring `_meta.ui.resourceUri` on the five tools.
-5. **Alexa+ simulator** (`apps/alexa-sim`) and **family page** (`apps/family`). The server
-   already has what they need: `routine_state`, `POST /demo/clock`, `GET /report/doctor`,
-   `family_summary`, `speech_trend`, `this_is_me`.
-6. Two-step consent switch-on, "delete everything", night-time family alert (P1).
-7. Deploy (Railway), Claude Desktop check, video, Devpost text.
-
-## 5. Rules that are easy to break
-
-- No LLM call inside an MCP tool handler, and no model-written sentence for memory, medicine or
-  trend statements. New spoken wording goes in `phrases.ts` with a test in the same commit.
-- Trend wording lives in `packages/core/src/trend-phrases.json` and is read by both languages.
-  A new metric needs an entry there or the trends agent raises `KeyError`.
-- Anything from `data/simulated/` must show "Simulated data" wherever it is displayed.
-- Regenerating demo data: `uv run python -m synth && uv run python -m trends`. Both are
-  deterministic, so the files should not change unless the code did.
+- No model call inside an MCP tool handler; no model-written memory, medicine or trend sentence.
+  New wording goes in `phrases.ts` (or `trend-phrases.json` if Python needs it) with a test.
+- Anything from `data/simulated/` must show "Simulated data" where it is displayed.
+- Audio is analysed then deleted; the worker deletes it even on failure, the simulator after an hour.
 - `CLAUDE.md` §19 lists every place the build differs from the spec. Keep it current.
-- The friction log and product feedback need a human to confirm each entry is true.

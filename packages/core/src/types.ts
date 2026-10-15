@@ -2,7 +2,7 @@
 export type Role = "elder" | "family" | "helper";
 export type SessionMode = "story" | "daily" | "family" | "photo_desc";
 export type EntityKind = "person" | "place" | "event" | "thing";
-export type AskIntent = "recall" | "whats_today" | "where_is" | "check_dose" | "who_is";
+export type AskIntent = "recall" | "whats_today" | "where_is" | "check_dose" | "who_is" | "night_out";
 
 export interface Household { id: string; name: string; tz: string; elderId: string; adminId: string }
 export interface Person {
@@ -36,6 +36,10 @@ export interface Profile {
 export interface WeeklyPhoto { id: string; photoId: string; week: string; sessionId?: string }
 export interface Device { id: string; kind: "light" | "speaker"; room: string; state: string }
 export interface RoutineEvent { id: string; kind: "evening" | "night"; at: string; actions: string[]; escalated: boolean }
+/** Shown to the family (§9.4 night escalation). `sms` is set once an SNS message was sent. */
+export interface FamilyAlert {
+  id: string; at: string; kind: "night"; say: string; place?: string; acknowledged: boolean; sms?: boolean;
+}
 /** Per-session speech markers (§7). `simulated` marks demo data, which every screen must label. */
 export interface MarkerSet {
   id: string; sessionId: string; computedAt: string; mode: SessionMode; simulated: boolean;

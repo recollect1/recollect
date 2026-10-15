@@ -4,7 +4,11 @@ import { onnxSessionOptions } from "./embed.ts";
 // library as the embedder) scores "does this passage answer this question". It is a classifier,
 // not a generative model: it picks among stored quotes and can only cause a refusal, never text.
 /** Scores aligned (question, passage) pairs in one forward pass. Higher = the passage answers the question. */
-export interface Reranker { score(questions: string[], passages: string[]): Promise<number[]> }
+export interface Reranker {
+  score(questions: string[], passages: string[]): Promise<number[]>;
+  /** Releases the ONNX session (see Embedder.dispose). */
+  dispose?(): Promise<void>;
+}
 
 export const RERANK_MODEL = "Xenova/ms-marco-MiniLM-L-6-v2";
 
@@ -21,6 +25,7 @@ export async function createReranker(): Promise<Reranker> {
       const { logits } = await model(inputs);
       return Array.from(logits.data as Float32Array);
     },
+    dispose: async () => { await model.dispose(); },
   };
   await reranker.score(["warm up"], ["warm up"]);
   return reranker;

@@ -80,6 +80,10 @@ export async function seed(
       }
     }
     await processSession(ctx, sessionId);
+    // Seeded stories carry hand-written mentions, so the extract worker must not redo them.
+    for (const job of await graph.find<{ id: string }>("Job", { sessionId })) {
+      await graph.upsert("Job", { id: job.id, done: true });
+    }
   }
   // One open story prompt: a person she has named in only one story (§9.1 step 4).
   const once = ENTITIES.find((e) => e.id === "e-nimmo" && mentioned.has(e.id));
