@@ -584,8 +584,8 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   seconds without the Python agents. Entities and relations still come from the extract agent.
 - **Queue (§9).** `Job{queue, sessionId, done}` nodes in the graph, not a Redis list.
 - **Routines (§9.4).** Evening and night state is computed in `routine_state` from the clock
-  (`packages/core/src/daily.ts`), which also writes the day's `RoutineEvent`. Night escalation
-  to family (P1) is not built.
+  (`packages/core/src/daily.ts`), which also writes the day's `RoutineEvent`. Night reassurance and the
+  family alert are the `night_reassure` tool (see "Night reassurance" below).
 - **Demo clock.** `POST /demo/clock {"at": "17:00"}` with the family token, only when `DEMO_CLOCK=1`.
 - **Seed (§5).** All six stories are seeded; `SEED_SKIP=radio` leaves the radio story out so
   scenario C can be told live. Scenario E's question changed (see §5).
@@ -651,6 +651,8 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   this page: step 1 records that she said yes (the family confirms it, ideally with her present),
   step 2 is the admin's own yes; turning off clears both. She can turn it off herself with
   `pause_tracking`; there is no spoken "turn it back on" (by design). Polls every 15 s (no SSE).
+- **Cards are built on install** (root `postinstall`, also `pnpm build:cards`): `dist/` is not
+  committed, and before 15 Oct only the Dockerfile built it, so tests failed on a fresh clone.
 - **`pnpm dev`** runs `scripts/dev.mjs`: loads `.env` and starts the MCP server, the simulator
   (backend + Vite) and the family page. `pnpm dev:server` runs the MCP server alone.
 - **Night reassurance (§9.4 P1, 15 Oct).** Elder tool `night_reassure {text}` (the routine table had no

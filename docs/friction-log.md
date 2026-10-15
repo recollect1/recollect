@@ -142,3 +142,19 @@ Disposing alone was not enough: `process.exit()` right after `dispose()` still a
 install output says so; it shows up in the type imports.
 **Workaround:** pinned ext-apps `^1.7.5`, whose peer range is `@modelcontextprotocol/sdk ^1.29`.
 **Suggestion:** state the required SDK major in the ext-apps README and as a peer dependency.
+
+## 19. The MCP Apps cards were missing on a fresh clone (15 Oct)
+**Doing:** cloning the merged repo on a second machine (Windows) and running `pnpm test`.
+**Problem:** one test failed with `ENOENT … packages/ui-cards/dist/story-card.html`. The cards are
+build output, `dist/` is git-ignored, and only the MCP server's `predev` script and the Dockerfile
+built them, so `pnpm test` on a clean checkout could not pass.
+**Fix:** a root `postinstall` builds the cards on every `pnpm i` (`pnpm build:cards` by hand).
+
+## 20. `pnpm dev` on Windows: no `uv`, no FalkorDB, and orphaned processes (15 Oct)
+**Doing:** running the full stack on Windows without Docker or `uv`.
+**Problem:** the worker command failed (`'uv' is not recognized`), and it would have had nothing to
+read anyway, since without FalkorDB the graph lives inside the MCP server process. Stopping the
+launcher killed only the shells it had started; on Windows their children (tsx, vite) keep running.
+**Fix:** `scripts/dev.mjs` skips the worker with a message when `FALKORDB_URL` is empty, falls back
+to `agents/.venv` when `uv` is missing, and stops each child's whole process tree with `taskkill /T`
+on Windows. The Ctrl+C path on Windows has not been exercised by hand yet.

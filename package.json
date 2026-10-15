@@ -8,13 +8,15 @@
     "node": ">=22"
   },
   "scripts": {
+    "postinstall": "pnpm --filter @recollect/ui-cards build",
     "dev": "node scripts/dev.mjs",
     "test": "vitest run",
     "typecheck": "pnpm -r typecheck",
     "seed": "pnpm --filter @recollect/core seed",
     "eval:recall": "pnpm --filter @recollect/core eval:recall",
     "test:latency": "pnpm --filter @recollect/mcp-server test:latency",
-    "dev:server": "pnpm --filter @recollect/mcp-server dev"
+    "dev:server": "pnpm --filter @recollect/mcp-server dev",
+    "build:cards": "pnpm --filter @recollect/ui-cards build"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

@@ -90,6 +90,10 @@ pnpm dev                      # MCP server :8787, simulator :5173, family page :
 No Docker? Leave `FALKORDB_URL` empty and `pnpm dev` runs on an in-memory graph seeded at boot
 (local development only; data is lost on exit).
 
+The agent worker needs FalkorDB, so without it `pnpm dev` skips the worker and says so. Without
+`uv`, `pnpm dev` runs the worker from `agents/.venv` if that exists. `pnpm i` also builds the MCP
+Apps cards (`pnpm build:cards` to rebuild them).
+
 The first run downloads two small local ONNX models (about 50 MB together) from Hugging Face.
 
 ```
