@@ -4,11 +4,18 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import uuid
 
 import boto3
 
 from extract.validate import Extraction, Proposed, Relation
+
+
+#: A new runtime session starts a new microVM (a cold start of about 10 s per call). The agent is
+#: stateless (a fresh Strands agent per sentence inside), so one session is reused across calls and
+#: renewed hourly, well inside AgentCore's session lifetime.
+SESSION_RENEW_S = 3600
 
 
 class AgentCoreExtractor:
@@ -18,11 +25,18 @@ class AgentCoreExtractor:
         self.name = f"agentcore:{runtime_arn.rsplit('/', 1)[-1]}"
         self._arn = runtime_arn
         self._client = boto3.client("bedrock-agentcore", region_name=region or os.environ.get("AWS_REGION", "us-east-1"))
+        self._session, self._session_started = "", 0.0
+
+    def _session_id(self) -> str:
+        if not self._session or time.monotonic() - self._session_started > SESSION_RENEW_S:
+            self._session = f"recollect-extract-{uuid.uuid4()}"  # ≥ 33 characters
+            self._session_started = time.monotonic()
+        return self._session
 
     def extract(self, quote: str, known_names: list[str]) -> Extraction:
         r = self._client.invoke_agent_runtime(
             agentRuntimeArn=self._arn,
-            runtimeSessionId=f"recollect-extract-{uuid.uuid4()}",  # ≥ 33 chars; one session per call
+            runtimeSessionId=self._session_id(),
             payload=json.dumps({"quote": quote, "known_names": known_names}).encode(),
             contentType="application/json", accept="application/json",
         )
