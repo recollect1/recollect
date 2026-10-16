@@ -71,7 +71,8 @@ export async function seed(
     if (opts.skipStories?.includes(story.key)) continue;
     // Told at 11:00 household time on the story's date.
     const at = new Date(`${story.toldOn}T05:30:00.000Z`);
-    const { sessionId } = await rememberStory(ctx, { text: story.text, at, storyKey: story.key });
+    // Seeded stories carry hand-written mentions, so the extract worker must never redo them.
+    const { sessionId } = await rememberStory(ctx, { text: story.text, at, storyKey: story.key, queued: false });
     const quotes = (await graph.out<Quote>(["Session", sessionId], "HAS_QUOTE")).map((n) => n.node);
     for (const [span, entityId] of story.mentions) {
       for (const q of quotes.filter((q) => hasSpan(q.text, span))) {
@@ -80,10 +81,6 @@ export async function seed(
       }
     }
     await processSession(ctx, sessionId);
-    // Seeded stories carry hand-written mentions, so the extract worker must not redo them.
-    for (const job of await graph.find<{ id: string }>("Job", { sessionId })) {
-      await graph.upsert("Job", { id: job.id, done: true });
-    }
   }
   // One open story prompt: a person she has named in only one story (§9.1 step 4).
   const once = ENTITIES.find((e) => e.id === "e-nimmo" && mentioned.has(e.id));

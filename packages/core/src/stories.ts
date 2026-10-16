@@ -12,6 +12,12 @@ export const EXTRACT_QUEUE = "extract";
 
 export interface RememberInput {
   text: string; private?: boolean; audioRef?: string; mode?: SessionMode; at?: Date; storyKey?: string;
+  /**
+   * false: record the job as already done, so the background agents never pick it up. The seed
+   * uses this for stories whose mentions are hand-written; marking them done afterwards left a
+   * gap in which a running worker could grab one.
+   */
+  queued?: boolean;
 }
 
 export async function rememberStory(ctx: Ctx, input: RememberInput): Promise<{ say: string; sessionId: string }> {
@@ -33,7 +39,7 @@ export async function rememberStory(ctx: Ctx, input: RememberInput): Promise<{ s
   // Session closed: queue it for the background agents (§9). Job nodes stand in for a list so
   // the queue lives in the same graph the Python agents already read.
   await graph.upsert("Job", {
-    id: newId("job"), queue: EXTRACT_QUEUE, sessionId: session.id, at, done: false,
+    id: newId("job"), queue: EXTRACT_QUEUE, sessionId: session.id, at, done: input.queued === false,
     ...(input.audioRef ? { audioRef: input.audioRef } : {}),
   });
   return { say: session.mode === "photo_desc" ? P.photoThanks() : P.storySaved(), sessionId: session.id };

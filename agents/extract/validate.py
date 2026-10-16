@@ -17,6 +17,11 @@ MAX_EDITS = 2
 # Below this length two edits can turn one name into another ("Aman" -> "Amar"), so short
 # names must match exactly.
 MIN_FUZZY_LEN = 6
+#: Never entities: the speaker and other pronouns. The prompt asks for this; validation enforces it.
+PRONOUNS = {"i", "me", "my", "myself", "we", "us", "our", "you", "your", "he", "him", "his",
+            "she", "her", "they", "them", "their", "it", "its", "this", "that", "someone", "something"}
+#: A name longer than this, or one with sentence punctuation, is a phrase or a sentence, not a name.
+MAX_NAME_WORDS = 5
 
 
 @dataclass(frozen=True)
@@ -66,6 +71,10 @@ def validate(quote: str, extraction: Extraction) -> Extraction:
             continue
         # A bare number ("1968") is a year or a count, never a person, place, event or thing.
         if _norm(e.name).replace(" ", "").isdigit():
+            continue
+        if _norm(e.name) in PRONOUNS:
+            continue
+        if len(e.name.split()) > MAX_NAME_WORDS or any(c in e.name for c in ".!?;"):
             continue
         key = (_norm(e.name), e.span)
         if key in seen:

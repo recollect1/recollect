@@ -107,3 +107,15 @@ def test_drops_bare_numbers_as_entities():
     ))
     assert [(e.name, e.year) for e in out.entities] == [("radio", 1968)]
     assert out.relations == []
+
+
+def test_drops_pronouns_and_whole_sentences():
+    quote = "I was eighteen years old. We came by bus and I held my trunk on my lap."
+    out = validate(quote, Extraction([
+        Proposed("person", "I", "I"),
+        Proposed("event", "I was eighteen years old.", "I was eighteen years old."),
+        Proposed("thing", "held my trunk on my lap the whole", "held my trunk on my lap"),
+        Proposed("thing", "trunk", "trunk"),
+        Proposed("thing", "bus", "bus"),
+    ]))
+    assert [e.name for e in out.entities] == ["trunk", "bus"]

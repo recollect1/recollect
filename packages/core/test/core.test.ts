@@ -55,6 +55,11 @@ describe("seed (§5)", () => {
     }
     expect(edges).toBeGreaterThan(25);
   });
+  it("queues no extract job for any seeded story, at any point (no race with a running worker)", async () => {
+    expect(await ctx.graph.find("Job", { done: false })).toEqual([]);
+    const { sessionId } = await rememberStory(ctx, { text: "A seeded sentence for the test.", queued: false });
+    expect(await ctx.graph.find("Job", { sessionId })).toMatchObject([{ done: true }]);
+  });
   it("every declared mention was linked at least once", () => {
     for (const s of STORIES) for (const [span] of s.mentions) expect(s.text, `${s.key}: ${span}`).toContain(span);
   });
