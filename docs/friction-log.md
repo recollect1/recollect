@@ -184,3 +184,47 @@ dose of the day, however long ago. For someone with memory loss that invites a l
 The unit tests ran at 09:00, where the old rule happened to be right.
 **Fix:** "next tablet" names only a dose that is upcoming or at most 60 minutes late; missed doses
 stay on the family page. Tested at 17:30, 20:45 and 21:30.
+
+## 24. Git Bash rewrote `/dev/xvda` into a Windows path (15 Oct)
+**Doing:** `aws ec2 run-instances --block-device-mappings 'DeviceName=/dev/xvda,…'` from Git Bash.
+**Problem:** `InvalidBlockDeviceMapping: Invalid device name C:/Program Files/Git/dev/xvda`. MSYS
+path conversion rewrites anything that looks like a Unix path, even inside a quoted argument. The
+security group and Elastic IP had already been created, so the failure was half-way through.
+**Fix:** `MSYS_NO_PATHCONV=1` for every AWS CLI call from Git Bash.
+
+## 25. AgentCore needs to create a service-linked role on first use (16 Oct)
+**Doing:** `create-agent-runtime` as the scoped `recollect-deploy` user.
+**Problem:** "Failed creating service linked role. Please verify that the calling role has sufficient
+permissions to create a service linked role." The deploy docs list the execution role's permissions
+but not this one-time permission for the caller, and the error does not name the service.
+**Fix:** allowed `iam:CreateServiceLinkedRole` only where `iam:AWSServiceName` is
+`*.bedrock-agentcore.amazonaws.com`.
+
+## 26. One AgentCore session per call meant a cold start per sentence (16 Oct)
+**Doing:** the first calls to the deployed extract agent.
+**Problem:** correct answers, but 11–12 s per sentence, against 1–3 s calling Bedrock directly. The
+client used a new `runtimeSessionId` for every call, and each new session starts a new microVM. A
+six-sentence story would have taken over a minute; scenario C needs about 10 s.
+**Fix:** one session per worker, renewed hourly (the agent is stateless). Now 1–3 s per sentence;
+the radio story reaches the graph in about 8 s end to end.
+
+## 27. The seed raced the worker (16 Oct)
+**Doing:** seeding the deployed graph while the worker was running.
+**Problem:** the worker extracted a seeded story, adding junk entities to it. The seed saved each
+story (which queues a job) and marked the job done a moment later; the worker polls every 2 s and
+took one in the gap. Locally the worker had never run during a seed.
+**Fix:** `rememberStory({ queued: false })` creates the job already done. Tested.
+
+## 28. Extraction proposed pronouns, verbs, bare years and whole sentences (16 Oct)
+**Doing:** live extraction with Nova Pro on the seed stories.
+**Problem:** entities named "I", "bring", "1968" and "I was eighteen years old." All were exact
+substrings of the quote, so the span check let them through.
+**Fix:** the prompt now says what an event is; validation drops pronouns, bare numbers and names over
+five words or with sentence punctuation. Tested.
+
+## 29. The latency budget cannot be met from India (16 Oct)
+**Doing:** `pnpm test:latency` against the deployed URL in us-east-1, from a laptop in India.
+**Problem:** every call failed (p95 336–409 ms) while the server's own time was p95 3–85 ms: about
+280 ms is the network round trip.
+**Fix:** none needed for Alexa+, which calls from AWS. Measured again from inside AWS through the same
+public HTTPS endpoint: passes, worst p95 144 ms. Both results are in the README.

@@ -1,78 +1,57 @@
-# Handoff — for Shambhvi (from Yash, 15 Oct 2026)
+# Handoff (Shambhvi, 16 Oct 2026)
 
-Everything from your 13 Oct handoff is built and tested, plus the P1 features, AgentCore packaging
-and deploy files. Graph Hacks is no longer on the plan; Oct 15–23 is all Recollect. This page is
-the current state: what is done, what is left, and who did what. `CLAUDE.md` §19 lists every place
-the build differs from the spec; `docs/friction-log.md` entries 16–18 are new.
-
-Deadline: submit **Oct 23 evening IST** (official: Oct 24, 00:30 IST).
+Deadline: submit **Oct 23 evening IST** (official: Oct 24, 00:30 IST). `CLAUDE.md` §19 lists every
+place the build differs from the spec; `docs/friction-log.md` has 29 entries.
 
 ## Who built what
 
-| Who | Commits | What |
+| Who | When | What |
 |---|---|---|
-| Shambhvi | `b1574ef`, `173cc75`, `3e804ec` (12–13 Oct) | Scaffold; `packages/core` (graph port, schema, phrases, grounded recall + cross-encoder check, daily tools, routines, seed); MCP server (15 tools, role tokens, demo clock, doctor-report route); grounding eval; `extract/validate.py`; text, graph and timing marker maths; simulated 12-week history; trends (baseline, 4-week rule, card, doctor report); Agent Skill. |
-| Yash (with Claude Code) | everything after `3e804ec` (14–15 Oct): `git log --oneline 3e804ec..main` | First run of `FalkorGraph`; latency test passing; agent worker (Strands → Bedrock, validated writes, story prompts, markers); AgentCore Runtime agent; MCP Apps cards; Alexa+ simulator; family page + family REST; night reassurance + alert; full-voice timing markers; live graph panel; trends on the live graph; deploy files; docs; Open Source entry [`mcp-latency`](https://github.com/yash4428/mcp-latency). |
+| Shambhvi | 12–13 Oct | Scaffold, `packages/core` (graph port, phrases, grounded recall + relevance check, daily tools, seed), MCP server, grounding eval, extract validation, marker maths, simulated history, trends + doctor report, Agent Skill. |
+| Yash | 14–15 Oct | First FalkorDB run, latency test, agent worker (Strands on Bedrock), AgentCore agent, MCP Apps cards, simulator, family page, night reassurance, full-voice timing markers, live graph panel, trends on the live graph, deploy files, docs, Open Source entry `mcp-latency`. |
+| Shambhvi | 15–16 Oct | Windows fixes, weekly photo scheduling (last P0), Claude Desktop bridge, first live Bedrock runs, "next tablet" safety fix, AWS deployment with AgentCore, worker and extraction fixes found on the live system, video script and Devpost draft. |
 
-## Run it
+## Live on AWS (16 Oct)
+
+- **Site:** https://34-194-181-93.sslip.io — simulator at `/`, family page at `/family`, both behind a
+  password (browser login, any user name). MCP endpoint `/mcp` (bearer token).
+- **Where the secrets are:** `.env.aws` on Shambhvi's laptop (git-ignored) and the SSM parameter
+  `/recollect/env`. Ask Shambhvi; never commit them or show them in the video.
+- **Models:** Amazon Nova Pro on Bedrock for the voice loop and extraction. Claude models need the
+  Anthropic use-case form in the Bedrock console first (friction log 21).
+- **Extraction:** Bedrock AgentCore Runtime `recollect_extract`; a story told through `/mcp` reaches the
+  graph in about 8 s (scenario C).
+- **Latency:** passes from inside AWS against the public URL (worst p95 144 ms); README, Latency.
+- **Operating it:** `docs/deploy-aws.md` (deploy, re-seed, AgentCore update, costs, switching off). The
+  graph is seeded with `SEED_SKIP=radio` so the radio story can be told live; re-seed after any test.
+- **Cost:** about US$17/month while running, plus cents of Bedrock per demo. Stop the instance after the
+  hackathon (`docs/deploy-aws.md`).
+
+## Run it locally
 
 ```
-pnpm i && (cd agents && uv sync)
-cp .env.example .env              # two different tokens; DEMO_CLOCK=1 for the demo
-docker compose up -d falkordb
-pnpm seed
-pnpm dev                          # MCP :8787 · simulator :5173 · family :5174 · worker
+pnpm i && (cd agents && uv sync)     # pnpm i also builds the MCP Apps cards
+cp .env.example .env                 # two different tokens; DEMO_CLOCK=1; Nova Pro model IDs are the default
+docker compose up -d falkordb && pnpm seed
+pnpm dev                             # MCP :8787 · simulator :5173 · family :5174 · worker
 ```
 
-Tests: `pnpm test` (75; add `FALKORDB_URL=redis://localhost:6379` to run the core and family tests on
-FalkorDB too), `(cd agents && uv run pytest)` (47), `pnpm eval:recall`, `pnpm test:latency`.
-Simulator debug buttons (real tool calls, no voice model): http://localhost:5173/?debug
+Tests: `pnpm test` (83), `(cd agents && uv run pytest)` (51), `pnpm eval:recall`, `pnpm test:latency`.
+Without Docker, leave `FALKORDB_URL` empty: everything but the worker runs on an in-memory graph.
 
-## Verified on 14–15 Oct (macOS, Docker, FalkorDB)
+## Left to do (all need a person)
 
-- `FalkorGraph`: seed and every core and family test pass on FalkorDB, no adapter changes needed.
-- Latency: every elder tool far under budget, locally and in the `deploy/mcp-server.Dockerfile`
-  container (worst p95 about 15 ms).
-- In the browser: all five MCP Apps cards, the evening routine at 17:00, night reassurance and the
-  family alert at 03:00, the family page, the live graph panel.
-- Images: MCP server, web (password gate, family proxy) and worker run locally.
-- Trends on the live graph: `uv run python -m trends --graph` reads every MarkerSet from FalkorDB and
-  writes the TrendCard, TrendFlags and a `DoctorReport` node (done on 15 Oct).
-
-## Last thing added (15 Oct, tested, not yet tried in the browser)
-
-- `GET /report/doctor` now serves the latest `DoctorReport` from the graph, falling back to
-  `data/simulated/doctor-report.html`.
-- Family page → Speech changes → **Recalculate now** queues a `trends` job; the worker also runs the
-  trends agent weekly (`agents/worker/__main__.py`, `trends_due`).
-- Worth a click-through: press Recalculate now with `pnpm dev` running and check the card and report.
-
-## Left to do
-
-**Code (small):**
-1. **Weekly photo scheduling (P0, §9.4).** `photo_moment` works on demand, but nothing schedules the
-   weekly prompt for a calm daytime moment. Suggested: `routine_state` returns `photoDue: true` once a
-   week in a calm window (e.g. 11:00–12:00, not evening), and the simulator offers the photo then.
-2. **Repo "About" description** on GitHub (one line; the MIT licence already shows).
-3. *(P2, only if time)* her music playlist; carer check-in.
-
-**Needs AWS (Yash's account) — the AWS Builder entry depends on this:**
-4. Bedrock model access + an IAM user key (the CLI credentials on Yash's Mac are the root user).
-   Then the first live run of the simulator's voice loop (`BEDROCK_CHAT_MODEL_ID`) and the worker's
-   extraction (`BEDROCK_EXTRACT_MODEL_ID`), including scenario C (graph grows within ~10 s).
-   **Nothing has called Bedrock yet.** After that, fill the "pending" sections of
-   `docs/product-feedback.md`.
-5. Deploy: AgentCore Runtime for the extract agent, plus hosting for FalkorDB, MCP server, web and
-   worker. `docs/deploy.md` describes Railway; on AWS the simplest is one EC2 instance with Docker
-   Compose (all four containers) and HTTPS, plus AgentCore. Then `pnpm test:latency` against the URL.
-
-**Needs a person:**
-6. Microphone test in Chrome: push-to-talk, story mode, full-voice recording, TTS.
-7. Claude Desktop clip (~10 s). The server needs the bearer token in a header; if the connector form
-   cannot send one, use a small authenticating proxy for the recording.
-8. Video under 3 minutes (storyboard in `CLAUDE.md` §15), public, no copyrighted music.
-9. Devpost text in our own words; tracks: Alexa+, AWS Builder, Open Source (`docs/open-source.md`).
-10. Read and confirm every friction-log and product-feedback entry.
+1. **Microphone test** in Chrome on the deployed site: push-to-talk, story mode, full-voice recording
+   (switch it on in the family page's consent section first), spoken replies.
+2. **Click through the deployed site** once, especially "Photo time 11:15" (scenario J), "Evening
+   17:00" (I), "Night 03:00" + "I need to go to the market" (K), and the family page's Recalculate now.
+3. **Claude Desktop clip** (~10 s): `docs/claude-desktop.md`; point `MCP_SERVER_URL` at the deployed `/mcp`.
+4. **Video** under 3 minutes: `docs/video-script.md`. Re-seed before recording.
+5. **Devpost text** in our own words: draft in `docs/devpost.md` (items marked [confirm]); Open Source
+   fields in `docs/open-source.md`.
+6. **Confirm** every friction-log and product-feedback entry is true.
+7. **GitHub:** the repo's one-line "About" description; add `yash4428` as a collaborator if not done.
+8. *(P2, only if time)* her music playlist; carer check-in.
 
 ## Rules that are easy to break
 

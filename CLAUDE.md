@@ -701,9 +701,16 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   yet tried in the Claude Desktop app.
 - **"Next tablet" (§1.5).** `whats_today` names only a dose that is upcoming or at most 60 minutes
   late; a long-missed dose is never offered as "next" (friction log 23).
-- **Not deployed yet (15 Oct):** AgentCore, hosting (Railway or AWS).
-  **Needs a human:** the Anthropic use-case form if Claude models are wanted on Bedrock, a hosting
-  login (Railway) or approval to create AWS resources, microphone test, Claude Desktop clip, video.
+- **Deployed on AWS (16 Oct)** instead of Railway: one `t4g.small` EC2 host running FalkorDB, MCP server,
+  web, worker and Caddy (HTTPS via an sslip.io name) with Docker Compose (`deploy/aws/`), secrets from
+  SSM Parameter Store, AWS access through the instance role only. Extract agent on AgentCore Runtime
+  (`recollect_extract`); the client reuses one runtime session per worker (a new session per call cost
+  a cold start, 11–12 s). Operated by the IAM user `recollect-deploy`. Details: `docs/deploy-aws.md`.
+- **Seed jobs** are created already done (`rememberStory({queued: false})`): marking them done after
+  creation raced a running worker. **Validation** also drops pronouns, bare numbers and sentence-length
+  names (friction log 27–28).
+- **Latency** against the deployed URL passes from inside AWS (worst p95 144 ms); from India the network
+  alone exceeds the budget (friction log 29).
+  **Needs a human:** microphone test in a real browser, Claude Desktop clip, video, Devpost text,
+  confirming the friction log and product feedback; the Anthropic use-case form only if Claude models are wanted.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.
-- **Latency:** `pnpm test:latency` passes locally on FalkorDB (14 Oct, worst p95 38 ms); not yet
-  run against a deployed server.

@@ -65,15 +65,21 @@ not yet called the real AWS service.
   recipe would help. `callback_handler=None` is needed to stop console streaming in a background worker.
 - **Would build again:** yes, for the typed output alone.
 
-## Amazon Bedrock AgentCore Runtime (`bedrock-agentcore` 1.24) — *pending deployment*
+## Amazon Bedrock AgentCore Runtime (`bedrock-agentcore` 1.24) — deployed 16 Oct
 
 - **Used for:** hosting the extract agent (`agents/agentcore_app.py`, `BedrockAgentCoreApp` +
-  `@app.entrypoint`); the worker calls it with `InvokeAgentRuntime` (`agents/extract/agentcore.py`).
+  `@app.entrypoint`); the deployed worker calls it with `InvokeAgentRuntime` (`agents/extract/agentcore.py`).
 - **Worked well:** the runtime contract is tiny — `/invocations` and `/ping` on port 8080 — and runs
-  locally unchanged, so the agent was testable before any deployment. `/ping` reports Healthy out of the box.
-- **Needs work:** `runtimeSessionId` has a 33-character minimum; we found it in the service model, not
-  in an error message we had hit. The runtime image must be arm64, which needs `buildx` on x86 CI.
-- **Deployment:** not yet — needs the team's AWS account (ECR, an execution role, model access).
+  locally unchanged, so the agent was testable before any deployment. Deployment was one image push and
+  one `create-agent-runtime` call; READY in under two minutes.
+- **Needs work:** (1) the first runtime in an account needs `iam:CreateServiceLinkedRole`, and the error
+  does not say for which service (friction log 25). (2) A new `runtimeSessionId` per call means a new
+  microVM per call: 11–12 s per sentence for us until we reused one session (1–3 s). For stateless
+  agents that is easy to miss; the docs could say so next to the session ID parameter (friction log 26).
+  (3) `runtimeSessionId` has a 33-character minimum, found in the service model, not an error message.
+  (4) The image must be arm64; we built it on an arm64 EC2 host to avoid cross-building.
+- **Would build again:** yes. Keeping the model-calling agent out of the always-on worker, with its own
+  narrow execution role, is a clean split.
 
 ## Amazon SNS — *pending a live run*
 

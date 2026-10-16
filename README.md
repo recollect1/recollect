@@ -15,11 +15,12 @@ Built for Amazon's "Build, Ship, Shape" hackathon — Alexa+ track, AWS Builder 
 Open Source mini-challenge with [`mcp-latency`](https://github.com/yash4428/mcp-latency).
 All people, stories and speech histories in this repository are **fictional**.
 
-> **Status (15 Oct 2026).** Everything in the spec is built and tested on FalkorDB, including the P1
-> features (night reassurance, timing markers, live graph panel). The simulator's voice loop and the
-> extract agent first ran live on Amazon Bedrock (Amazon Nova Pro) on 15 Oct. **Not yet done:** the
-> worker's extraction end to end on FalkorDB with Bedrock, AgentCore and hosted deployment, a
-> real-microphone test. See [What exists today](#what-exists-today).
+> **Status (16 Oct 2026).** Everything in the spec is built and tested, including the P1 features.
+> **Deployed on AWS** (one EC2 host, HTTPS) with the extract agent on **Bedrock AgentCore Runtime**
+> and models on **Amazon Bedrock** (Amazon Nova Pro): a story told through the public MCP endpoint
+> reaches the graph as people, places and things in about 8 s, and every tool passes the latency
+> budget measured inside AWS. **Not yet done:** a real-microphone test. See
+> [What exists today](#what-exists-today) and [docs/deploy-aws.md](docs/deploy-aws.md).
 
 ![Architecture](docs/architecture.png)
 
@@ -47,11 +48,11 @@ A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has t
 | `agents/trends` — baseline, sustained-change flags, family card, printable doctor report | Built, tested |
 | `skill/SKILL.md` — Agent Skill with six example exchanges | Written |
 | `agents/worker` + `agents/extract/agent.py` — Strands Agent on Bedrock extracts entities; validated graph writes, story prompts, marker sets; markers-only without Bedrock | Built, tested (scripted extractor, in memory and on FalkorDB). The extract agent ran live on Bedrock (Nova Pro, 15 Oct) on seed sentences; the full worker loop with Bedrock is **not yet run** |
-| `agents/agentcore_app.py` — the extract agent as a Bedrock AgentCore Runtime agent | Built; `/ping` and `/invocations` checked locally; **not yet deployed to AgentCore** |
+| `agents/agentcore_app.py` — the extract agent as a Bedrock AgentCore Runtime agent | Deployed to AgentCore Runtime (`recollect_extract`, 16 Oct); the deployed worker uses it |
 | Full-voice mode — consented story audio → `agents/markers/vad.py` → timing markers, audio deleted | Built, tested on synthetic audio; **not yet tried with a real microphone** |
 | Night reassurance + family alert (`night_reassure`, optional SMS via Amazon SNS) | Built, tested |
 | Live memory graph panel in the simulator | Built |
-| `deploy/` — Dockerfiles for the MCP server, web (simulator + family page, password protected), worker, AgentCore | Built; worker image run locally; **not yet deployed** |
+| `deploy/` — Dockerfiles for the MCP server, web (simulator + family page, password protected), worker, AgentCore | Deployed on AWS (16 Oct): `deploy/aws/` (Compose + Caddy on one EC2 host), see `docs/deploy-aws.md` |
 | `packages/ui-cards` — MCP Apps cards: story, today, who's-who, trend, photo | Built; served by the MCP server, tested |
 | `apps/alexa-sim` — Echo-Show-style simulator: real MCP client, Bedrock Converse loop speaking `say` verbatim, story mode, cards, latency strip, simulated home, demo clock | Built; ran live on Bedrock (Nova Pro, 15 Oct): every demo question picked the right tool and spoke its `say` verbatim |
 | `apps/family` — family page: today, speech changes + doctor report, stories, people, medicines, weekly photo, This is me, two-step consent, delete everything | Built; backend tested in memory and on FalkorDB |
@@ -159,8 +160,30 @@ Measured 14 Oct 2026 on a MacBook (Apple silicon, mains power) against FalkorDB 
 | routine_state | 1 | 1 | 3 | 1 |
 
 **Passes locally.** An earlier run on a Windows laptop on battery did not pass: power throttling
-slowed `recall_memory` roughly tenfold under sustained load (friction log 6). The spec asks for a
-run against the deployed server; that is still to do.
+slowed `recall_memory` roughly tenfold under sustained load (friction log 6).
+
+**Against the deployed server** (16 Oct 2026, `https://34-194-181-93.sslip.io/mcp`, FalkorDB,
+t4g.small, 50 calls per tool, through TLS and Caddy), run from inside AWS (the host itself, over the
+public endpoint), as an Alexa+ caller would be: **passes**.
+
+| Tool | p50 ms | p95 ms | max ms | server p95 ms |
+|---|---|---|---|---|
+| remember_story | 13 | 57 | 72 | 49 |
+| recall_memory (found) | 42 | 93 | 97 | 72 |
+| recall_memory (nothing saved) | 11 | 47 | 56 | 9 |
+| whats_today | 16 | 71 | 74 | 63 |
+| check_dose | 13 | 74 | 103 | 69 |
+| log_dose | 9 | 72 | 76 | 67 |
+| where_is | 7 | 80 | 92 | 75 |
+| who_is | 7 | 10 | 14 | 5 |
+| keep_private | 98 | 144 | 174 | 139 |
+| pause_tracking | 5 | 9 | 83 | 3 |
+| story_prompt | 5 | 10 | 10 | 4 |
+| photo_moment | 6 | 10 | 35 | 5 |
+| routine_state | 7 | 11 | 43 | 6 |
+
+The same test from a laptop in India fails on round trip (p95 336–409 ms) while the server's own time
+stays at p95 3–85 ms: about 280 ms of every call is the network between India and Virginia.
 
 ## Safety and consent
 
