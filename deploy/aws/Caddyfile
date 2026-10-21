@@ -13,3 +13,11 @@
 		reverse_proxy web:8080
 	}
 }
+
+# The MCP server on its own name (api.<site>): /mcp, /api/*, /report/*, /demo/*, /healthz. Every
+# route there checks the bearer token itself. Used by a local simulator or family page, or by
+# Claude Desktop, pointed at the deployment. The main site above keeps its password gate.
+api.{$SITE_HOST} {
+	encode gzip
+	reverse_proxy mcp:8787
+}
