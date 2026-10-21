@@ -1,5 +1,8 @@
 # Demo video script (under 3 minutes)
 
+> **Made on 21 Oct:** `video/recollect-demo.mp4`, recorded from real calls to the live deployment;
+> how it was made is in `video/README.md`. This page remains the plan for a re-take with a real voice.
+
 Follows the CLAUDE.md §15 timeline. Draft, 15 Oct: the voice loop has not run against Bedrock yet,
 so every scene below says what to do with voice and what to do if Bedrock is still unavailable on
 the day (type the line into the simulator's text box, or use the `?debug` buttons, which are real

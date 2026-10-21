@@ -713,4 +713,10 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   alone exceeds the budget (friction log 29).
   **Needs a human:** microphone test in a real browser, Claude Desktop clip, video, Devpost text,
   confirming the friction log and product feedback; the Anthropic use-case form only if Claude models are wanted.
+- **Latency display (§13).** The simulator's chips and strip show the server's own time
+  (`_meta["recollect/latencyMs"]`, coloured against the budget) and the round trip, labelled; far from
+  the server the round trip is mostly network (friction log 31). User lines keep their speaker.
+- **API hostname.** Caddy also serves the MCP server alone on `api.<site>` (every route checks its token),
+  so a local simulator, family page or Claude Desktop can use the deployment directly.
+- **Demo video (21 Oct)** made from real calls to the deployment: `video/README.md`.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.

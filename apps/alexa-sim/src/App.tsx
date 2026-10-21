@@ -4,7 +4,7 @@ import { api, ApiError, type CardRef, type GraphData, type Role, type RoutineSta
 import { CardFrame } from './CardFrame.tsx';
 import { GraphPanel } from './GraphPanel.tsx';
 import { HomePanel } from './HomePanel.tsx';
-import { LatencyStrip, latencyClass } from './LatencyStrip.tsx';
+import { LatencyStrip, latencyClass, timing, toolMs } from './LatencyStrip.tsx';
 import { startRecording, type Recording } from './audio.ts';
 import { listenForStory, listenOnce, recognitionSupported, speak, stopSpeaking, STORY_TRIGGER } from './speech.ts';
 
@@ -17,6 +17,8 @@ interface Line {
   who: 'user' | 'recollect' | 'system';
   text: string;
   source?: 'say' | 'model';
+  /** Who said a user line; the role can be switched later, so it is kept per line. */
+  as?: Role;
   calls?: ToolCallRecord[];
 }
 
@@ -111,7 +113,7 @@ export function App() {
   const send = useCallback(async (utterance: string) => {
     const t = utterance.trim();
     if (!t) return;
-    setLines((l) => [...l, { who: 'user', text: t }]);
+    setLines((l) => [...l, { who: 'user', text: t, as: role }]);
     if (photoNext && role === 'elder') {
       setPhotoNext(false);
       if (NOT_NOW.test(t)) {
@@ -163,7 +165,7 @@ export function App() {
       s.done.then(async (story) => {
         stopRef.current = null;
         setInterim('');
-        if (story) setLines((l) => [...l, { who: 'user', text: story }]);
+        if (story) setLines((l) => [...l, { who: 'user', text: story, as: role }]);
         const audio = recording ? await recording.stop().catch(() => undefined) : undefined;
         void tellStory(story, audio);
       });
@@ -194,7 +196,7 @@ export function App() {
     setText('');
     if (storyNext) {
       setStoryNext(false);
-      setLines((l) => [...l, { who: 'user', text: t }]);
+      setLines((l) => [...l, { who: 'user', text: t, as: role }]);
       void tellStory(t.replace(/[\s,.]*(that's all)[\s.!]*$/i, ''));
     } else void send(t);
   }
@@ -282,7 +284,7 @@ export function App() {
             <div className="ring-wrap" aria-hidden="true">
               <div className="ring">
                 {ticks.map((c, i) => (
-                  <span key={i} className={`tick ${latencyClass(c.ms)}`} style={{ transform: `rotate(${(i / 24) * 360}deg) translateY(-50px)` }} />
+                  <span key={i} className={`tick ${latencyClass(toolMs(c))}`} style={{ transform: `rotate(${(i / 24) * 360}deg) translateY(-50px)` }} />
                 ))}
               </div>
             </div>
@@ -319,13 +321,13 @@ export function App() {
           <ol ref={logRef}>
             {lines.map((l, i) => (
               <li key={i} className={`line ${l.who}`}>
-                {l.who !== 'system' && <span className="who">{l.who === 'user' ? (role === 'elder' ? 'Gurdev' : 'Aman') : 'Recollect'}</span>}
+                {l.who !== 'system' && <span className="who">{l.who === 'user' ? ((l.as ?? role) === 'elder' ? 'Gurdev' : 'Aman') : 'Recollect'}</span>}
                 <p className={l.source === 'say' ? 'said' : undefined}>{l.text}</p>
                 {l.who === 'recollect' && l.source && (
                   <span className="provenance mono">{l.source === 'say' ? 'spoken verbatim from tool `say`' : 'model small talk'}</span>
                 )}
                 {l.calls?.map((c, j) => (
-                  <span key={j} className={`call mono ${latencyClass(c.ms)}`}>{c.name}({Object.values(c.args).map((v) => JSON.stringify(v)).join(', ')}) · {c.ms.toFixed(1)} ms</span>
+                  <span key={j} className={`call mono ${latencyClass(toolMs(c))}`}>{c.name}({Object.values(c.args).map((v) => JSON.stringify(v)).join(', ')}) · {timing(c)}</span>
                 ))}
               </li>
             ))}

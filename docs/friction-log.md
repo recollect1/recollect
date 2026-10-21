@@ -228,3 +228,19 @@ five words or with sentence punctuation. Tested.
 280 ms is the network round trip.
 **Fix:** none needed for Alexa+, which calls from AWS. Measured again from inside AWS through the same
 public HTTPS endpoint: passes, worst p95 144 ms. Both results are in the README.
+
+## 30. The worker image did not carry the simulated history (21 Oct)
+**Doing:** recording the demo video against the live deployment.
+**Problem:** the doctor report the worker had just regenerated said "0 questions … 0 of 0 tablets".
+`trends/live.py` merges the simulated daily counts from `data/simulated/markers.json`, but the worker
+Dockerfile copies only `agents/`, so the file was missing in the container and the merge silently
+did nothing. Tests ran from the repo, where the file exists.
+**Fix:** the worker image copies the file. Regenerated report: 309 questions, 320 of 336 tablets.
+
+## 31. Latency chips looked red from India (21 Oct)
+**Doing:** the same recording, with the simulator in India and the server in us-east-1.
+**Problem:** the simulator's latency chips showed 300–1,400 ms in amber and red: round trips
+dominated by the network, while the server itself took 2–30 ms. That would have told viewers the
+tools were slow.
+**Fix:** chips and the strip now show the server's own time (coloured against the budget) next to
+the round trip, both labelled.

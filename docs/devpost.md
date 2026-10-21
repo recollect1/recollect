@@ -1,6 +1,6 @@
 # Devpost draft — Recollect
 
-Draft, 15 Oct. Everything marked **[confirm]** must be true on submission day or be cut. The
+Draft, updated 21 Oct; the AWS facts are now confirmed on the live deployment. The
 human submitting this owns every sentence in it (CLAUDE.md §18.4).
 
 **Track:** Alexa+ · **Mini-challenge:** AWS Builder · **Repo:** https://github.com/recollect1/recollect
@@ -39,9 +39,12 @@ gives the family an honest, early signal to take to a doctor — without ever di
   inside the Alexa+ 500 ms budget.
 - **Background agents** (Python): a **Strands Agents** extract agent on **Amazon Bedrock** turns her
   sentences into people, places and events, validated so every link points at words she actually
-  said; it is packaged for **Bedrock AgentCore Runtime** **[confirm deployed]**. Marker and trend
-  agents compute speech markers and the family card; **Amazon SNS** sends the night alert by SMS
-  **[confirm]**.
+  said. It runs on **Bedrock AgentCore Runtime** with Amazon Nova Pro: a story told on the live
+  deployment reaches the graph in about 8 seconds. Marker and trend agents compute speech markers
+  and the family card. Night-time alerts to the family appear on the family page (SMS through
+  Amazon SNS is built but not switched on).
+- **Deployed on AWS:** one EC2 host (FalkorDB, MCP server, web, worker, HTTPS), AWS access only
+  through IAM roles, secrets in SSM Parameter Store; narration for our video by **Amazon Polly**.
 - **Alexa+ simulator** (React): a real MCP client with a Bedrock Converse tool loop that speaks a
   tool's answer verbatim and throws away the model's own text, a latency strip, a simulated home and
   a live memory-graph panel.
@@ -63,7 +66,7 @@ gives the family an honest, early signal to take to a doctor — without ever di
 ## Accomplishments we're proud of
 
 Nothing she hears about her past is invented. Every tool is fast enough for Alexa+ (slowest p95
-about 10–40 ms locally **[confirm against the deployed URL]**). The family gets a careful, printable
+144 ms against the live deployment, measured from inside AWS). The family gets a careful, printable
 signal instead of an alarm.
 
 ## What we learned
@@ -79,8 +82,8 @@ them (our feature request), and more languages.
 ## Built with
 
 TypeScript · Node.js · Python · Model Context Protocol · MCP Apps · FalkorDB · Hugging Face
-Transformers.js · Amazon Bedrock · Strands Agents · Amazon Bedrock AgentCore **[confirm]** ·
-Amazon SNS **[confirm]** · React · Vite · Railway **[confirm]**
+Transformers.js · Amazon Bedrock · Strands Agents · Amazon Bedrock AgentCore ·
+Amazon EC2 · AWS Systems Manager · Amazon ECR · Amazon Polly · React · Vite · Caddy
 
 ## Notes for the submitter
 

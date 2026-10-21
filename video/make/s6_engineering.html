@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="card.css">
+<style>body{padding:48px 64px} h2{font-size:34px;margin-bottom:16px} table{font-size:19px} td{padding:8px 18px 8px 0} td.v{white-space:nowrap;font-size:22px} .row{gap:36px} img{max-width:470px;max-height:470px} .small{margin-top:20px;font-size:17px}</style>
+<div class="row">
+<div style="flex:1;min-width:0">
+<h2>Measured, not promised</h2>
+<table>
+<tr><td>Slowest tool, p95, live deployment (from inside AWS)</td><td class="v">144 ms</td></tr>
+<tr><td>Alexa+ budget</td><td class="v">500 ms</td></tr>
+<tr><td>Grounding eval: answerable questions, right story quoted</td><td class="v">20 / 20</td></tr>
+<tr><td>Unanswerable questions, "nothing saved"</td><td class="v">10 / 10</td></tr>
+<tr><td>Invented content</td><td class="v">0</td></tr>
+<tr><td>Story → memory graph (AgentCore + Nova Pro)</td><td class="v">≈ 8 s</td></tr>
+</table>
+<p class="small">MCP server · FalkorDB · Strands on Bedrock AgentCore · EC2 · Polly narration</p>
+</div>
+<img src="architecture.png">
+</div>
