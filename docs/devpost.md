@@ -30,6 +30,16 @@ gives the family an honest, early signal to take to a doctor — without ever di
   stories, a two-step consent switch, a printable "This is me" profile for carers, and "delete
   everything".
 
+- **Memory fidelity and family.** Retold stories are compared with her first telling (what stayed,
+  what changed) and a short "tell me about your day" chat sets her recent memory beside her long-ago
+  memory, without ever quizzing or correcting her. Family members add their own memories to her
+  stories (always attributed), leave a message read to her when she asks for them, and get a carer
+  coach built from her own stories. A Memory Lane card replays her best stories with photos and
+  family voices.
+- **Care follow-through.** After a sustained change, Recollect prepares a pre-visit summary,
+  questions for the doctor, a calendar invitation, a printable memory book and a tablet list to
+  check with the pharmacy. The family approves each one; Recollect never books or buys anything.
+
 ## How we built it
 
 - **MCP server** (TypeScript, Streamable HTTP, protocol 2025-11-25): 16 tools, role tokens for
@@ -77,7 +87,9 @@ fixed wording for memories, medicines and trends, and models used only where a m
 ## What's next
 
 A pilot with families and carers (with ethics review), on-device acoustic features if Alexa+ offers
-them (our feature request), and more languages.
+them (our feature request), and her first language: Punjabi and Hindi wording reviewed by native
+speakers, with markers validated per language. Memory Lane on Fire TV in the evening, and Ring telling
+her who is at the door with the who's-who card.
 
 ## Built with
 

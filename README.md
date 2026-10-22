@@ -38,7 +38,7 @@ A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has t
 | Part | State |
 |---|---|
 | `packages/core` — graph port, schema, phrase templates, grounded recall, daily tools, seed | Built, tested |
-| `apps/mcp-server` — Streamable HTTP MCP server, 16 tools, role tokens, MCP Apps cards, family REST, `/api/graph` | Built, tested with a real MCP client |
+| `apps/mcp-server` — Streamable HTTP MCP server, 22 tools, role tokens, MCP Apps cards, family REST, `/api/graph` | Built, tested with a real MCP client |
 | Grounding eval (`pnpm eval:recall`) | Passing, table below |
 | FalkorDB adapter (`FalkorGraph`) | Built; seed and the 35-test core suite pass against FalkorDB (`FALKORDB_URL=redis://localhost:6379 pnpm test`) |
 | Latency test (`pnpm test:latency`) | Passing locally on FalkorDB; deployed run still to do — see [Latency](#latency) |
@@ -53,9 +53,10 @@ A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has t
 | Night reassurance + family alert (`night_reassure`, optional SMS via Amazon SNS) | Built, tested |
 | Live memory graph panel in the simulator | Built |
 | `deploy/` — Dockerfiles for the MCP server, web (simulator + family page, password protected), worker, AgentCore | Deployed on AWS (16 Oct): `deploy/aws/` (Compose + Caddy on one EC2 host), see `docs/deploy-aws.md` |
-| `packages/ui-cards` — MCP Apps cards: story, today, who's-who, trend, photo | Built; served by the MCP server, tested |
+| `packages/ui-cards` — MCP Apps cards: story, today, who's-who, trend, photo, Memory Lane | Built; served by the MCP server, tested |
 | `apps/alexa-sim` — Echo-Show-style simulator: real MCP client, Bedrock Converse loop speaking `say` verbatim, story mode, cards, latency strip, simulated home, demo clock | Built; ran live on Bedrock (Nova Pro, 15 Oct): every demo question picked the right tool and spoke its `say` verbatim |
 | `apps/family` — family page: today, speech changes + doctor report, stories, people, medicines, weekly photo, This is me, two-step consent, delete everything | Built; backend tested in memory and on FalkorDB |
+| Memory fidelity, family memory network, care follow-through, Memory Lane, carer coach (22 Oct, below) | Built and tested in memory (107 JS tests, 51 Python); **not yet on the AWS deployment or in the demo video** |
 
 Picking this up? Start with [docs/handoff.md](docs/handoff.md).
 
@@ -78,6 +79,50 @@ Limits: parts of speech come from word lists and suffix rules, not a tagger, so
 `pronoun_noun_ratio` and `idea_density` are rough; they are only ever compared with the same
 person's earlier values. None of this has been run on real speech, and no marker has clinical
 validity.
+
+## Added on 22 Oct: the memory fidelity engine and family features
+
+Built on the same graph and the same rules (her words only, fixed wording, no model in a tool,
+family-only views never spoken to her).
+
+- **Memory fidelity engine.** When she retells a story, the family page compares it with her first
+  telling: which people, places and things stayed, which dropped out, which are new, a changed year,
+  a possibly swapped name ("Nimmo in her first telling, Jagdish now"). Separately, a two-second
+  "tell me about your day" chat (`talk_about_today`) lets Recollect compare her **recent** memory
+  (did she name who visited, against the visit schedule) with her **long-ago** memory (how rich her
+  old stories are). Recent memory usually fades first in memory loss (Ribot's law). She is never
+  quizzed or corrected: whatever she says, she hears the same thanks. Family tool `memory_fidelity`.
+- **Family memory network.** Family members add their own memory under one of her stories
+  (`share_family_memory`, or the family page). It is stored with its own speaker and always
+  attributed: "Aman told me on …". Recall still prefers her own words. A family member can leave a
+  short **message** that is read to her after "Where is Aman?". The Memory Lane card and the printed
+  memory book include these family voices.
+- **Care follow-through.** When a sustained change card exists, Recollect prepares five steps for
+  the family to approve: a pre-visit summary, questions for the doctor (one per changed marker),
+  a check-up calendar invitation (.ics), a printable book of her stories, and a list of her tablets
+  to check with the pharmacy. **Recollect never books, buys or orders anything**; it prepares, the
+  family decides. Family tool `care_follow_through`, routes `/report/care-calendar.ics` and
+  `/report/memory-book`.
+- **Memory Lane** (`memory_lane`, MCP Apps card `ui://recollect/lane-card`): a slow slideshow of
+  her richest stories in her own words, with a photo where one depicts the story, a family voice,
+  a gentle "Would you tell me more about …?" and her music from the profile.
+- **Carer coach** (`carer_coach`, family page "When things are hard"): reviewed guidance for asking
+  for a parent, wanting to go out, repeated questions and evenings, each with a way in from her own
+  stories (her actual sentence and date) and what calms her from the profile. Night alerts on the
+  family page show the "going out" tip.
+
+## Vision (not built)
+
+- **Her first language.** Gurdev would most naturally speak Punjabi or Hindi. The spec keeps this
+  build English-only (§1.10): every sentence she hears is fixed, reviewed wording, and the speech
+  markers are tuned on English. Next step: Punjabi and Hindi phrase files reviewed by native
+  speakers and carers, and markers validated per language before any trend is shown.
+- **Fire TV:** Memory Lane on the living-room screen in the evening routine, the family's photos
+  large, her words as captions.
+- **Ring:** when the doorbell rings, "That's Harpreet, your helper. She comes every morning", using
+  the who's-who card, so a visitor is never a stranger.
+- **Real voice messages** from family (today they are short text, read aloud), a village map in
+  Memory Lane, and pharmacy and clinic integrations that still need a family member's approval.
 
 ## Setup
 

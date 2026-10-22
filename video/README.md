@@ -1,5 +1,8 @@
 # Demo video
 
+> Made on 21 Oct, before the 22 Oct features (memory fidelity, family memories, care
+> follow-through, Memory Lane, carer coach). Those are not in this cut.
+
 `recollect-demo.mp4` (2 min 47 s, 1280×720) is not committed; it was made on 21 Oct 2026 with the
 scripts in `make/` and is to be uploaded publicly for the submission.
 

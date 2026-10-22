@@ -33,6 +33,8 @@ const DEBUG_CALLS: { role: Role; name: string; args: Record<string, unknown>; la
   { role: 'elder', name: 'photo_moment', args: {}, label: 'photo_moment' },
   { role: 'elder', name: 'night_reassure', args: { text: 'I need to go to the market' }, label: 'night: go to the market' },
   { role: 'elder', name: 'story_prompt', args: {}, label: 'story_prompt' },
+  { role: 'elder', name: 'memory_lane', args: {}, label: 'memory_lane' },
+  { role: 'elder', name: 'talk_about_today', args: {}, label: 'talk_about_today' },
   { role: 'family', name: 'speech_trend', args: {}, label: 'speech_trend (family)' },
 ];
 

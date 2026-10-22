@@ -39,6 +39,13 @@ pnpm dev                             # MCP :8787 · simulator :5173 · family :5
 Tests: `pnpm test` (83), `(cd agents && uv run pytest)` (51), `pnpm eval:recall`, `pnpm test:latency`.
 Without Docker, leave `FALKORDB_URL` empty: everything but the worker runs on an in-memory graph.
 
+## 22 Oct: new features on branch `yash-ideas` (not pushed)
+
+Memory fidelity engine, family memory network (shared memories, messages), care follow-through
+(approve-only), Memory Lane card, carer coach; see the README section "Added on 22 Oct". Tested in
+memory only. Merging to `main` and pushing redeploys AWS (the deploy pulls from GitHub); after that,
+re-seed and click through the family page's new sections. The demo video predates these features.
+
 ## Left to do (all need a person)
 
 1. **Microphone test** in Chrome on the deployed site: push-to-talk, story mode, full-voice recording

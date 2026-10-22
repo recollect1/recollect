@@ -720,3 +720,21 @@ Recorded as the code was written. Each has a friction-log entry where one applie
   so a local simulator, family page or Claude Desktop can use the deployment directly.
 - **Demo video (21 Oct)** made from real calls to the deployment: `video/README.md`.
 - **Handoff:** `docs/handoff.md` lists what to run first on a machine with Docker.
+- **22 Oct features (branch `yash-ideas`).** Beyond the original spec, all with fixed wording and no
+  model in a tool:
+  - *Memory fidelity* (`packages/core/src/fidelity.ts`, family tool `memory_fidelity`): retellings vs.
+    first telling by `storyKey`/RETELLS (kept, dropped, added entities, changed years, possible
+    person swaps). `talk_about_today` (elder) saves a `daily` session (excluded from recall) and, with
+    tracking on and a visit due, a `RecentRecall{expected, mentioned, matched}`; she always hears
+    `todayChatThanks`. `recentVsOld` sets 28 days of those beside entities per old story, with
+    `RIBOT_NOTE` and `NOT_MEDICAL`. Simulated day chats are seeded (`loadSimulatedDayChats`).
+  - *Family memory network* (`network.ts`): Session mode `family` with the family member as speaker,
+    `ABOUT` her story; recall prefers her own quotes and attributes others with `fromFamilyWords`.
+    `FamilyMessage` (≤ 200 chars, text) is appended to `where_is` via `messageFrom`.
+  - *Care follow-through* (`care.ts`, `care_follow_through`): five `CareAction`s per change card,
+    proposed until the family approves; `.ics` only after the appointment step is approved;
+    `/report/memory-book`. Never books, buys or orders; tablet step lists schedules only (§1.5).
+  - *Memory Lane* (`lane.ts`, `memory_lane`, `ui://recollect/lane-card`) and *carer coach*
+    (`coach.ts`, `carer_coach`; `COACH` guidance in `phrases.ts`).
+  - *First language* (Punjabi/Hindi) stays out of scope (§1.10): documented as future work only.
+  - Doctor questions per metric live in `trend-phrases.json` (`question`, `doctorQuestionsIntro`).
