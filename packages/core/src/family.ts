@@ -139,7 +139,7 @@ export async function changeConsent(ctx: Ctx, change: ConsentChange): Promise<Co
  */
 export const PERSONAL_LABELS = [
   "Session", "Quote", "Entity", "StoryPrompt", "MarkerSet", "Baseline", "TrendFlag", "TrendCard",
-  "AskEvent", "DoseEvent", "RoutineEvent", "WeeklyPhoto", "Job", "FamilyAlert",
+  "AskEvent", "DoseEvent", "RoutineEvent", "WeeklyPhoto", "Job", "FamilyAlert", "RecentRecall", "CareAction",
 ] as const;
 
 export async function deleteEverything(ctx: Ctx): Promise<{ removed: number }> {

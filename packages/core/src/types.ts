@@ -12,6 +12,8 @@ export interface Person {
 export interface Session {
   id: string; startedAt: string; speakerId: string; mode: SessionMode;
   private: boolean; hasAudio: boolean; storyKey?: string;
+  /** Family memory network: the story of hers that a family member's memory is about. */
+  aboutSessionId?: string;
 }
 export interface Quote {
   id: string; text: string; speakerId: string; saidAt: string; sessionId: string;
@@ -44,6 +46,22 @@ export interface FamilyAlert {
 export interface MarkerSet {
   id: string; sessionId: string; computedAt: string; mode: SessionMode; simulated: boolean;
   retold?: boolean; [metric: string]: unknown;
+}
+/** A short message a family member leaves her; read out when she asks where they are. */
+export interface FamilyMessage { id: string; personId: string; text: string; at: string }
+/**
+ * Memory Fidelity Engine: one "tell me about your day" chat, compared silently with who actually
+ * visited or called. Never shown or said to her; family view only, and only while tracking is on.
+ */
+export interface RecentRecall {
+  id: string; at: string; sessionId?: string; expected: string[]; mentioned: string[];
+  matched: boolean; simulated: boolean;
+}
+/** Care follow-through: one step Recollect prepares when a change card appears. Never acted on alone. */
+export interface CareAction {
+  id: string; planId: string; trendCardId: string; kind: "summary" | "questions" | "appointment" | "memory_book" | "tablet_check";
+  order: number; title: string; detail: string; items: string[]; status: "proposed" | "approved" | "dismissed";
+  createdAt: string; decidedAt?: string; simulated: boolean;
 }
 // Written by the trends agent (§9.3); read, never computed, by the speech_trend tool.
 export interface TrendCard {

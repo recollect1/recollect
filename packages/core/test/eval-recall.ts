@@ -7,14 +7,18 @@ import { MemoryGraph } from "../src/graph.ts";
 import { nothingRecorded } from "../src/phrases.ts";
 import { recall } from "../src/recall.ts";
 import { createReranker } from "../src/rerank.ts";
-import { STORIES } from "../src/seed/data.ts";
+import { FAMILY_MEMORIES, RETELLINGS, STORIES } from "../src/seed/data.ts";
 import { seed } from "../src/seed/index.ts";
 import { RETELL_MIN_SIMILARITY } from "../src/stories.ts";
 import { systemClock } from "../src/time.ts";
 import { HELD_OUT, QUESTIONS } from "./eval-questions.ts";
 
 const ctx = await seed(new MemoryGraph(), systemClock, await createEmbedder(), await createReranker());
-const stories = new Map(STORIES.map((s) => [s.key, s.text]));
+// Every stored telling of each story: her own (and her retellings), and family members' memories of it.
+const stories = new Map<string, string[]>();
+for (const s of STORIES) stories.set(s.key, [s.text]);
+for (const r of RETELLINGS) stories.get(r.retellOf)?.push(r.text);
+for (const m of FAMILY_MEMORIES) stories.get(m.about)?.push(m.text);
 const NOTHING = "nothingRecorded";
 const times: number[] = [];
 
@@ -31,7 +35,7 @@ async function run(title: string, questions: [string, string | null][]) {
     const got = r.found ? (r.quotes[0]?.storyKey ?? "?") : null;
     const spoken = r.quotes.map((x) => x.text).join(" ");
     // Invented content = anything spoken that is not an exact passage of a stored story.
-    const verbatim = r.found ? Boolean(got && stories.get(got)?.includes(spoken)) : r.say === nothingRecorded("that");
+    const verbatim = r.found ? Boolean(got && stories.get(got)?.some((t) => t.includes(spoken))) : r.say === nothingRecorded("that");
     if (!verbatim) invented++;
     if (got === want) want ? right++ : refused++;
     const rel = [r.direct, r.masked].map((x) => (x === undefined ? "–" : x.toFixed(1))).join(" / ");

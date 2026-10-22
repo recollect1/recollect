@@ -95,7 +95,7 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
     async ({ question }) => {
       const r = await recall(ctx, question, role);
       if (role === "elder") background(() => logAsk(ctx, "recall", question));
-      return { say: r.say, found: r.found, quotes: r.quotes, speaker: ctx.elder.name };
+      return { say: r.say, found: r.found, quotes: r.quotes, speaker: r.speaker ?? ctx.elder.name };
     }, "story");
 
   tool("whats_today", ["elder"],

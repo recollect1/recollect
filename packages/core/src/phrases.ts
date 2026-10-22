@@ -81,6 +81,26 @@ export const photoThanks = () => "Thank you, I loved hearing that.";
 export const photoLater = () => "Alright, we can look at it another time.";
 export const noPhotoYet = (admin: string) => `There's no photo chosen yet. ${admin} can pick one for us.`;
 
+// --- family memory network ---
+/** A family member's own memory, quoted verbatim and always attributed. */
+export const fromFamilyWords = (quote: string, speakerName: string, date: string) =>
+  `${speakerName} told me on ${date}: "${quote}"`;
+export const familyMemorySaved = (elderName: string) => `Thank you. I've kept your memory with ${elderName}'s stories.`;
+/** Read after where_is; the same words every time until the family changes the message. */
+export const messageFrom = (name: string, text: string) => `${name} left you a message: "${text}"`;
+export const messageSaved = (elderName: string) => `Saved. ${elderName} will hear it when she asks where you are.`;
+
+// --- memory fidelity: a chat about her day, never a quiz ---
+export const todayChatPrompt = (name: string) => `${name}, tell me about your day. Did anyone come to see you?`;
+/** Identical whatever she says: it never confirms, corrects or hints at the right answer (§1.4). */
+export const todayChatThanks = () => "Thank you for telling me about your day.";
+
+// --- Memory Lane ---
+export const memoryLaneIntro = (name: string) =>
+  `${name}, shall we look through some of your memories together? There's no right or wrong answer.`;
+export const memoryLanePrompt = (topic: string) => `Would you tell me more about ${topic}?`;
+export const memoryLaneEmpty = () => "There are no stories to look through yet. Would you like to tell me one?";
+
 // --- family only: never spoken to the elder ---
 export const CHANGE_PHRASES: Record<string, string> = Object.fromEntries(
   Object.entries(trend.metrics).map(([metric, m]) => [metric, m.phrase]));
@@ -109,3 +129,58 @@ export const familySummary = (name: string, taken: number, due: number, stories:
 export const repeatLine = (label: string, count: number) => `${label} (asked ${count} times today)`;
 export const thisIsMeReady = (name: string) => `Here is ${name}'s "This is me" page, ready to print.`;
 export const thisIsMeMissing = (name: string) => `${name}'s "This is me" page hasn't been written yet.`;
+
+// --- family only: memory fidelity ---
+export const RIBOT_NOTE =
+  "In memory loss, recent memories often fade before old ones. Recollect compares her only with herself.";
+export const recentVsOld = (name: string, named: number, chats: number, perStory: number) =>
+  `In the last four weeks, ${name} named who had visited or called in ${named} of ${chats} chats about her day, ` +
+  `while her stories from long ago name about ${perStory} people, places and things each. ${RIBOT_NOTE} ${NOT_MEDICAL}`;
+export const recentNotReady = (name: string) =>
+  `Recollect has not had enough chats with ${name} about her day to compare recent and long-ago memories yet.`;
+export const retellSummary = (name: string, kept: number, total: number) =>
+  `When ${name} told this story again, ${kept} of ${total} details from her earlier telling were the same.`;
+
+// --- family only: carer coach (fixed, reviewed wording; the starter quotes her own stories) ---
+export const coachStarter = (topic: string, quote: string, date: string) =>
+  `Ask her about ${topic}. She told Recollect on ${date}: "${quote}"`;
+export const COACH: Record<string, { title: string; guidance: string }> = {
+  parent: {
+    title: "When she asks for her mother or father",
+    guidance: "Don't correct her or tell her they have died; that can feel like hearing it for the first time. " +
+      "Ask about them instead, and stay with the feeling she is showing.",
+  },
+  going_out: {
+    title: "When she wants to go out or go home",
+    guidance: "Agree calmly, then offer something first: tea, a short walk in the courtyard, or a story. " +
+      "Arguing about whether she can go usually makes it harder.",
+  },
+  repeats: {
+    title: "When she asks the same thing again",
+    guidance: "Answer as if it were the first time, in the same calm words. Recollect does the same.",
+  },
+  evening: {
+    title: "In the late afternoon and evening",
+    guidance: "Keep the room bright and quiet, slow down, and offer something familiar from her profile.",
+  },
+};
+
+// --- family only: care follow-through (prepared for approval; Recollect never books or buys) ---
+export const CARE_TITLES = {
+  summary: "Pre-visit summary for her doctor",
+  questions: "Questions to ask at the check-up",
+  appointment: "Book a check-up in the next two weeks",
+  memory_book: "A printed book of her stories",
+  tablet_check: "Check her tablets will last until the visit",
+} as const;
+export const careSummary = (name: string, trendSay: string, sessions: number, weeks: number) =>
+  `${trendSay} Based on ${sessions} everyday conversations over ${weeks} weeks. The doctor report has the charts.`;
+export const careAppointment = (name: string) =>
+  `Recollect has prepared a calendar invitation for a check-up for ${name}. Choose a time with her doctor's surgery, ` +
+  `then add it to your calendar. Recollect does not book appointments itself.`;
+export const careMemoryBook = (name: string, stories: number) =>
+  `A printable book of ${stories} of ${name}'s stories, in her own words, for the family and her carers. ` +
+  `Print it at home or send the file to a print shop; Recollect does not place orders.`;
+export const careTabletCheck = (admin: string) =>
+  `Before the visit, check with the pharmacy that her regular tablets will last until then. ` +
+  `Recollect lists them below; ${admin} or the pharmacy decides everything about them.`;

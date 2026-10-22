@@ -3,10 +3,13 @@
 import type { Ctx } from "./ctx.ts";
 import { cosine } from "./embed.ts";
 import type { Graph } from "./graph.ts";
-import { fromTheirWords, nothingRecorded } from "./phrases.ts";
+import { fromFamilyWords, fromTheirWords, nothingRecorded } from "./phrases.ts";
 import { normalise, wordCount } from "./text.ts";
 import { fmtDate } from "./time.ts";
-import type { Entity, EntityKind, Quote, Session } from "./types.ts";
+import type { Entity, EntityKind, Person, Quote, Session } from "./types.ts";
+
+/** Sessions recall answers from: her life stories, and family members' memories of them. */
+const RECALLED_MODES = new Set(["story", "family"]);
 
 export const MAX_ANSWER_WORDS = 45;
 const TOP_K = 8;
@@ -31,6 +34,7 @@ const PRONOUN: Record<EntityKind, string> = { person: "they", place: "there", ev
 export class RecallIndex {
   private quotes = new Map<string, IndexedQuote>();
   private aliases: { alias: string; entityId: string; mask: RegExp; pronoun: string }[] = [];
+  private names = new Map<string, string>();
 
   async load(graph: Graph): Promise<void> {
     const sessions = new Map((await graph.find<Session>("Session")).map((s) => [s.id, s]));
@@ -38,12 +42,13 @@ export class RecallIndex {
     const bySession = new Map<string, Set<string>>();
     for (const q of await graph.find<Quote>("Quote")) {
       const s = sessions.get(q.sessionId);
-      // Weekly photo descriptions are a marker series, not life stories.
-      if (!s || s.mode === "photo_desc" || !q.embedding) continue;
+      // Weekly photo descriptions and chats about her day are marker series, not life stories.
+      if (!s || !RECALLED_MODES.has(s.mode) || !q.embedding) continue;
       let storyEntityIds = bySession.get(q.sessionId);
       if (!storyEntityIds) bySession.set(q.sessionId, (storyEntityIds = new Set()));
       quotes.set(q.id, { ...q, entityIds: new Set(), storyEntityIds, storyKey: s.storyKey });
     }
+    this.names = new Map((await graph.find<Person>("Person")).map((p) => [p.id, p.name]));
     const aliases: RecallIndex["aliases"] = [];
     for (const e of await graph.find<Entity>("Entity")) {
       for (const a of [e.name, ...e.aliases]) {
@@ -85,12 +90,15 @@ export class RecallIndex {
 
   all(): IndexedQuote[] { return [...this.quotes.values()]; }
   get(id: string): IndexedQuote | undefined { return this.quotes.get(id); }
+  speakerName(id: string): string { return this.names.get(id) ?? ""; }
   get size(): number { return this.quotes.size; }
 }
 
 export interface RecalledQuote { id: string; text: string; saidAt: string; date: string; sessionId: string; storyKey?: string }
 export interface RecallResult {
   say: string; found: boolean; quotes: RecalledQuote[];
+  /** Who said the quoted words: her, or a family member (family memory network). */
+  speaker?: string;
   /** Best §11 score, and the relevance logits behind the decision (for the eval table). */
   score: number; direct?: number; masked?: number;
 }
@@ -131,9 +139,11 @@ export async function recall(ctx: Ctx, question: string, role: "elder" | "family
   const bestMasked = masked.length ? Math.max(...masked) : undefined;
   if (bestDirect < directMin() && (bestMasked === undefined || bestMasked < maskedMin()))
     return nothing(top.score, bestDirect, bestMasked);
-  let pick = 0;
   const rel = (i: number) => Math.max(direct[i] ?? -Infinity, masked[i] ?? -Infinity);
-  for (let i = 1; i < candidates.length; i++) if (rel(i) > rel(pick)) pick = i;
+  const answers = (i: number) => (direct[i] ?? -Infinity) >= directMin() || (masked[i] ?? -Infinity) >= maskedMin();
+  // Her own words first: a family member's memory is quoted only when none of hers answers.
+  const order = candidates.map((_, i) => i).sort((a, b) => rel(b) - rel(a));
+  const pick = order.find((i) => answers(i) && candidates[i]!.q.speakerId === elder.id) ?? order[0]!;
   const best = (candidates[pick] ?? top).q;
 
   // Step 6: 1–2 quotes, at most 45 words, whole sentences only, copied verbatim. The second quote
@@ -143,9 +153,13 @@ export async function recall(ctx: Ctx, question: string, role: "elder" | "family
   if (next && wordCount(best.text) + wordCount(next.text) <= MAX_ANSWER_WORDS) picked.push(next);
 
   const date = fmtDate(new Date(best.saidAt), household.tz);
-  const say = fromTheirWords(picked.map((q) => q.text).join(" "), elder.name, date, role);
+  const text = picked.map((q) => q.text).join(" ");
+  const speaker = best.speakerId === elder.id ? elder.name : index.speakerName(best.speakerId) || "Someone";
+  const say = best.speakerId === elder.id || role === "family"
+    ? fromTheirWords(text, speaker, date, role)
+    : fromFamilyWords(text, speaker, date);
   return {
-    say, found: true, score: top.score, direct: bestDirect, ...(bestMasked === undefined ? {} : { masked: bestMasked }),
+    say, found: true, speaker, score: top.score, direct: bestDirect, ...(bestMasked === undefined ? {} : { masked: bestMasked }),
     quotes: picked.map((q) => ({
       id: q.id, text: q.text, saidAt: q.saidAt, date, sessionId: q.sessionId, storyKey: q.storyKey,
     })),

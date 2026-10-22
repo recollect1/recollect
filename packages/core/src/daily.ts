@@ -6,7 +6,7 @@ import { newId, normalise } from "./text.ts";
 import { fmtHHMM, fmtTime, isoWeek, localAt, localDayBounds, localParts, minutesOfDay, parseHHMM } from "./time.ts";
 import type {
   AskEvent, AskIntent, Consent, Device, DoseEvent, Entity, Medicine, Person, Profile, RoutineEvent,
-  Schedule, Session, TrendCard, Visit, WeeklyPhoto,
+  Schedule, Session, TrendCard, Visit, WeeklyPhoto, FamilyMessage,
 } from "./types.ts";
 
 /** How long before a slot's time a dose still counts towards that slot. */
@@ -134,18 +134,25 @@ export async function whatsToday(ctx: Ctx): Promise<{ say: string; card: TodayCa
 
 // ---------- people ----------
 
-async function findPerson(ctx: Ctx, spoken: string): Promise<Person | undefined> {
+export async function findPerson(ctx: Ctx, spoken: string): Promise<Person | undefined> {
   const want = normalise(spoken.replace(/\b(my|the|our)\b/gi, " ")).trim();
   if (!want) return undefined;
   const people = (await ctx.graph.find<Person>("Person")).filter((p) => p.id !== ctx.elder.id);
   return people.find((p) => [p.name, p.relation, ...p.aliases].some((a) => normalise(a).trim() === want));
 }
 
-export async function whereIs(ctx: Ctx, spoken: string): Promise<{ say: string; person?: string }> {
+export async function whereIs(ctx: Ctx, spoken: string): Promise<{ say: string; person?: string; message?: string }> {
   const person = await findPerson(ctx, spoken);
   await logAsk(ctx, "where_is", person?.name ?? spoken);
   if (!person?.statusLine) return { say: P.whoIsUnknown(ctx.admin.name) };
-  return { say: P.personStatus(person.name, person.statusLine), person: person.name };
+  const status = P.personStatus(person.name, person.statusLine);
+  // A message the family left her is read after the status line, the same way every time.
+  const message = (await ctx.graph.find<FamilyMessage>("FamilyMessage", { personId: person.id }))
+    .sort((a, b) => (a.at < b.at ? 1 : -1))[0];
+  return {
+    say: message ? `${status} ${P.messageFrom(person.name, message.text)}` : status, person: person.name,
+    ...(message ? { message: message.text } : {}),
+  };
 }
 
 export interface WhoCard { name: string; relationToElder: string; statusLine?: string; photoUrl?: string }

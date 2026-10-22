@@ -11,9 +11,11 @@ import { hasSpan } from "../text.ts";
 import type { Clock } from "../time.ts";
 import type { Quote } from "../types.ts";
 import {
-  CONSENT, DEVICES, ENTITIES, HOUSEHOLD, MEDICINES, PEOPLE, PHOTOS, PROFILE, SAME_AS, SCHEDULES,
-  STORIES, VISITS, WEEKLY_PHOTO_ID,
+  CONSENT, DEVICES, ENTITIES, FAMILY_MEMORIES, HOUSEHOLD, MEDICINES, PEOPLE, PHOTOS, PROFILE, RETELLINGS, SAME_AS,
+  SCHEDULES, SIMULATED_DAY_CHATS, STORIES, VISITS, WEEKLY_PHOTO_ID, type SeedStory,
 } from "./data.ts";
+import { shareFamilyMemory } from "../network.ts";
+import type { RecentRecall } from "../types.ts";
 
 /** Output of `python -m synth` and `python -m trends`: the SIMULATED 12-week history (§12). */
 const SIMULATED = new URL("../../../../data/simulated/", import.meta.url);
@@ -67,19 +69,37 @@ export async function seed(
 
   const ctx = await loadCtx(graph, clock, embedder, reranker, HOUSEHOLD.id);
   const mentioned = new Map<string, number>();
-  for (const story of STORIES) {
-    if (opts.skipStories?.includes(story.key)) continue;
+  const linkMentions = async (sessionId: string, mentions: [string, string][], count: boolean) => {
+    const quotes = (await graph.out<Quote>(["Session", sessionId], "HAS_QUOTE")).map((n) => n.node);
+    for (const [span, entityId] of mentions) {
+      for (const q of quotes.filter((q) => hasSpan(q.text, span))) {
+        await graph.link(["Quote", q.id], "MENTIONS", ["Entity", entityId], { span });
+        if (count) mentioned.set(entityId, (mentioned.get(entityId) ?? 0) + 1);
+      }
+    }
+  };
+  const sessionOf = new Map<string, string>();
+  // Stories first, then retellings, which share the story key of the story they retell.
+  const tellings: (SeedStory & { retellOf?: string })[] = [...STORIES, ...RETELLINGS];
+  for (const story of tellings) {
+    const storyKey = story.retellOf ?? story.key;
+    if (opts.skipStories?.includes(storyKey)) continue;
     // Told at 11:00 household time on the story's date.
     const at = new Date(`${story.toldOn}T05:30:00.000Z`);
     // Seeded stories carry hand-written mentions, so the extract worker must never redo them.
-    const { sessionId } = await rememberStory(ctx, { text: story.text, at, storyKey: story.key, queued: false });
-    const quotes = (await graph.out<Quote>(["Session", sessionId], "HAS_QUOTE")).map((n) => n.node);
-    for (const [span, entityId] of story.mentions) {
-      for (const q of quotes.filter((q) => hasSpan(q.text, span))) {
-        await graph.link(["Quote", q.id], "MENTIONS", ["Entity", entityId], { span });
-        mentioned.set(entityId, (mentioned.get(entityId) ?? 0) + 1);
-      }
-    }
+    const { sessionId } = await rememberStory(ctx, { text: story.text, at, storyKey, queued: false });
+    if (!sessionOf.has(storyKey)) sessionOf.set(storyKey, sessionId);
+    await linkMentions(sessionId, story.mentions, !story.retellOf);
+    await processSession(ctx, sessionId);
+  }
+  // Family memory network: family members' own memories, linked to her stories.
+  for (const m of FAMILY_MEMORIES) {
+    const about = sessionOf.get(m.about);
+    if (!about) continue;
+    const { sessionId } = await shareFamilyMemory(ctx, {
+      personId: m.personId, text: m.text, aboutSessionId: about, at: new Date(`${m.toldOn}T13:30:00.000Z`), queued: false,
+    });
+    await linkMentions(sessionId, m.mentions, false);
     await processSession(ctx, sessionId);
   }
   // One open story prompt: a person she has named in only one story (§9.1 step 4).
@@ -90,6 +110,26 @@ export async function seed(
     });
   }
   await loadSimulated(graph);
+  await loadSimulatedDayChats(graph);
   await ctx.index.load(graph);
   return ctx;
+}
+
+/** SIMULATED day chats (labelled so) for the recent-vs-long-ago view of the Memory Fidelity Engine. */
+export async function loadSimulatedDayChats(graph: Graph): Promise<number> {
+  const start = new Date(`${SIMULATED_DAY_CHATS.start}T12:30:00.000Z`); // Monday, 18:00 household time
+  let n = 0;
+  for (const [week, named] of SIMULATED_DAY_CHATS.namedPerWeek.entries()) {
+    for (const [i, offset] of [0, 2, 4].entries()) {
+      const at = new Date(start.getTime() + (week * 7 + offset) * 86400000).toISOString();
+      const matched = i < named;
+      const record: RecentRecall = {
+        id: `rr-sim-w${String(week + 1).padStart(2, "0")}-${i + 1}`, at, simulated: true,
+        expected: ["Harpreet"], mentioned: matched ? ["Harpreet"] : [], matched,
+      };
+      await graph.upsert("RecentRecall", { ...record });
+      n++;
+    }
+  }
+  return n;
 }

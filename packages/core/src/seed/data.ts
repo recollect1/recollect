@@ -181,3 +181,35 @@ export const CONSENT: Consent = {
   id: "c-gurdev", personId: "p-gurdev", trackingOn: true, fullVoiceOn: false,
   byElderAt: "2026-07-18T05:30:00.000Z", byFamilyAt: "2026-07-18T05:35:00.000Z",
 };
+
+/**
+ * Memory Fidelity Engine demo: the well story told again six weeks later. The details drift the way
+ * retellings do: her sister Nimmo has become her brother Jagdish, and her father and the hook are gone.
+ * Nothing is ever said to her about it; only the family view compares the two tellings.
+ */
+export const RETELLINGS: (SeedStory & { retellOf: string })[] = [
+  {
+    key: "well-retold", retellOf: "well", title: "The village well, told again", toldOn: "2026-09-28",
+    text: "In Rampur we had one well for the whole village. Every morning I went there with my brother " +
+      "Jagdish to fill the brass pots. The rope was very rough. Once Jagdish dropped the bucket into the " +
+      "well and we both ran away. Nobody could get it out for two days.",
+    mentions: [["Rampur", "e-rampur"], ["well", "e-well"], ["Jagdish", "e-jagdish"]],
+  },
+];
+
+/** Family memory network demo: Aman's own memory of his grandmother's saag, linked to her story. */
+export const FAMILY_MEMORIES: { personId: string; about: string; toldOn: string; text: string; mentions: [string, string][] }[] = [
+  {
+    personId: "p-aman", about: "saag", toldOn: "2026-09-20",
+    text: "Every winter Biji made saag for all of us. I still remember the white butter melting on top, " +
+      "and how she would not let anyone else stir the pot.",
+    mentions: [["saag", "e-saag"]],
+  },
+];
+
+/**
+ * SIMULATED "tell me about your day" chats for the recent-vs-long-ago view: three a week (Monday,
+ * Wednesday, Friday evenings) over the same 12 weeks as the simulated speech history; how many of
+ * each week's three chats named the helper who had visited that morning.
+ */
+export const SIMULATED_DAY_CHATS = { start: "2026-07-20", namedPerWeek: [3, 3, 2, 3, 3, 3, 2, 2, 2, 1, 1, 1] };

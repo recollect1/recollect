@@ -1,8 +1,14 @@
 {
   "notMedical": "This is not a medical assessment.",
   "bannedClaims": [
-    "diagnos", "dementia detected", "alzheimer's detected", "you have", "signs of dementia",
-    "risk score", "cognitive decline detected", "screening result"
+    "diagnos",
+    "dementia detected",
+    "alzheimer's detected",
+    "you have",
+    "signs of dementia",
+    "risk score",
+    "cognitive decline detected",
+    "screening result"
   ],
   "templates": {
     "trendStable": "{name}'s speech has stayed close to their usual pattern over the last {weeks} weeks. {notMedical}",
@@ -11,21 +17,102 @@
     "storyPromptFor": "You mentioned {entity}. Would you like to tell me more?"
   },
   "metrics": {
-    "mean_pause_s": { "phrase": "pauses longer", "worse": "up", "label": "Mean pause length (seconds)" },
-    "pause_rate": { "phrase": "pauses more often", "worse": "up", "label": "Pauses per minute of speech" },
-    "long_pause_rate": { "phrase": "has more long pauses", "worse": "up", "label": "Pauses of 2 seconds or more per minute" },
-    "phonation_ratio": { "phrase": "spends less of the time speaking", "worse": "down", "label": "Share of the time spent speaking" },
-    "speech_rate_wpm": { "phrase": "speaks more slowly", "worse": "down", "label": "Speech rate (words per minute)" },
-    "mattr": { "phrase": "uses fewer different words", "worse": "down", "label": "Vocabulary variety (moving type-token ratio)" },
-    "vague_rate": { "phrase": "uses more vague words", "worse": "up", "label": "Vague words per 100 words" },
-    "pronoun_noun_ratio": { "phrase": "uses more pronouns in place of names", "worse": "up", "label": "Pronouns per noun" },
-    "mean_utt_len": { "phrase": "speaks in shorter sentences", "worse": "down", "label": "Words per sentence" },
-    "idea_density": { "phrase": "packs less detail into each sentence", "worse": "down", "label": "Idea density (per 10 words)" },
-    "self_corrections": { "phrase": "corrects themselves more often", "worse": "up", "label": "Self-corrections per 100 words" },
-    "named_recall": { "phrase": "names familiar people less often", "worse": "down", "label": "Familiar people and places referred to by name (share)" },
-    "retell_rate": { "phrase": "retells the same stories more often", "worse": "up", "label": "Stories that repeat an earlier one (share per week)" },
-    "new_entity_rate": { "phrase": "brings up fewer new people and places", "worse": "down", "label": "New people, places and events per story" },
-    "orientation_asks": { "phrase": "asks about the day, people and tablets more often", "worse": "up", "label": "Orientation questions per day" },
-    "evening_orientation_share": { "phrase": "asks more of those questions in the evening", "worse": "up", "label": "Share of orientation questions asked 16:00–22:00" }
-  }
+    "mean_pause_s": {
+      "phrase": "pauses longer",
+      "worse": "up",
+      "label": "Mean pause length (seconds)",
+      "question": "Her pauses in conversation have grown longer over several weeks. Is that worth looking into?"
+    },
+    "pause_rate": {
+      "phrase": "pauses more often",
+      "worse": "up",
+      "label": "Pauses per minute of speech",
+      "question": "She pauses more often mid-sentence than she used to. Could anything be contributing to that?"
+    },
+    "long_pause_rate": {
+      "phrase": "has more long pauses",
+      "worse": "up",
+      "label": "Pauses of 2 seconds or more per minute",
+      "question": "She has more long pauses when she talks. Is that worth looking into?"
+    },
+    "phonation_ratio": {
+      "phrase": "spends less of the time speaking",
+      "worse": "down",
+      "label": "Share of the time spent speaking",
+      "question": "She spends less of the time speaking during a conversation. Could tiredness or hearing play a part?"
+    },
+    "speech_rate_wpm": {
+      "phrase": "speaks more slowly",
+      "worse": "down",
+      "label": "Speech rate (words per minute)",
+      "question": "She speaks more slowly than she used to. Could any of her medicines or her sleep affect this?"
+    },
+    "mattr": {
+      "phrase": "uses fewer different words",
+      "worse": "down",
+      "label": "Vocabulary variety (moving type-token ratio)",
+      "question": "She uses a narrower range of words than a few months ago. Is that worth looking into?"
+    },
+    "vague_rate": {
+      "phrase": "uses more vague words",
+      "worse": "up",
+      "label": "Vague words per 100 words",
+      "question": "She uses words like 'thing' and 'stuff' more often. Is that worth looking into?"
+    },
+    "pronoun_noun_ratio": {
+      "phrase": "uses more pronouns in place of names",
+      "worse": "up",
+      "label": "Pronouns per noun",
+      "question": "She says 'he' or 'she' more often where she used to say a name. Is that worth looking into?"
+    },
+    "mean_utt_len": {
+      "phrase": "speaks in shorter sentences",
+      "worse": "down",
+      "label": "Words per sentence",
+      "question": "Her sentences have become shorter. Could anything be contributing to that?"
+    },
+    "idea_density": {
+      "phrase": "packs less detail into each sentence",
+      "worse": "down",
+      "label": "Idea density (per 10 words)",
+      "question": "Her sentences carry less detail than before. Is that worth looking into?"
+    },
+    "self_corrections": {
+      "phrase": "corrects themselves more often",
+      "worse": "up",
+      "label": "Self-corrections per 100 words",
+      "question": "She corrects herself more often while talking. Is that worth looking into?"
+    },
+    "named_recall": {
+      "phrase": "names familiar people less often",
+      "worse": "down",
+      "label": "Familiar people and places referred to by name (share)",
+      "question": "She names familiar people and places less often. Is that worth looking into?"
+    },
+    "retell_rate": {
+      "phrase": "retells the same stories more often",
+      "worse": "up",
+      "label": "Stories that repeat an earlier one (share per week)",
+      "question": "She retells the same stories more often. Is that worth looking into?"
+    },
+    "new_entity_rate": {
+      "phrase": "brings up fewer new people and places",
+      "worse": "down",
+      "label": "New people, places and events per story",
+      "question": "Her stories bring up fewer new people and places. Is that worth looking into?"
+    },
+    "orientation_asks": {
+      "phrase": "asks about the day, people and tablets more often",
+      "worse": "up",
+      "label": "Orientation questions per day",
+      "question": "She asks about the day, people and her tablets more often. What would help her day feel more settled?"
+    },
+    "evening_orientation_share": {
+      "phrase": "asks more of those questions in the evening",
+      "worse": "up",
+      "label": "Share of orientation questions asked 16:00–22:00",
+      "question": "More of her questions come in the evening. What could help in the late afternoon?"
+    }
+  },
+  "doctorQuestionsIntro": "Questions you might ask. They come from the changes Recollect noticed in her everyday speech; only her doctor can say what they mean."
 }
