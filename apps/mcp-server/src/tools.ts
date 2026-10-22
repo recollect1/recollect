@@ -6,7 +6,8 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import {
   checkDose, familySummary, keepPrivate, localAt, logDose, pauseTracking, photoMoment, processSession,
   nightReassure, recall, rememberStory, routineState, speechTrend, storyPrompt, thisIsMe, whatsToday, whereIs, whoIs,
-  logAsk, type Ctx,
+  logAsk, todayChat, memoryLane, carerCoach, ensureCarePlan, fidelityView, shareFamilyMemory, findPerson, phrases,
+  type Ctx,
 } from "@recollect/core";
 import { CARDS, cardHtml, type CardName } from "@recollect/ui-cards";
 import { z, type ZodRawShape } from "zod";
@@ -17,7 +18,7 @@ const SAY = "Read the `say` field exactly as written.";
 const BOTH: ToolRole[] = ["elder", "family"];
 // MCP annotations. readOnlyHint only where nothing is written: the elder's tools all log asks
 // (silently, for the family view) or update routine/device state, so they are not read-only.
-const READ_ONLY = new Set(["family_summary", "speech_trend", "this_is_me"]);
+const READ_ONLY = new Set(["family_summary", "speech_trend", "this_is_me", "carer_coach", "memory_fidelity", "memory_lane"]);
 
 export interface ToolLog { tool: string; ms: number; ok: boolean }
 export interface ServerDeps {
@@ -189,6 +190,66 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
     "not a medical assessment and must never be presented as one.",
     { weeks: z.number().int().positive().optional().describe("How many recent weeks the family wants to see.") },
     async () => ({ ...(await speechTrend(ctx)) }), "trend");
+
+  tool("talk_about_today", ["elder"],
+    "A gentle chat about her day. Call with no answer to ask her about it; call again with her words " +
+    "exactly as spoken. She always hears the same thanks: never confirm, correct or quiz her about her day.",
+    { answer: z.string().optional().describe("What she said about her day, exactly as spoken.") },
+    async ({ answer }) => ({ ...(await todayChat(ctx, answer)) }));
+
+  tool("memory_lane", ["elder"],
+    "A short Memory Lane session: some of her own stories in her own words, with photos and a family " +
+    "member's memory where there is one, and a gentle question on each. Use when she would like to look " +
+    "back, or the conversation goes quiet. There are no right answers.",
+    {}, async () => ({ ...(await memoryLane(ctx)) }), "lane");
+
+  tool("share_family_memory", ["family"],
+    "For family: keep a family member's own memory of one of her stories, in their words, linked to her " +
+    "story. It is always attributed to them and never presented as hers.",
+    {
+      from: z.string().min(1).describe("Who is sharing it: their name or relation, e.g. 'Aman'."),
+      text: z.string().min(1).describe("Their memory, exactly as they said it."),
+      about: z.string().optional().describe("Which of her stories it is about, in a few words, e.g. 'the radio'."),
+    },
+    async ({ from, text, about }) => {
+      const person = await findPerson(ctx, from);
+      if (!person) return { say: phrases.whoIsUnknown(ctx.admin.name) };
+      let aboutSessionId: string | undefined;
+      if (about) {
+        const r = await recall(ctx, about, "family");
+        const hit = r.found && r.speaker === ctx.elder.name ? r.quotes[0]?.sessionId : undefined;
+        aboutSessionId = hit;
+      }
+      const saved = await shareFamilyMemory(ctx, { personId: person.id, text, ...(aboutSessionId ? { aboutSessionId } : {}) });
+      background(() => processSession(ctx, saved.sessionId));
+      const say = about && !aboutSessionId ? `${saved.say} ${phrases.familyMemoryNoStory()}` : saved.say;
+      return { say, sessionId: saved.sessionId, linked: Boolean(aboutSessionId) };
+    });
+
+  tool("carer_coach", ["family"],
+    "For family: ideas for hard moments (asking for a parent, wanting to go out, repeated questions, " +
+    "evenings), with conversation starters that quote her own stories.",
+    {}, async () => ({ say: phrases.coachReady(ctx.elder.name), tips: await carerCoach(ctx) }));
+
+  tool("memory_fidelity", ["family"],
+    "For family: how her retellings compare with her first tellings, and her recent memory beside her " +
+    "long-ago memory, compared only with herself. This is not a medical assessment.",
+    {}, async () => {
+      const v = await fidelityView(ctx);
+      return { say: v.recentVsOld.say, ...v };
+    });
+
+  tool("care_follow_through", ["family"],
+    "For family: when her speech has changed, the next steps Recollect has prepared for approval: a " +
+    "pre-visit summary, questions for the doctor, a check-up invitation, a book of her stories and a " +
+    "tablet check. Recollect never books, buys or orders anything itself.",
+    {}, async () => {
+      const steps = await ensureCarePlan(ctx);
+      return {
+        say: steps.length ? phrases.careReady(ctx.elder.name, steps.length) : phrases.careNone(ctx.elder.name),
+        steps,
+      };
+    });
 
   tool("this_is_me", ["family"],
     "For family: her printable 'This is me' page for carers and hospitals, built from what the family wrote and approved.",

@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
-import { graphView, localAt, type Ctx, type DemoClock } from "@recollect/core";
+import { graphView, localAt, type Ctx, type DemoClock, careCalendar, memoryBookHtml } from "@recollect/core";
 import { familyApi } from "./family-api.ts";
 import { buildServer, type ToolLog, type ToolRole } from "./tools.ts";
 
@@ -77,6 +77,24 @@ export function createApp(opts: AppOptions): App {
         if (latest?.html) return void res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(latest.html);
         if (!existsSync(DOCTOR_REPORT)) return json(res, 404, { error: "no report yet — run the trends agent" });
         return void res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(readFileSync(DOCTOR_REPORT));
+      }
+
+      // Care follow-through: the printable book of her stories, and the check-up invitation once approved.
+      if (path === "/report/memory-book") {
+        if (role !== "family") return json(res, 401, { error: "family token required" });
+        return void res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(await memoryBookHtml(ctx));
+      }
+      if (path === "/report/care-calendar.ics") {
+        if (role !== "family") return json(res, 401, { error: "family token required" });
+        const plan = new URL(req.url ?? "/", "http://localhost").searchParams.get("plan") ?? "";
+        try {
+          const body = await careCalendar(ctx, plan);
+          return void res.writeHead(200, {
+            "content-type": "text/calendar; charset=utf-8", "content-disposition": 'attachment; filename="check-up.ics"',
+          }).end(body);
+        } catch (e) {
+          return json(res, 400, { error: (e as Error).message });
+        }
       }
 
       // Live graph panel (§13 P1): either role; private stories are left out for the family.

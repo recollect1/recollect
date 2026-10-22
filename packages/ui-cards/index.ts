@@ -7,6 +7,7 @@ export const CARDS = {
   trend: "ui://recollect/trend-card",
   who: "ui://recollect/who-card",
   photo: "ui://recollect/photo-card",
+  lane: "ui://recollect/lane-card",
 } as const;
 export type CardName = keyof typeof CARDS;
 

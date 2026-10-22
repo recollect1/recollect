@@ -43,13 +43,15 @@ if (WEB_PASSWORD) {
   });
 }
 
-// The family page calls /api/family/* and /report/doctor; add the family token here (server side).
+// The family page calls /api/family/* and /report/*; add the family token here (server side).
 async function toMcpAsFamily(req: express.Request, res: express.Response) {
   const r = await fetch(`${MCP_ORIGIN}${req.originalUrl}`, {
     method: req.method,
     headers: { authorization: `Bearer ${tokenFor("family")}`, ...(req.method === "POST" ? { "content-type": "application/json" } : {}) },
     ...(req.method === "POST" ? { body: JSON.stringify(req.body ?? {}) } : {}),
   });
+  const disposition = r.headers.get("content-disposition");
+  if (disposition) res.setHeader("content-disposition", disposition);
   res.status(r.status).type(r.headers.get("content-type") ?? "application/json").send(Buffer.from(await r.arrayBuffer()));
 }
 
@@ -64,7 +66,8 @@ const handle = (fn: (req: express.Request, res: express.Response) => Promise<unk
   };
 
 app.all(/^\/api\/family\//, handle(toMcpAsFamily));
-app.get("/report/doctor", handle(toMcpAsFamily));
+// Printable family outputs: the doctor report, the memory book, the check-up calendar invitation.
+app.get(/^\/report\//, handle(toMcpAsFamily));
 
 app.get("/api/status", handle(async (_req, res) => {
   const out: Record<string, unknown> = { mcpUrl: MCP_URL, chatModel: CHAT_MODEL || null };

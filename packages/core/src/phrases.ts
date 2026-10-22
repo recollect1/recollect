@@ -181,6 +181,14 @@ export const careAppointment = (name: string) =>
 export const careMemoryBook = (name: string, stories: number) =>
   `A printable book of ${stories} of ${name}'s stories, in her own words, for the family and her carers. ` +
   `Print it at home or send the file to a print shop; Recollect does not place orders.`;
+export const coachReady = (name: string) =>
+  `Here are some ideas for talking with ${name}, built from her own stories.`;
+export const careReady = (name: string, steps: number) =>
+  `Recollect has prepared ${steps} next steps for ${name}'s check-up, for you to approve on the family page.`;
+export const careNone = (name: string) =>
+  `Nothing to prepare for ${name} at the moment: her speech has not changed enough to mention.`;
+export const familyMemoryNoStory = () =>
+  "I couldn't find which of her stories that is about, so I've kept it on its own.";
 export const careTabletCheck = (admin: string) =>
   `Before the visit, check with the pharmacy that her regular tablets will last until then. ` +
   `Recollect lists them below; ${admin} or the pharmacy decides everything about them.`;

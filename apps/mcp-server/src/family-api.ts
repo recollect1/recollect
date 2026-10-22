@@ -4,6 +4,8 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import {
   acknowledgeAlert, approveFact, changeConsent, familyAlerts, chooseWeeklyPhoto, deleteEverything, factCandidates, familyOverview, familyStories,
   familySummary, FamilyError, newId, saveMedicine, saveProfile, setStatusLine, speechTrend, thisIsMe, type Ctx,
+  carerCoach, decideCare, ensureCarePlan, familyMessages, familyVoices, fidelityView, processSession, setFamilyMessage,
+  shareFamilyMemory,
 } from "@recollect/core";
 import { z } from "zod";
 
@@ -32,7 +34,33 @@ export async function familyApi(
     switch (route) {
       case "GET /api/family/overview": return json(res, 200, await familyOverview(ctx)), true;
       case "GET /api/family/today": return json(res, 200, await familySummary(ctx)), true;
-      case "GET /api/family/stories": return json(res, 200, await familyStories(ctx)), true;
+      case "GET /api/family/stories": {
+        // Her stories, each with family members' own memories of it (family memory network).
+        const [stories, voices] = await Promise.all([familyStories(ctx), familyVoices(ctx)]);
+        return json(res, 200, {
+          ...stories,
+          stories: stories.stories.map((s) => ({ ...s, voices: voices.get(s.sessionId) ?? [] })),
+          unlinkedVoices: voices.get("") ?? [],
+        }), true;
+      }
+      case "POST /api/family/memory": {
+        const b = z.object({ personId: z.string(), text: z.string().min(1).max(2000), aboutSessionId: z.string().optional() }).parse(body);
+        const saved = await shareFamilyMemory(ctx, b);
+        await processSession(ctx, saved.sessionId);
+        return json(res, 200, saved), true;
+      }
+      case "GET /api/family/messages": return json(res, 200, await familyMessages(ctx)), true;
+      case "POST /api/family/message": {
+        const b = z.object({ personId: z.string(), text: z.string().max(200) }).parse(body);
+        return json(res, 200, await setFamilyMessage(ctx, b.personId, b.text)), true;
+      }
+      case "GET /api/family/fidelity": return json(res, 200, await fidelityView(ctx)), true;
+      case "GET /api/family/coach": return json(res, 200, await carerCoach(ctx)), true;
+      case "GET /api/family/care": return json(res, 200, await ensureCarePlan(ctx)), true;
+      case "POST /api/family/care-decision": {
+        const b = z.object({ id: z.string(), approve: z.boolean() }).parse(body);
+        return json(res, 200, await decideCare(ctx, b.id, b.approve)), true;
+      }
       case "GET /api/family/trend": return json(res, 200, await speechTrend(ctx)), true;
       case "POST /api/family/trend-refresh": {
         // Queues the trends agent (§9.3, "on demand"); the Python worker picks it up within seconds.

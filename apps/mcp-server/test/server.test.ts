@@ -9,11 +9,13 @@ import { createApp, type App } from "../src/app.ts";
 
 const tokens = { elder: "test-elder", family: "test-family" };
 const ELDER_TOOLS = [
-  "check_dose", "keep_private", "log_dose", "night_reassure", "pause_tracking", "photo_moment", "recall_memory",
-  "remember_story", "routine_state", "story_prompt", "whats_today", "where_is", "who_is",
+  "check_dose", "keep_private", "log_dose", "memory_lane", "night_reassure", "pause_tracking", "photo_moment",
+  "recall_memory", "remember_story", "routine_state", "story_prompt", "talk_about_today", "whats_today", "where_is",
+  "who_is",
 ];
 const FAMILY_TOOLS = [
-  "family_summary", "recall_memory", "routine_state", "speech_trend", "story_prompt", "this_is_me", "who_is",
+  "care_follow_through", "carer_coach", "family_summary", "memory_fidelity", "recall_memory", "routine_state",
+  "share_family_memory", "speech_trend", "story_prompt", "this_is_me", "who_is",
 ];
 
 let app: App, url: URL, ctx: Ctx, clock: DemoClock;
@@ -75,6 +77,7 @@ describe("MCP server (§10)", () => {
     const want: Record<string, string> = {
       recall_memory: "ui://recollect/story-card", whats_today: "ui://recollect/today-card",
       who_is: "ui://recollect/who-card", photo_moment: "ui://recollect/photo-card",
+      memory_lane: "ui://recollect/lane-card",
     };
     const elder = await connect(tokens.elder);
     const tools = (await elder.listTools()).tools;
@@ -85,8 +88,9 @@ describe("MCP server (§10)", () => {
     const family = await connect(tokens.family);
     const familyTools = (await family.listTools()).tools;
     expect(familyTools.filter((t) => t.annotations?.readOnlyHint).map((t) => t.name).sort())
-      .toEqual(["family_summary", "speech_trend", "this_is_me"]);
-    expect(tools.every((t) => t.annotations?.readOnlyHint === false)).toBe(true); // elder tools all write something
+      .toEqual(["carer_coach", "family_summary", "memory_fidelity", "speech_trend", "this_is_me"]);
+    // Every elder tool writes something (an ask, a session, routine state) except Memory Lane.
+    expect(tools.filter((t) => t.annotations?.readOnlyHint).map((t) => t.name)).toEqual(["memory_lane"]);
     const trend = familyTools.find((t) => t.name === "speech_trend");
     expect((trend?._meta as { ui?: { resourceUri?: string } }).ui?.resourceUri).toBe("ui://recollect/trend-card");
     for (const uri of [...Object.values(want), "ui://recollect/trend-card"]) {
@@ -130,7 +134,7 @@ describe("MCP server (§10)", () => {
     expect((await fetch(`${url.origin}/api/graph`)).status).toBe(401);
     const g = await (await fetch(`${url.origin}/api/graph`, { headers: { authorization: `Bearer ${tokens.family}` } })).json() as
       { stories: unknown[]; entities: { name: string }[]; mentions: unknown[] };
-    expect(g.stories.length).toBe(6);
+    expect(g.stories.length).toBe(7); // six stories and the seeded retelling of the well story
     expect(g.entities.map((e) => e.name)).toContain("Patiala");
   });
 
@@ -217,5 +221,70 @@ describe("MCP server (§10)", () => {
     expect((await call(elder, "story_prompt")).say).toBe("You mentioned your sister Nimmo. Would you like to tell me more?");
     expect((await call(elder, "pause_tracking")).say).toBe(phrases.trackingPaused("Simran"));
     expect((await call(family, "speech_trend")).say).toBe(phrases.trackingOff("Gurdev"));
+  });
+
+  it("memory fidelity: a chat about her day is thanked the same way, and the family sees the comparison", async () => {
+    const elder = await connect(tokens.elder);
+    const family = await connect(tokens.family);
+    expect((await call(elder, "talk_about_today")).say).toBe(phrases.todayChatPrompt("Gurdev"));
+    clock.set(new Date("2026-10-13T11:00:00+05:30"));
+    const a = await call(elder, "talk_about_today", { answer: "Harpreet came and we had tea." });
+    const b = await call(elder, "talk_about_today", { answer: "Nobody came today." });
+    expect(a.say).toBe(phrases.todayChatThanks());
+    expect(b.say).toBe(a.say);
+    const f = await call(family, "memory_fidelity");
+    expect(f.say).toContain(phrases.RIBOT_NOTE);
+    expect((f.data.retells as { storyKey: string }[])[0]?.storyKey).toBe("well");
+  });
+
+  it("Memory Lane returns slides of her own stories with the lane card", async () => {
+    const r = await call(await connect(tokens.elder), "memory_lane");
+    expect(r.say).toBe(phrases.memoryLaneIntro("Gurdev"));
+    expect((r.data.slides as unknown[]).length).toBeGreaterThan(2);
+  });
+
+  it("family memory network: a shared memory is linked to her story and attributed when recalled", async () => {
+    const family = await connect(tokens.family);
+    const r = await call(family, "share_family_memory", {
+      from: "Simran", text: "Biji kept Jagdish's letters in a biscuit tin with a picture of a peacock on the lid.",
+      about: "my brother Jagdish bicycle fields",
+    });
+    expect(r.data.linked).toBe(true);
+    expect(r.say).toBe(phrases.familyMemorySaved("Gurdev"));
+    const unknown = await call(family, "share_family_memory", { from: "Kuldeep", text: "hello" });
+    expect(unknown.say).toBe(phrases.whoIsUnknown("Simran"));
+  });
+
+  it("carer coach and care follow-through for the family; the calendar and memory book need the family token", async () => {
+    const family = await connect(tokens.family);
+    const coach = await call(family, "carer_coach");
+    expect((coach.data.tips as unknown[]).length).toBe(4);
+    const care = await call(family, "care_follow_through");
+    expect(care.say).toBe(phrases.careReady("Gurdev", 5));
+    const steps = care.data.steps as { id: string; kind: string; planId: string }[];
+    const auth = (t: string) => ({ headers: { authorization: `Bearer ${t}` } });
+    const ics = new URL(`/report/care-calendar.ics?plan=${steps[0]!.planId}`, url);
+    expect((await fetch(ics, auth(tokens.family))).status).toBe(400);
+    const decide = await fetch(new URL("/api/family/care-decision", url), {
+      method: "POST", headers: { ...auth(tokens.family).headers, "content-type": "application/json" },
+      body: JSON.stringify({ id: steps.find((s) => s.kind === "appointment")!.id, approve: true }),
+    });
+    expect(decide.status).toBe(200);
+    const cal = await fetch(ics, auth(tokens.family));
+    expect(cal.headers.get("content-type")).toContain("text/calendar");
+    expect(await cal.text()).toContain("BEGIN:VEVENT");
+    const book = new URL("/report/memory-book", url);
+    expect((await fetch(book, auth(tokens.elder))).status).toBe(401);
+    expect(await (await fetch(book, auth(tokens.family))).text()).toContain("My mother made sarson ka saag every winter.");
+  });
+
+  it("a family message set on the family page is read after where-is", async () => {
+    const res = await fetch(new URL("/api/family/message", url), {
+      method: "POST", headers: { authorization: `Bearer ${tokens.family}`, "content-type": "application/json" },
+      body: JSON.stringify({ personId: "p-aman", text: "Hello Biji, I'll call you on Sunday." }),
+    });
+    expect(res.status).toBe(200);
+    const r = await call(await connect(tokens.elder), "where_is", { person: "Aman" });
+    expect(r.say).toBe('Aman is in London and calls you on Sundays. Aman left you a message: "Hello Biji, I\'ll call you on Sunday."');
   });
 });

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Memory Lane</title>
+<link rel="stylesheet" href="./card.css" />
+<style>
+.intro{font-size:26px;margin:0 0 16px;color:var(--muted)}
+blockquote{margin:16px 0 4px;font-size:32px;line-height:1.4;border-left:6px solid var(--accent);padding-left:20px}
+.by{margin:0 0 12px;font-size:20px}
+.voice{margin:8px 0 12px 26px;padding-left:16px;border-left:3px solid var(--line)}
+.voice p.serif{font-size:24px;margin:0 0 4px}
+.prompt{font-size:30px;margin:16px 0}
+img.photo{max-height:300px;object-fit:cover}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}
+button.secondary{background:var(--chip);color:var(--ink)}
+button:disabled{opacity:.4;cursor:default}
+.counter{margin:0;font-size:20px}
+.music{font-size:20px;margin-top:14px}
+</style>
+</head>
+<body>
+  <main id="root"><p class="empty">Gathering her memories…</p></main>
+  <script type="module" src="./lane-card.ts"></script>
+</body>
+</html>

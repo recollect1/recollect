@@ -2,7 +2,7 @@
 import { build } from "vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
 
-for (const name of ["story", "today", "who", "trend", "photo"]) {
+for (const name of ["story", "today", "who", "trend", "photo", "lane"]) {
   await build({
     root: "src", logLevel: "warn", plugins: [viteSingleFile()],
     build: { outDir: "../dist", emptyOutDir: false, rollupOptions: { input: `src/${name}-card.html` } },
