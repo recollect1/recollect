@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, type Alert, type Medicine, type Overview, type Person, type Profile, type Story, type ThisIsMe, type Today, type Trend } from './api.ts';
+import { api, type Alert, type CareStep, type CoachTip, type Fidelity, type Medicine, type Message, type Overview, type Person, type Profile, type Story, type ThisIsMe, type Today, type Trend } from './api.ts';
+import { CareSection, CoachSection, FidelitySection, MessageField, StoryVoices } from './Ideas.tsx';
 
 // The family page (§13): setup, consent, stories, today, trends, "This is me".
 // Trends are family-only and never spoken to her. Simulated data is always labelled.
@@ -7,6 +8,7 @@ import { api, type Alert, type Medicine, type Overview, type Person, type Profil
 interface Data {
   alerts: Alert[];
   overview: Overview; today: Today; trend: Trend; me: ThisIsMe;
+  fidelity: Fidelity; coach: CoachTip[]; care: CareStep[]; messages: Message[];
   stories: { stories: Story[]; privateCount: number; prompts: { id: string; text: string }[] };
 }
 
@@ -16,10 +18,11 @@ export function App() {
 
   const load = useCallback(async () => {
     try {
-      const [overview, today, stories, trend, me, alerts] = await Promise.all([
+      const [overview, today, stories, trend, me, alerts, fidelity, coach, care, messages] = await Promise.all([
         api.overview(), api.today(), api.stories(), api.trend(), api.thisIsMe(), api.alerts(),
+        api.fidelity(), api.coach(), api.care(), api.messages(),
       ]);
-      setData({ overview, today, stories, trend, me, alerts });
+      setData({ overview, today, stories, trend, me, alerts, fidelity, coach, care, messages });
       setError(null);
     } catch (e) {
       setError(`Recollect is not reachable (${(e as Error).message}). Check that the server is running, then reload.`);
@@ -34,7 +37,8 @@ export function App() {
 
   if (error) return <main className="shell"><p className="banner">{error}</p></main>;
   if (!data) return <main className="shell"><p className="muted">Loading…</p></main>;
-  const { overview, today, stories, trend, me, alerts } = data;
+  const { overview, today, stories, trend, me, alerts, fidelity, coach, care, messages } = data;
+  const goingOut = coach.find((t) => t.situation === 'going_out');
   const openAlerts = alerts.filter((a) => !a.acknowledged);
   const first = overview.elder.name;
 
@@ -44,7 +48,8 @@ export function App() {
         <p className="eyebrow">Recollect · family page</p>
         <h1>{first}</h1>
         <nav aria-label="Sections">
-          <a href="#today">Today</a><a href="#trends">Speech changes</a><a href="#stories">Her stories</a>
+          <a href="#today">Today</a><a href="#trends">Speech changes</a>{care.length > 0 && <a href="#care">Next steps</a>}
+          <a href="#fidelity">Memory fidelity</a><a href="#coach">When things are hard</a><a href="#stories">Her stories</a>
           <a href="#people">People</a><a href="#medicines">Medicines</a><a href="#photo">Weekly photo</a>
           <a href="#me">This is me</a><a href="#consent">Consent</a>
         </nav>
@@ -56,6 +61,9 @@ export function App() {
             <div key={a.id} className="alert">
               <p>{a.say}</p>
               <p className="small muted">{new Date(a.at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}{a.sms ? ' · text message sent' : ''}</p>
+              {goingOut?.starter && (
+                <p className="small"><b>What might help:</b> {goingOut.guidance} Ask her about {goingOut.starter.topic}: <span className="voice">“{goingOut.starter.quote}”</span></p>
+              )}
               <button onClick={() => void api.ackAlert(a.id).then(load)}>I've seen this</button>
             </div>
           ))}
@@ -94,6 +102,12 @@ export function App() {
 
       <TrendSection trend={trend} name={first} />
 
+      <CareSection steps={care} onSaved={load} name={first} />
+
+      <FidelitySection fidelity={fidelity} name={first} />
+
+      <CoachSection tips={coach} name={first} />
+
       <section id="stories" className="block">
         <h2>{first}’s stories</h2>
         {stories.prompts.length > 0 && (
@@ -114,6 +128,7 @@ export function App() {
                 told {new Date(s.startedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                 {s.retold && <span className="muted"> · she has told this one before</span>}
               </p>
+              <StoryVoices story={s} family={overview.people} onSaved={load} />
             </li>
           ))}
         </ol>
@@ -123,7 +138,12 @@ export function App() {
         <h2>People</h2>
         <p className="muted">When {first} asks where someone is, Recollect reads exactly this line. The photo and relationship appear when she asks “who’s this?”.</p>
         <div className="rows">
-          {overview.people.map((p) => <PersonRow key={p.id} p={p} onSaved={load} />)}
+          {overview.people.map((p) => (
+            <div key={p.id} className="person-block">
+              <PersonRow p={p} onSaved={load} />
+              <MessageField person={p} current={messages.find((m) => m.personId === p.id)?.text} onSaved={load} />
+            </div>
+          ))}
         </div>
       </section>
 

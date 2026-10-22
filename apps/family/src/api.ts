@@ -25,7 +25,24 @@ export interface Today {
   say: string; date: string; doses: { name: string; time: string; taken: boolean; takenAt?: string }[];
   storiesToday: number; repeatedQuestions: { label: string; count: number }[]; note: string;
 }
-export interface Story { sessionId: string; startedAt: string; quotes: string[]; retold: boolean }
+export interface Voice { sessionId: string; name: string; relation: string; at: string; quotes: string[] }
+export interface Story { sessionId: string; startedAt: string; quotes: string[]; retold: boolean; voices?: Voice[] }
+export interface Retell {
+  storyKey?: string; first: { sessionId: string; date: string; opening: string }; retold: { sessionId: string; date: string; opening: string };
+  kept: string[]; dropped: string[]; added: string[]; years: { first: string[]; retold: string[] } | null;
+  possibleSwaps: [string, string][]; confirmedByFamily: string[]; consistency: number; say: string;
+}
+export interface Fidelity {
+  retells: Retell[];
+  recentVsOld: { say: string; ready: boolean; simulated: boolean; recent: { named: number; chats: number }; perStory: number;
+    weekly: { week: string; named: number; chats: number }[] };
+}
+export interface CoachTip { situation: string; title: string; guidance: string; calm?: string; starter?: { topic: string; quote: string; date: string; say: string } }
+export interface CareStep {
+  id: string; planId: string; kind: 'summary' | 'questions' | 'appointment' | 'memory_book' | 'tablet_check'; order: number;
+  title: string; detail: string; items: string[]; status: 'proposed' | 'approved' | 'dismissed'; simulated: boolean;
+}
+export interface Message { id: string; personId: string; text: string; at: string }
 export interface Trend { say: string; card?: { kind: string; changes: string[]; since?: string; weeks: number; simulated: boolean } }
 export interface Profile {
   preferredName: string; likes: string[]; calms: string[]; upsets: string[]; routines: string[];
@@ -44,7 +61,14 @@ export const api = {
   ackAlert: (id: string) => req('POST', '/api/family/alert-ack', { id }),
   overview: () => req<Overview>('GET', '/api/family/overview'),
   today: () => req<Today>('GET', '/api/family/today'),
-  stories: () => req<{ stories: Story[]; privateCount: number; prompts: { id: string; text: string }[] }>('GET', '/api/family/stories'),
+  stories: () => req<{ stories: Story[]; privateCount: number; prompts: { id: string; text: string }[]; unlinkedVoices?: Voice[] }>('GET', '/api/family/stories'),
+  fidelity: () => req<Fidelity>('GET', '/api/family/fidelity'),
+  coach: () => req<CoachTip[]>('GET', '/api/family/coach'),
+  care: () => req<CareStep[]>('GET', '/api/family/care'),
+  careDecision: (id: string, approve: boolean) => req('POST', '/api/family/care-decision', { id, approve }),
+  shareMemory: (personId: string, text: string, aboutSessionId?: string) => req<{ say: string }>('POST', '/api/family/memory', { personId, text, ...(aboutSessionId ? { aboutSessionId } : {}) }),
+  messages: () => req<Message[]>('GET', '/api/family/messages'),
+  setMessage: (personId: string, text: string) => req('POST', '/api/family/message', { personId, text }),
   trend: () => req<Trend>('GET', '/api/family/trend'),
   thisIsMe: () => req<ThisIsMe>('GET', '/api/family/this-is-me'),
   setStatus: (personId: string, statusLine: string) => req('POST', '/api/family/status', { personId, statusLine }),

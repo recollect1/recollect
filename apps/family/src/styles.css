@@ -137,3 +137,30 @@ button.link { background: none; color: var(--thread); padding: 0 4px; font-weigh
 .alerts { margin-top: 24px; display: grid; gap: 12px; }
 .alert { border: 2px solid var(--rose); border-radius: 10px; padding: 12px 16px; background: var(--card); }
 .alert p { margin: 0 0 6px; }
+
+/* Memory fidelity, family voices, carer coach, care follow-through */
+.fidelity-figures { display: flex; flex-wrap: wrap; gap: 28px; margin: 8px 0; }
+.fidelity-figures b { font-size: 30px; display: block; }
+.mini-chart { width: 100%; max-width: 560px; height: auto; display: block; margin: 8px 0; }
+.mini-chart .bar { fill: var(--sage); }
+.mini-chart .axis { stroke: var(--line); stroke-width: 1; }
+.mini-chart .tick { fill: var(--muted); font-size: 12px; }
+.retell { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin: 12px 0; }
+.retell p { margin: 4px 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 8px 0; }
+.chip { border: 1px solid var(--line); border-radius: 999px; padding: 2px 12px; font-size: 15px; background: var(--paper); }
+.chip.dropped, .legend.dropped { border-color: var(--rose); color: var(--rose); }
+.chip.added, .legend.added { border-color: var(--thread); color: var(--thread); }
+.chip.dropped { text-decoration: line-through; }
+.starter { border-left: 3px solid var(--thread); padding-left: 12px; }
+.starter p { margin: 2px 0; }
+.voices { margin-top: 8px; }
+.family-voice { margin: 8px 0 8px 18px; padding-left: 12px; border-left: 3px solid var(--line); }
+.family-voice p { margin: 2px 0; }
+.person-block { display: grid; gap: 6px; }
+.inline.message { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.inline.message input { flex: 1; min-width: 220px; }
+.care-steps { list-style: none; padding: 0; display: grid; gap: 12px; margin-top: 12px; }
+.care-head { display: flex; justify-content: space-between; gap: 12px; }
+.row.care.approved { border-color: var(--sage); }
+.row.care.dismissed { opacity: .6; }
