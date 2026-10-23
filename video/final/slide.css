@@ -1,0 +1,12 @@
+html, body { margin: 0; height: 100%; background: #0b1226; color: #f2f5fa; font-family: "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif; }
+body { display: flex; align-items: center; justify-content: center; }
+.wrap { width: 1040px; }
+.line { opacity: 0; animation: in 0.9s ease forwards; }
+@keyframes in { to { opacity: 1; } }
+h1 { font-size: 44px; font-weight: 700; line-height: 1.25; margin: 0 0 22px; }
+p { font-size: 30px; line-height: 1.4; margin: 0 0 18px; color: #cfd8e6; }
+.big { font-size: 52px; color: #fff; font-weight: 700; }
+.row { display: grid; grid-template-columns: 240px 1fr; gap: 24px; font-size: 30px; padding: 14px 0; border-bottom: 1px solid #22304f; }
+.row b { color: #f2a93b; }
+.accent { color: #f2a93b; }
+.note { font-size: 20px; color: #8a97ad; margin-top: 28px; }

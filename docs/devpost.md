@@ -1,9 +1,47 @@
-# Devpost draft — Recollect
+# Devpost submission — Recollect
 
-Draft, updated 21 Oct; the AWS facts are now confirmed on the live deployment. The
-human submitting this owns every sentence in it (CLAUDE.md §18.4).
+Paste-ready, updated 23 Oct. Every field below goes into Devpost as written. The human submitting
+this owns every sentence in it (CLAUDE.md §18.4).
 
-**Track:** Alexa+ · **Mini-challenge:** AWS Builder · **Repo:** https://github.com/recollect1/recollect
+## Fields
+
+**Project name:** Recollect
+
+**Tagline (elevator pitch):** An Alexa+ companion for people with early memory loss: it keeps her
+life story in her own words, answers her daily questions the same calm way every time, and tells her
+family, gently, when her speech changes.
+
+**Track:** Alexa+ · **Mini-challenges:** AWS Builder, Open Source (`mcp-latency`, fields in
+`docs/open-source.md`)
+
+**Repo:** https://github.com/recollect1/recollect (MIT)
+
+**Video:** <YouTube or Vimeo link, public> — file `video/final/recollect-final.mp4`, 2:57, English
+(the Hindi line is subtitled).
+
+**About the video:** The voice conversations are a re-enactment. Gurdev's, Aman's and the
+narrator's voices are Amazon Polly, and the microphone is replaced by her scripted words. Every reply
+on screen and every Recollect line you hear is the real app's answer, recorded live from the running
+system (local FalkorDB, MCP server, Strands worker on Amazon Bedrock with Nova Pro). All people are
+fictional. The 12-week speech history is simulated and labelled "Simulated data" on screen.
+
+**Testing instructions (for judges):** Run it locally in five commands (Node 22, pnpm, Docker,
+Python 3.12 with `uv`):
+
+```
+pnpm i && (cd agents && uv sync)
+cp .env.example .env          # set ELDER_TOKEN and FAMILY_TOKEN; DEMO_CLOCK=1
+docker compose up -d falkordb
+pnpm seed
+pnpm dev                      # simulator http://localhost:5173 · family page http://localhost:5174
+```
+
+Without AWS keys, everything except the simulator's voice loop and story extraction works; the
+simulator's `?debug` mode makes real tool calls directly. With Bedrock access, set
+`BEDROCK_CHAT_MODEL_ID` and `BEDROCK_EXTRACT_MODEL_ID` (we used `us.amazon.nova-pro-v1:0`).
+Try: "Did I take my BP tablet?", "Where is Aman?" (three times), "I want to tell you a story", then
+switch to Aman and ask "How did Grandma come to Patiala?" `pnpm eval:recall` and `pnpm test:latency`
+reproduce the numbers below. The AWS deployment we measured on 20–21 Oct has since been taken down.
 
 ## Inspiration
 
@@ -49,8 +87,8 @@ gives the family an honest, early signal to take to a doctor — without ever di
 
 ## How we built it
 
-- **MCP server** (TypeScript, Streamable HTTP, protocol 2025-11-25): 16 tools, role tokens for
-  her and her family, five **MCP Apps** cards (story, today, who's-who, trend, photo).
+- **MCP server** (TypeScript, Streamable HTTP, protocol 2025-11-25): 26 tools (16 for her, 14 for
+  her family, a few shared), role tokens, five **MCP Apps** cards (story, today, who's-who, trend, photo).
 - **Memory graph** on **FalkorDB**, with local in-process embeddings and a small local relevance
   classifier, so a memory answer never waits on a model: every tool answers in milliseconds,
   inside the Alexa+ 500 ms budget.
@@ -104,8 +142,19 @@ TypeScript · Node.js · Python · Model Context Protocol · MCP Apps · FalkorD
 Transformers.js · Amazon Bedrock · Strands Agents · Amazon Bedrock AgentCore ·
 Amazon EC2 · AWS Systems Manager · Amazon ECR · Amazon Polly · React · Vite · Caddy
 
-## Notes for the submitter
+## AWS Builder: services used
 
-- All people and data are fictional; the speech history is simulated and labelled so.
-- Feature requests and product feedback: `docs/feature-requests.md`, `docs/product-feedback.md`.
-- Open Source mini-challenge fields: `docs/open-source.md`.
+Amazon Bedrock (Converse, Nova Pro) for the extract agent and the simulator's conversation loop ·
+Strands Agents SDK for the extract agent · Amazon Bedrock AgentCore Runtime hosting it · Amazon EC2,
+ECR, IAM roles and SSM Parameter Store for the deployment · Amazon SNS for night alerts (built,
+switched off) · Amazon Polly for the video's voices. File paths are in the README's AWS section;
+our experience with each is in `docs/product-feedback.md`.
+
+## Before you press submit
+
+- [ ] Upload `video/final/recollect-final.mp4` to YouTube or Vimeo as **Public**, paste the link above.
+- [ ] Tracks: Alexa+; mini-challenges AWS Builder and Open Source (`docs/open-source.md`).
+- [ ] Attach or link `docs/product-feedback.md`, `docs/friction-log.md`, `docs/feature-requests.md`
+      (read them once: you are confirming they are true).
+- [ ] Add teammates on Devpost; confirm the repo is public with MIT in About.
+- [ ] Deadline: Sat 24 Oct 2026, 00:30 IST.

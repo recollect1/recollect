@@ -1,0 +1,23 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="slide.css">
+<style>
+.wrap{width:1180px}.cols{display:grid;grid-template-columns:1.25fr 1fr;gap:48px;align-items:start}
+.box{border:2px solid #2f6fd1;border-radius:12px;padding:10px 14px;font-size:21px;margin:0 0 6px;background:#101b38}
+.box b{color:#fff}.arrow{color:#6b7a95;font-size:20px;margin:0 0 6px 18px}
+ul{margin:0;padding-left:22px;font-size:22px;line-height:1.55;color:#cfd8e6}
+h2{font-size:22px;letter-spacing:.06em;text-transform:uppercase;color:#8a97ad;margin:0 0 12px}
+.stats{margin-top:30px;font-size:22px;color:#f2a93b;border-top:1px solid #22304f;padding-top:14px}
+</style></head><body><div class="wrap line" style="animation-delay:.2s">
+<div class="cols"><div>
+<h2>How it's built</h2>
+<div class="box"><b>Alexa+ / simulator</b> · Bedrock Converse picks the tool</div><div class="arrow">↓ MCP (Streamable HTTP)</div>
+<div class="box"><b>MCP server</b> · 26 tools · answers in milliseconds · no AI writes what she hears</div><div class="arrow">↕</div>
+<div class="box"><b>FalkorDB memory graph</b> · her words, people, places</div><div class="arrow">↑ background agents</div>
+<div class="box"><b>Strands agents on Amazon Bedrock + AgentCore</b> · extract · markers · trends</div><div class="arrow">↓</div>
+<div class="box"><b>Family page · doctor report · life timeline</b></div>
+</div><div>
+<h2>Also inside</h2>
+<ul><li>Evening calm routine</li><li>Night reassurance + family alert</li><li>Weekly photo chat</li><li>Memory Lane · carer coach</li>
+<li>Memory fidelity (retellings)</li><li>Two-step consent · "delete everything"</li><li>Hindi and English</li></ul>
+</div></div>
+<div class="stats">30/30 recall eval, 0 invented · 144 ms p95 on AWS · 133 tests · open source: mcp-latency</div>
+</div></body></html>

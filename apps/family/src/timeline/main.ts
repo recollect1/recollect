@@ -73,7 +73,7 @@ scene.add(key);
 
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.85, 0.55, 0.16);
+const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.45, 0.55, 0.16);
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
@@ -260,10 +260,10 @@ function makeOrb(e: TEvent): Orb {
   const size = 0.9 + Math.min(1.4, e.quotes.length * 0.12 + e.entities.length * 0.06) * (e.retellOf ? 0.6 : 1);
   const group = new THREE.Group();
   const core = new THREE.Mesh(new THREE.IcosahedronGeometry(size, 3),
-    new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.6, roughness: 0.35, metalness: 0.1 }));
+    new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.0, roughness: 0.35, metalness: 0.1 }));
   core.userData.id = e.id;
   group.add(core);
-  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLOW, color, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending }));
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLOW, color, transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending }));
   halo.scale.setScalar(size * 5);
   group.add(halo);
   // A stem down to the river, like a memory rising out of time.

@@ -38,7 +38,7 @@ A real Alexa+ add-on receives **text**, not the user's audio. So Recollect has t
 | Part | State |
 |---|---|
 | `packages/core` — graph port, schema, phrase templates, grounded recall, daily tools, seed | Built, tested |
-| `apps/mcp-server` — Streamable HTTP MCP server, 22 tools, role tokens, MCP Apps cards, family REST, `/api/graph` | Built, tested with a real MCP client |
+| `apps/mcp-server` — Streamable HTTP MCP server, 26 tools, role tokens, MCP Apps cards, family REST, `/api/graph` | Built, tested with a real MCP client |
 | Grounding eval (`pnpm eval:recall`) | Passing, table below |
 | FalkorDB adapter (`FalkorGraph`) | Built; seed and the 35-test core suite pass against FalkorDB (`FALKORDB_URL=redis://localhost:6379 pnpm test`) |
 | Latency test (`pnpm test:latency`) | Passing locally on FalkorDB; deployed run still to do — see [Latency](#latency) |

@@ -1,0 +1,13 @@
+s1_problem    10.1 s recorded,  0.0 s of waiting to cut
+s2_who        11.7 s recorded,  0.0 s of waiting to cut
+s3_morning    43.8 s recorded,  6.7 s of waiting to cut
+s4_hindi      12.0 s recorded,  2.7 s of waiting to cut
+s5_story      36.3 s recorded,  0.0 s of waiting to cut
+s6_recall     29.7 s recorded,  3.7 s of waiting to cut
+  reply r7a differs → re-voice: 'Aman would love to know: "What was your wedding day like?" Would you tell me about it? There\'s no right or wrong answer.'
+  reply r7b differs → re-voice: "Thank you. I've kept that, and I'll keep it for Aman too."
+s7_ask        24.8 s recorded,  0.0 s of waiting to cut
+s8_timeline    9.1 s recorded,  0.0 s of waiting to cut
+s9_family     33.9 s recorded,  0.0 s of waiting to cut
+s10_built     10.4 s recorded,  0.0 s of waiting to cut
+s11_close      4.1 s recorded,  0.0 s of waiting to cut

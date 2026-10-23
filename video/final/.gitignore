@@ -1,0 +1,6 @@
+.venv/
+takes/
+clips/
+parts/
+*.mp4
+*.mp3
