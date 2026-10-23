@@ -55,6 +55,11 @@ export interface ThisIsMe {
 
 export interface Alert { id: string; at: string; say: string; acknowledged: boolean; sms?: boolean }
 
+/** Show a failed action to the family (the page's Toast listens for this). */
+export function notifyError(e: unknown): void {
+  window.dispatchEvent(new CustomEvent('recollect:error', { detail: `That didn’t work: ${(e as Error)?.message ?? String(e)}` }));
+}
+
 export const api = {
   language: () => req<{ lang: 'en' | 'hi' }>('GET', '/api/family/language'),
   setLanguage: (lang: 'en' | 'hi') => req<{ lang: 'en' | 'hi' }>('POST', '/api/family/language', { lang }),
