@@ -11,6 +11,7 @@ export default defineConfig(({ mode, command }) => {
     base: command === 'build' ? '/family/' : '/',
     plugins: [react()],
     server: {
+      host: '127.0.0.1', // IPv4: some browsers resolve localhost to 127.0.0.1 only
       port: 5174,
       strictPort: true,
       proxy: {
