@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Recollect · Life timeline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="stage" aria-hidden="true"></div>
+  <header class="tl-head">
+    <div>
+      <h1 id="tl-title">Her life</h1>
+      <p id="tl-sub" class="tl-sub">Loading her stories…</p>
+    </div>
+    <div class="tl-actions">
+      <span class="tl-live" id="tl-live" role="status"><i></i> Live</span>
+      <button id="tl-play" type="button">▶ Play her life</button>
+      <button id="tl-reset" type="button" class="ghost">Reset view</button>
+      <a id="tl-back" class="ghost" href="./">Family page</a>
+    </div>
+  </header>
+  <ul class="tl-legend" aria-label="Legend">
+    <li><i class="said"></i>Year in her own words</li>
+    <li><i class="family"></i>Year confirmed by family</li>
+    <li><i class="undated"></i>Not placed in time yet</li>
+    <li><i class="voice"></i>A family member's memory</li>
+    <li><i class="thread"></i>The same person or place across stories</li>
+  </ul>
+  <aside id="tl-panel" class="tl-panel" hidden aria-live="polite"></aside>
+  <div id="tl-toast" class="tl-toast" role="status" hidden></div>
+  <p class="tl-foot">Every point is a story she told, in her exact words. Nothing is guessed: a story is placed in a year only
+    if she said it, or her family confirmed it. All people and stories in this demo are fictional.</p>
+  <noscript>The life timeline needs JavaScript and WebGL.</noscript>
+  <script type="module" src="/src/timeline/main.ts"></script>
+</body>
+</html>

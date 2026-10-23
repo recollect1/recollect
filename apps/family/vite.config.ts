@@ -10,6 +10,8 @@ export default defineConfig(({ mode, command }) => {
     // Built for /family/ on the web service; dev serves it at the root.
     base: command === 'build' ? '/family/' : '/',
     plugins: [react()],
+    // Two pages: the family page and the 3D life timeline.
+    build: { rollupOptions: { input: { main: 'index.html', timeline: 'timeline.html' } } },
     server: {
       host: '127.0.0.1', // IPv4: some browsers resolve localhost to 127.0.0.1 only
       port: 5174,
