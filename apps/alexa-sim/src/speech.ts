@@ -10,10 +10,14 @@ export function recognitionSupported(): boolean {
   return typeof window !== 'undefined' && !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
 }
 
+/** The language she speaks and hears: follows the household setting (English or Hindi). */
+let speechLang: 'en-IN' | 'hi-IN' = 'en-IN';
+export function setSpeechLang(lang: 'en' | 'hi'): void { speechLang = lang === 'hi' ? 'hi-IN' : 'en-IN'; }
+
 function makeRec(continuous: boolean): Rec {
   const C = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
   const r: Rec = new C();
-  r.lang = 'en-IN';
+  r.lang = speechLang;
   r.continuous = continuous;
   r.interimResults = true;
   return r;
@@ -40,7 +44,7 @@ export function listenOnce(onInterim: (t: string) => void): { done: Promise<stri
   return { done, stop: () => rec.stop() };
 }
 
-const END_PHRASE = /[\s,.]*(that's all|that is all|thats all)[\s.!]*$/i;
+const END_PHRASE = /[\s,.।]*(that's all|that is all|thats all|बस इतना ही|बस इतनी सी|bas itna hi)[\s.!।]*$/i;
 
 /**
  * Story mode: keep listening until a 4 s pause or "that's all". Returns the verbatim transcript
@@ -92,7 +96,9 @@ export function speak(text: string, onEnd?: () => void): void {
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   const voices = window.speechSynthesis.getVoices();
-  u.voice = voices.find((v) => v.lang === 'en-IN') ?? voices.find((v) => v.lang.startsWith('en')) ?? null;
+  const want = speechLang;
+  u.lang = want;
+  u.voice = voices.find((v) => v.lang.replace('_', '-') === want) ?? voices.find((v) => v.lang.startsWith(want.slice(0, 2))) ?? null;
   u.rate = 0.92;
   u.onend = () => onEnd?.();
   u.onerror = () => onEnd?.();
@@ -103,4 +109,4 @@ export function stopSpeaking(): void {
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 
-export const STORY_TRIGGER = /\b(tell you a story|want to tell (you )?(a|about)|let me tell you|i have a story)\b/i;
+export const STORY_TRIGGER = /\b(tell you a story|want to tell (you )?(a|about)|let me tell you|i have a story|kahani suna)|कहानी सुना|कहानी बता|एक कहानी है/i;

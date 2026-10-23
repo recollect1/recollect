@@ -77,7 +77,7 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
     "Save a story or memory she has just told, in her exact words. Pass everything she said, unedited. " +
     "Use when she tells you about her life, her family or her past.",
     {
-      text: z.string().min(1).describe("Her words exactly as spoken, the whole story."),
+      text: z.string().min(1).describe("Her words exactly as spoken, the whole story, in the language she used. Never translate."),
       private: z.boolean().optional().describe("True if she asked to keep this one to herself."),
       audioRef: z.string().optional().describe("Simulator only: reference to consented story-mode audio."),
     },
@@ -92,7 +92,7 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
   tool("recall_memory", BOTH,
     "Answer a question about her past using only what she has told Recollect before. Returns her own " +
     "words with the date she said them, or says that nothing is saved. Never add to or rephrase the answer.",
-    { question: z.string().min(1).describe("The question as asked.") },
+    { question: z.string().min(1).describe("The question as asked, in English: translate it if she asked in Hindi. The answer is still her own stored words.") },
     async ({ question }) => {
       const r = await recall(ctx, question, role);
       if (role === "elder") background(() => logAsk(ctx, "recall", question));
@@ -109,13 +109,13 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
 
   tool("check_dose", ["elder"],
     "Answer 'did I take my tablet?' from today's log. Gives no advice about medicines.",
-    { medicine: z.string().optional().describe("The tablet she named, e.g. 'BP tablet'. Omit if she did not say.") },
+    { medicine: z.string().optional().describe("The tablet she named, in English, e.g. 'BP tablet' (for 'BP की गोली'). Omit if she did not say.") },
     async ({ medicine }) => ({ ...(await checkDose(ctx, medicine)) }));
 
   tool("log_dose", ["elder"],
     "Mark a tablet as taken when she says she has just taken it. Gives no advice about medicines.",
     {
-      medicine: z.string().min(1).describe("The tablet she named, e.g. 'BP tablet'."),
+      medicine: z.string().min(1).describe("The tablet she named, in English, e.g. 'BP tablet' (for 'BP की गोली')."),
       at: z.string().regex(/^\d{1,2}:\d{2}$/).optional().describe("Time taken today as HH:MM, if she gave one."),
     },
     async ({ medicine, at }) => ({
@@ -125,13 +125,13 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
   tool("where_is", ["elder"],
     "Tell her where a family member or helper is, using the line her family wrote. Answer the same way " +
     "every time she asks.",
-    { person: z.string().min(1).describe("Who she asked about: a name or a relation such as 'my grandson'.") },
+    { person: z.string().min(1).describe("Who she asked about, in English: a name or a relation such as 'my grandson' (for 'मेरा पोता').") },
     async ({ person }) => ({ ...(await whereIs(ctx, person)) }));
 
   tool("who_is", BOTH,
     "Tell her who someone is: their name and how they are related to her, with their photo.",
     {
-      name: z.string().optional().describe("The name or relation she asked about."),
+      name: z.string().optional().describe("The name or relation she asked about, in English (e.g. 'Aman' for 'अमन')."),
       photoId: z.string().optional().describe("The photo on screen, if she asked 'who is this?'."),
     },
     async ({ name, photoId }) => ({ ...(await whoIs(ctx, { ...(name ? { name } : {}), ...(photoId ? { photoId } : {}) }, role)) }),
@@ -141,7 +141,7 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
     "Use when she wants to go somewhere or leave the house, especially at night ('I need to go to the market', " +
     "'I'm going out'). Pass her words. Reassures her calmly; at night it turns on the night light and tells her " +
     "family if needed. Never argue with her or correct her.",
-    { text: z.string().min(1).describe("What she said, exactly as spoken.") },
+    { text: z.string().min(1).describe("What she said, exactly as spoken, in the language she used. Never translate.") },
     async ({ text }) => {
       const r = await nightReassure(ctx, text);
       if (r.alert) { const alert = r.alert; background(() => sendAlertSms(ctx, alert)); }
@@ -163,7 +163,7 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
   tool("photo_moment", ["elder"],
     "The weekly photo. Call with no text to show this week's photo and invite her to describe it. Call " +
     "again with her words to save them. Never correct or quiz her about the photo.",
-    { text: z.string().optional().describe("Her description of the photo, exactly as spoken.") },
+    { text: z.string().optional().describe("Her description of the photo, exactly as spoken, in the language she used.") },
     async ({ text }) => {
       const r = await photoMoment(ctx, text);
       const { sessionId } = r;
@@ -194,7 +194,7 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
   tool("talk_about_today", ["elder"],
     "A gentle chat about her day. Call with no answer to ask her about it; call again with her words " +
     "exactly as spoken. She always hears the same thanks: never confirm, correct or quiz her about her day.",
-    { answer: z.string().optional().describe("What she said about her day, exactly as spoken.") },
+    { answer: z.string().optional().describe("What she said about her day, exactly as spoken, in the language she used.") },
     async ({ answer }) => ({ ...(await todayChat(ctx, answer)) }));
 
   tool("memory_lane", ["elder"],

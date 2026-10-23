@@ -174,6 +174,8 @@ export function App() {
 
       <ThisIsMeSection me={me} onSaved={load} />
 
+      <LanguageSection name={first} />
+
       <ConsentSection overview={overview} onSaved={load} />
     </div>
   );
@@ -348,6 +350,27 @@ function ThisIsMeSection({ me, onSaved }: { me: ThisIsMe; onSaved: () => void })
           {s.err && <p className="err">{s.err}</p>}
         </form>
       )}
+    </section>
+  );
+}
+
+/** The language she speaks and hears. Family pages and reports stay in English. */
+function LanguageSection({ name }: { name: string }) {
+  const [lang, setLang] = useState<'en' | 'hi' | null>(null);
+  useEffect(() => { void api.language().then((r) => setLang(r.lang)).catch(() => setLang('en')); }, []);
+  return (
+    <section id="language" className="block">
+      <h2>Her language</h2>
+      <p className="muted">
+        What {name} hears: dates, visitors, tablets, where people are, who is who, the evening and night routines. Her
+        stories are always kept in the words she used, never translated. Hindi wording is fixed text reviewed by the family.
+      </p>
+      <div className="actions">
+        {(['en', 'hi'] as const).map((l) => (
+          <button key={l} className={lang === l ? '' : 'secondary'} aria-pressed={lang === l}
+            onClick={() => void api.setLanguage(l).then((r) => setLang(r.lang))}>{l === 'en' ? 'English' : 'हिंदी (Hindi)'}</button>
+        ))}
+      </div>
     </section>
   );
 }

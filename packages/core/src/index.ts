@@ -19,3 +19,5 @@ export * from "./care.ts";
 export * as phrases from "./phrases.ts";
 export { seed, loadSimulated, loadSimulatedDayChats, type SeedOptions } from "./seed/index.ts";
 export * as seedData from "./seed/data.ts";
+export * from "./lang.ts";
+export { HI, BANNED_MEDICINE_HI } from "./phrases-hi.ts";

@@ -2,6 +2,7 @@
 // detection run after the tool has answered (processSession), then the extract agent takes over.
 import type { Ctx } from "./ctx.ts";
 import { cosine } from "./embed.ts";
+import { voice } from "./lang.ts";
 import * as P from "./phrases.ts";
 import { newId, splitQuotes } from "./text.ts";
 import { isoWeek } from "./time.ts";
@@ -42,7 +43,7 @@ export async function rememberStory(ctx: Ctx, input: RememberInput): Promise<{ s
     id: newId("job"), queue: EXTRACT_QUEUE, sessionId: session.id, at, done: input.queued === false,
     ...(input.audioRef ? { audioRef: input.audioRef } : {}),
   });
-  return { say: session.mode === "photo_desc" ? P.photoThanks() : P.storySaved(), sessionId: session.id };
+  return { say: session.mode === "photo_desc" ? P.photoThanks() : voice(ctx).storySaved(), sessionId: session.id };
 }
 
 /**
@@ -86,7 +87,7 @@ export async function keepPrivate(ctx: Ctx): Promise<{ say: string; sessionId?: 
     await Promise.all(quotes.map((q) => graph.upsert("Quote", { id: q.node.id, private: true })));
     await ctx.index.load(graph);
   }
-  return { say: P.privateKept(), ...(last ? { sessionId: last.id } : {}) };
+  return { say: voice(ctx).privateKept(), ...(last ? { sessionId: last.id } : {}) };
 }
 
 export async function storyPrompt(ctx: Ctx): Promise<{ say: string; promptId?: string }> {

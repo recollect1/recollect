@@ -111,12 +111,35 @@ family-only views never spoken to her).
   stories (her actual sentence and date) and what calms her from the profile. Night alerts on the
   family page show the "going out" tip.
 
+## Her first language: Hindi (23 Oct)
+
+Gurdev can speak Hindi, English or a mix (Hinglish), and hear Recollect in Hindi. The family switches
+it on the family page ("Her language"); the simulator has the same switch, and listens and speaks
+with Chrome's Hindi (`hi-IN`) speech.
+
+- **What she hears in Hindi** is fixed wording, like the English (`packages/core/src/phrases-hi.ts`):
+  what day it is, visitors, tablets (checked against a Hindi banned-advice list as well as the
+  English one), where someone is, who someone is, the evening and night routines, the day chat,
+  "kept" and "kept private", and "nothing saved". The family writes Hindi status lines, relations
+  and medicine names (seeded for the demo household).
+- **Her stories are never translated.** A story told in Hindi is stored word for word in Devanagari;
+  an answer about the past wraps her exact words, in whatever language she said them, in a Hindi
+  sentence: `आपने 3 अगस्त 2026 को मुझे बताया था: "…"`.
+- **Understanding Hindi.** In the simulator, her sentence is turned into one short English line
+  before the model picks a tool (shown on screen as "Understood as: …"), so questions match the
+  English memory index and names. This is in the client, before any tool call; tools still contain
+  no model. The line is cut to one sentence: an early version let Nova append an explanation or an
+  essay, which reached recall (friction log 32).
+- **Not yet:** asking in Hindi about a story told in Hindi (the local embedding model is English),
+  Punjabi, and speech markers for Hindi (tracking is only meaningful in the language the baseline
+  was measured in). The family page, reports and cards stay in English.
+- **Review needed:** the Hindi wording was written by the team and should be reviewed by native
+  speakers and carers before real use.
+
 ## Vision (not built)
 
-- **Her first language.** Gurdev would most naturally speak Punjabi or Hindi. The spec keeps this
-  build English-only (§1.10): every sentence she hears is fixed, reviewed wording, and the speech
-  markers are tuned on English. Next step: Punjabi and Hindi phrase files reviewed by native
-  speakers and carers, and markers validated per language before any trend is shown.
+- **More of her language.** Punjabi; asking in Hindi about stories told in Hindi (a multilingual
+  embedder, re-tuned on a Hindi grounding eval); speech markers validated per language.
 - **Fire TV:** Memory Lane on the living-room screen in the evening routine, the family's photos
   large, her words as captions.
 - **Ring:** when the doorbell rings, "That's Harpreet, your helper. She comes every morning", using

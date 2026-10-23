@@ -3,7 +3,8 @@
 import type { Ctx } from "./ctx.ts";
 import { cosine } from "./embed.ts";
 import type { Graph } from "./graph.ts";
-import { fromFamilyWords, fromTheirWords, nothingRecorded } from "./phrases.ts";
+import { spokenDate, voice } from "./lang.ts";
+import * as EN from "./phrases.ts";
 import { normalise, wordCount } from "./text.ts";
 import { fmtDate } from "./time.ts";
 import type { Entity, EntityKind, Person, Quote, Session } from "./types.ts";
@@ -105,8 +106,10 @@ export interface RecallResult {
 
 export async function recall(ctx: Ctx, question: string, role: "elder" | "family"): Promise<RecallResult> {
   const { index, household, elder } = ctx;
+  // She hears her own language; the family reads English. Quotes are never translated.
+  const V = role === "elder" ? voice(ctx) : EN;
   const nothing = (score: number, direct?: number, masked?: number): RecallResult => ({
-    say: nothingRecorded("that"), found: false, quotes: [], score,
+    say: V.nothingRecorded("that"), found: false, quotes: [], score,
     ...(direct === undefined ? {} : { direct }), ...(masked === undefined ? {} : { masked }),
   });
   const qVec = await ctx.embedder.embed(question);
@@ -155,9 +158,10 @@ export async function recall(ctx: Ctx, question: string, role: "elder" | "family
   const date = fmtDate(new Date(best.saidAt), household.tz);
   const text = picked.map((q) => q.text).join(" ");
   const speaker = best.speakerId === elder.id ? elder.name : index.speakerName(best.speakerId) || "Someone";
+  const spoken = role === "elder" ? spokenDate(ctx, new Date(best.saidAt)) : date;
   const say = best.speakerId === elder.id || role === "family"
-    ? fromTheirWords(text, speaker, date, role)
-    : fromFamilyWords(text, speaker, date);
+    ? V.fromTheirWords(text, speaker, spoken, role)
+    : V.fromFamilyWords(text, speaker, spoken);
   return {
     say, found: true, speaker, score: top.score, direct: bestDirect, ...(bestMasked === undefined ? {} : { masked: bestMasked }),
     quotes: picked.map((q) => ({

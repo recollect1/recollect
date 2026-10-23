@@ -15,15 +15,18 @@ const avatar = (initial: string, colour: string) =>
 export const PEOPLE: Person[] = [
   { id: "p-gurdev", name: "Gurdev", role: "elder", aliases: ["gurdev kaur", "grandma", "dadi", "biji"],
     relation: "self", photoUrl: avatar("G", "#8a5a44") },
-  { id: "p-aman", name: "Aman", role: "family", aliases: ["grandson", "simran's son", "simran's boy"],
+  { id: "p-aman", name: "Aman", role: "family", aliases: ["grandson", "simran's son", "simran's boy", "अमन", "पोता", "pota"],
     relation: "grandson", relationToElder: "grandson, Simran's son",
-    statusLine: "is in London and calls you on Sundays", photoUrl: avatar("A", "#3d6b8e") },
-  { id: "p-simran", name: "Simran", role: "family", aliases: ["daughter-in-law", "bahu"],
+    statusLine: "is in London and calls you on Sundays",
+    relationToElderHi: "आपका पोता, सिमरन का बेटा", statusLineHi: "लंदन में हैं और रविवार को आपको फ़ोन करते हैं", photoUrl: avatar("A", "#3d6b8e") },
+  { id: "p-simran", name: "Simran", role: "family", aliases: ["daughter-in-law", "bahu", "सिमरन", "बहू"],
     relation: "daughter-in-law", relationToElder: "daughter-in-law",
-    statusLine: "is at work and comes home at six", photoUrl: avatar("S", "#7a4d8c") },
-  { id: "p-harpreet", name: "Harpreet", role: "helper", aliases: ["helper", "the helper"],
+    statusLine: "is at work and comes home at six",
+    relationToElderHi: "आपकी बहू", statusLineHi: "काम पर हैं और छह बजे घर आती हैं", photoUrl: avatar("S", "#7a4d8c") },
+  { id: "p-harpreet", name: "Harpreet", role: "helper", aliases: ["helper", "the helper", "हरप्रीत"],
     relation: "home helper", relationToElder: "helper at home",
-    statusLine: "comes at ten in the morning, Monday to Saturday", photoUrl: avatar("H", "#4d8c6a") },
+    statusLine: "comes at ten in the morning, Monday to Saturday",
+    relationToElderHi: "घर में आपकी मदद करने वाली", statusLineHi: "सोमवार से शनिवार, सुबह दस बजे आती हैं", photoUrl: avatar("H", "#4d8c6a") },
 ];
 
 export const VISITS: Visit[] = [
@@ -34,10 +37,14 @@ export const VISITS: Visit[] = [
 // Generic names and a family-written purpose only; Recollect never gives dosing advice.
 export const MEDICINES: Medicine[] = [
   { id: "m-bp", name: "BP tablet", purpose: "for blood pressure",
-    aliases: ["bp", "bp medicine", "blood pressure tablet", "blood pressure medicine", "pressure tablet"] },
+    nameHi: "BP की गोली",
+    aliases: ["bp", "bp medicine", "blood pressure tablet", "blood pressure medicine", "pressure tablet",
+      "BP की गोली", "बीपी", "बीपी की गोली", "bp ki goli"] },
   { id: "m-sugar", name: "sugar tablet", purpose: "for sugar",
-    aliases: ["sugar", "sugar medicine", "diabetes tablet"] },
-  { id: "m-calcium", name: "calcium tablet", purpose: "for bones", aliases: ["calcium"] },
+    nameHi: "शुगर की गोली",
+    aliases: ["sugar", "sugar medicine", "diabetes tablet", "शुगर", "शुगर की गोली", "sugar ki goli"] },
+  { id: "m-calcium", name: "calcium tablet", purpose: "for bones", nameHi: "कैल्शियम की गोली",
+    aliases: ["calcium", "कैल्शियम", "कैल्शियम की गोली", "calcium ki goli"] },
 ];
 export const SCHEDULES: Schedule[] = [
   { id: "s-bp-am", medicineId: "m-bp", time: "08:00", qty: 1 },
@@ -165,6 +172,7 @@ export const PROFILE: Profile = {
   id: "p-gurdev", personId: "p-gurdev", preferredName: "Gurdev ji",
   likes: ["old Hindi and Punjabi film songs", "sweet milky tea at four", "sitting in the courtyard in the sun"],
   calms: ["Shall we have some tea and talk about your mother's saag?", "Shall we put on your music?"],
+  calmsHi: ["चलिए चाय पीते हैं और आपकी माँ के साग की बातें करते हैं?", "चलिए आपका संगीत लगाते हैं?"],
   upsets: ["being corrected or told she already asked", "loud television in the evening", "being rushed"],
   routines: ["wakes at six and says her prayers", "tablets with breakfast at eight", "rests after lunch"],
   communicationTips: ["speak slowly, one thing at a time", "use her name first", "answer repeats as if new"],

@@ -10,6 +10,7 @@
 //    memories often fade before old ones (Ribot's law); this compares her only with herself.
 import type { Ctx } from "./ctx.ts";
 import { familyVoices } from "./network.ts";
+import { voice } from "./lang.ts";
 import * as P from "./phrases.ts";
 import { rememberStory } from "./stories.ts";
 import { newId, normalise } from "./text.ts";
@@ -134,7 +135,7 @@ async function peopleNamed(ctx: Ctx, text: string): Promise<Person[]> {
  * people she named are compared, silently, with who was due to visit or call.
  */
 export async function todayChat(ctx: Ctx, answer?: string): Promise<{ say: string; saved: boolean }> {
-  if (!answer?.trim()) return { say: P.todayChatPrompt(ctx.elder.name), saved: false };
+  if (!answer?.trim()) return { say: voice(ctx).todayChatPrompt(ctx.elder.name), saved: false };
   const { sessionId } = await rememberStory(ctx, { text: answer, mode: "daily", queued: false });
   const consent = (await ctx.graph.find<Consent>("Consent", { personId: ctx.elder.id }))[0];
   const expected = await expectedToday(ctx);
@@ -147,7 +148,7 @@ export async function todayChat(ctx: Ctx, answer?: string): Promise<{ say: strin
     };
     await ctx.graph.upsert("RecentRecall", { ...record });
   }
-  return { say: P.todayChatThanks(), saved: true };
+  return { say: voice(ctx).todayChatThanks(), saved: true };
 }
 
 export interface RecentVsOld {

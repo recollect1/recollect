@@ -13,7 +13,8 @@ vi.mock('../server/mcp.ts', () => ({
   })),
 }));
 
-const { turn, setSender, setChatModel, resetHistory } = await import('../server/converse.ts');
+const { turn, setSender, setChatModel, resetHistory, cleanTranslation } = await import('../server/converse.ts');
+const { callTool } = await import('../server/mcp.ts');
 
 const reply = (content: Message['content'], stopReason = 'end_turn'): ConverseCommandOutput =>
   ({ output: { message: { role: 'assistant', content } }, stopReason } as ConverseCommandOutput);
@@ -64,5 +65,34 @@ describe('Converse loop', () => {
   it('refuses to run without a configured model', async () => {
     setChatModel('');
     await expect(turn('elder', 'hello')).rejects.toThrow(/BEDROCK_CHAT_MODEL_ID/);
+  });
+
+  it('Hindi: the tool-choosing model gets one short English line; the answer is still the tool `say`', async () => {
+    const seen: ConverseCommand[] = [];
+    setSender(async (cmd) => {
+      seen.push(cmd);
+      if (seen.length === 1) return reply([{ text: 'How did I come to Patiala?\n\nExplanation: "मैं" means I.' }]);
+      return reply([{ toolUse: { toolUseId: 'h1', name: 'recall_memory', input: { question: 'How did I come to Patiala?' } } }], 'tool_use');
+    });
+    const r = await turn('elder', 'मैं पटियाला कैसे आई थी?', { lang: 'hi' });
+    expect(r.understood).toBe('How did I come to Patiala?'); // the explanation is cut off
+    const asked = (seen[1]!.input.messages ?? []).flatMap((m) => m.content ?? []).find((c) => c.text)?.text;
+    expect(asked).toBe('How did I come to Patiala?');
+    expect(r.source).toBe('say');
+  });
+
+  it('Hindi: her own words reach remember_story exactly as she said them, never the translation', async () => {
+    let n = 0;
+    setSender(async () => (++n === 1
+      ? reply([{ text: 'There was a big peepal tree in our village.' }])
+      : reply([{ toolUse: { toolUseId: 'h2', name: 'remember_story', input: { text: 'There was a big peepal tree in our village.' } } }], 'tool_use')));
+    await turn('elder', 'हमारे गाँव में एक बड़ा पीपल का पेड़ था।', { lang: 'hi' });
+    expect(vi.mocked(callTool).mock.calls.at(-1)).toEqual(['elder', 'remember_story', { text: 'हमारे गाँव में एक बड़ा पीपल का पेड़ था।' }]);
+  });
+
+  it('cleanTranslation keeps one plain sentence and rejects an essay', () => {
+    expect(cleanTranslation('Translation: "Where is Aman?"', 'अमन कहाँ है?')).toBe('Where is Aman?');
+    expect(cleanTranslation('What was my school like?\n\nHere is an expansion...', 'मेरा स्कूल कैसा था?')).toBe('What was my school like?');
+    expect(cleanTranslation(Array(60).fill('word').join(' '), 'मेरा स्कूल कैसा था?')).toBeNull();
   });
 });

@@ -4,10 +4,16 @@ export type SessionMode = "story" | "daily" | "family" | "photo_desc";
 export type EntityKind = "person" | "place" | "event" | "thing";
 export type AskIntent = "recall" | "whats_today" | "where_is" | "check_dose" | "who_is" | "night_out";
 
-export interface Household { id: string; name: string; tz: string; elderId: string; adminId: string }
+export interface Household {
+  id: string; name: string; tz: string; elderId: string; adminId: string;
+  /** The language she hears (default English). */
+  lang?: "en" | "hi";
+}
 export interface Person {
   id: string; name: string; role: Role; aliases: string[]; relation: string;
   relationToElder?: string; statusLine?: string; photoUrl?: string;
+  /** Family-written Hindi versions, used when she hears Hindi. */
+  relationToElderHi?: string; statusLineHi?: string;
 }
 export interface Session {
   id: string; startedAt: string; speakerId: string; mode: SessionMode;
@@ -22,7 +28,7 @@ export interface Quote {
 export interface Entity { id: string; kind: EntityKind; name: string; aliases: string[]; year?: number }
 export interface Photo { id: string; url: string; caption: string }
 export interface StoryPrompt { id: string; text: string; basedOnEntityId: string; used: boolean }
-export interface Medicine { id: string; name: string; purpose: string; aliases: string[] }
+export interface Medicine { id: string; name: string; purpose: string; aliases: string[]; nameHi?: string }
 export interface Schedule { id: string; medicineId: string; time: string; qty: number }
 export interface DoseEvent { id: string; medicineId: string; at: string }
 export interface Visit { id: string; personId: string; daysOfWeek: number[]; time: string; kind: "visit" | "call" }
@@ -34,6 +40,8 @@ export interface Consent {
 export interface Profile {
   id: string; personId: string; preferredName: string; likes: string[]; calms: string[];
   upsets: string[]; routines: string[]; communicationTips: string[]; approvedFacts: string[];
+  /** Hindi versions of what calms her, for the evening greeting in Hindi. */
+  calmsHi?: string[];
 }
 export interface WeeklyPhoto { id: string; photoId: string; week: string; sessionId?: string }
 export interface Device { id: string; kind: "light" | "speaker"; room: string; state: string }

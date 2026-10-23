@@ -46,6 +46,11 @@ Memory fidelity engine, family memory network (shared memories, messages), care 
 memory only. Merging to `main` and pushing redeploys AWS (the deploy pulls from GitHub); after that,
 re-seed and click through the family page's new sections. The demo video predates these features.
 
+## 23 Oct: Hindi
+
+Gurdev can speak Hindi/Hinglish and hear Hindi (README "Her first language"). Switch it on the family
+page or with the simulator's हिंदी button; use Chrome (Hindi speech recognition and voice).
+
 ## Left to do (all need a person)
 
 1. **Microphone test** in Chrome on the deployed site: push-to-talk, story mode, full-voice recording

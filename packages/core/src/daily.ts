@@ -1,6 +1,7 @@
 // Daily-life tools: today, doses, where-is, who's-who, routines, family summary.
 // Same calm answer every time (§1.4): repeats are logged as AskEvents, never mentioned.
 import type { Ctx } from "./ctx.ts";
+import { dayNames, isHi, medName, relationOf, statusOf, voice } from "./lang.ts";
 import * as P from "./phrases.ts";
 import { newId, normalise } from "./text.ts";
 import { fmtHHMM, fmtTime, isoWeek, localAt, localDayBounds, localParts, minutesOfDay, parseHHMM } from "./time.ts";
@@ -74,9 +75,11 @@ export async function checkDose(ctx: Ctx, spoken?: string): Promise<{ say: strin
   const medicine = findMedicine(slots, spoken, nowMin);
   const slot = medicine && currentSlot(slots, medicine, nowMin);
   await logAsk(ctx, "check_dose", medicine?.name ?? spoken ?? "");
-  if (!medicine || !slot) return { say: P.medicineUnknown(ctx.admin.name) };
+  const V = voice(ctx);
+  if (!medicine || !slot) return { say: V.medicineUnknown(ctx.admin.name) };
+  const name = medName(ctx, medicine);
   const say = slot.taken && slot.takenAt
-    ? P.doseTaken(medicine.name, slot.takenAt) : P.doseNotYet(medicine.name, fmtHHMM(slot.time));
+    ? V.doseTaken(name, slot.takenAt) : V.doseNotYet(name, fmtHHMM(slot.time));
   return { say, medicine: medicine.name, taken: slot.taken };
 }
 
@@ -87,15 +90,16 @@ export async function logDose(ctx: Ctx, spoken: string, at?: Date): Promise<{ sa
   const { slots } = await todaysDoses(ctx);
   const medicine = findMedicine(slots, spoken, nowMin);
   const slot = medicine && currentSlot(slots, medicine, nowMin);
-  if (!medicine || !slot) return { say: P.medicineUnknown(admin.name), logged: false };
-  if (slot.taken && slot.takenAt) return { say: P.doseAlreadyLogged(medicine.name, slot.takenAt, admin.name), logged: false };
+  const V = voice(ctx);
+  if (!medicine || !slot) return { say: V.medicineUnknown(admin.name), logged: false };
+  if (slot.taken && slot.takenAt) return { say: V.doseAlreadyLogged(medName(ctx, medicine), slot.takenAt, admin.name), logged: false };
   const dose: DoseEvent = { id: newId("dose"), medicineId: medicine.id, at: when.toISOString() };
   await graph.upsert("DoseEvent", { ...dose });
   await Promise.all([
     graph.link(["Person", elder.id], "LOGGED", ["DoseEvent", dose.id]),
     graph.link(["DoseEvent", dose.id], "OF", ["Medicine", medicine.id]),
   ]);
-  return { say: P.doseLogged(medicine.name, fmtTime(when, household.tz)), logged: true };
+  return { say: V.doseLogged(medName(ctx, medicine), fmtTime(when, household.tz)), logged: true };
 }
 
 // ---------- today ----------
@@ -113,15 +117,18 @@ export async function whatsToday(ctx: Ctx): Promise<{ say: string; card: TodayCa
   ]);
   const name = (id: string) => people.find((x) => x.id === id)?.name ?? "";
   const todays = visits.filter((v) => v.daysOfWeek.includes(p.weekday)).sort((a, b) => parseHHMM(a.time) - parseHHMM(b.time));
+  const V = voice(ctx);
   const visitorLine = todays.length
-    ? todays.map((v) => (v.kind === "call" ? P.visitorCalls(name(v.personId)) : P.visitorComes(name(v.personId), fmtHHMM(v.time)))).join(", and ")
-    : P.noVisitors();
+    ? todays.map((v) => (v.kind === "call" ? V.visitorCalls(name(v.personId)) : V.visitorComes(name(v.personId), fmtHHMM(v.time))))
+      .join(isHi(ctx) ? ", और " : ", and ")
+    : V.noVisitors();
   const nowMin = minutesOfDay(ctx.clock.now(), household.tz);
   const next = slots.find((s) => !s.taken && parseHHMM(s.time) >= nowMin - NEXT_DOSE_LATE_MIN);
-  const nextLine = next ? P.nextDose(next.medicine.name, fmtHHMM(next.time)) : P.noMoreDoses();
+  const nextLine = next ? V.nextDose(medName(ctx, next.medicine), fmtHHMM(next.time)) : V.noMoreDoses();
   await logAsk(ctx, "whats_today");
+  const spoken = dayNames(ctx, ctx.clock.now());
   return {
-    say: P.today(p.weekdayName, p.day, p.monthName, visitorLine, nextLine),
+    say: V.today(spoken.weekdayName, spoken.day, spoken.monthName, visitorLine, nextLine),
     card: {
       weekday: p.weekdayName, date: `${p.day} ${p.monthName}`,
       visitors: todays.map((v) => ({ name: name(v.personId), time: fmtHHMM(v.time), kind: v.kind })),
@@ -144,13 +151,14 @@ export async function findPerson(ctx: Ctx, spoken: string): Promise<Person | und
 export async function whereIs(ctx: Ctx, spoken: string): Promise<{ say: string; person?: string; message?: string }> {
   const person = await findPerson(ctx, spoken);
   await logAsk(ctx, "where_is", person?.name ?? spoken);
-  if (!person?.statusLine) return { say: P.whoIsUnknown(ctx.admin.name) };
-  const status = P.personStatus(person.name, person.statusLine);
+  const V = voice(ctx);
+  if (!person?.statusLine) return { say: V.whoIsUnknown(ctx.admin.name) };
+  const status = V.personStatus(person.name, statusOf(ctx, person));
   // A message the family left her is read after the status line, the same way every time.
   const message = (await ctx.graph.find<FamilyMessage>("FamilyMessage", { personId: person.id }))
     .sort((a, b) => (a.at < b.at ? 1 : -1))[0];
   return {
-    say: message ? `${status} ${P.messageFrom(person.name, message.text)}` : status, person: person.name,
+    say: message ? `${status} ${V.messageFrom(person.name, message.text)}` : status, person: person.name,
     ...(message ? { message: message.text } : {}),
   };
 }
@@ -170,10 +178,14 @@ export async function whoIs(
       person = (await graph.out<Person>(["Entity", depicted[0].node.id], "SAME_AS"))[0]?.node;
   }
   if (role === "elder") await logAsk(ctx, "who_is", person?.name ?? input.name ?? "");
-  if (!person?.relationToElder) return { say: P.whoIsUnknown(admin.name) };
-  const extra = person.statusLine ? P.personStatus(person.name, person.statusLine) : undefined;
+  // The family always reads English; she hears her own language.
+  const V = role === "elder" ? voice(ctx) : P;
+  if (!person?.relationToElder) return { say: V.whoIsUnknown(admin.name) };
+  const relation = role === "elder" ? relationOf(ctx, person) : person.relationToElder;
+  const status = role === "elder" ? statusOf(ctx, person) : person.statusLine;
+  const extra = status ? V.personStatus(person.name, status) : undefined;
   return {
-    say: P.whoIs(person.name, person.relationToElder, extra),
+    say: V.whoIs(person.name, relation, extra),
     card: {
       name: person.name, relationToElder: person.relationToElder,
       ...(person.statusLine ? { statusLine: person.statusLine } : {}),
@@ -189,7 +201,7 @@ export async function pauseTracking(ctx: Ctx): Promise<{ say: string }> {
   await ctx.graph.upsert("Consent", {
     id: consent?.id ?? newId("c"), personId: ctx.elder.id, trackingOn: false, fullVoiceOn: false,
   });
-  return { say: P.trackingPaused(ctx.admin.name) };
+  return { say: voice(ctx).trackingPaused(ctx.admin.name) };
 }
 
 // ---------- routines (§9.4) ----------
@@ -242,7 +254,10 @@ export async function routineState(ctx: Ctx): Promise<RoutineState> {
       await graph.upsert("RoutineEvent", { ...event });
     }
     const profile = await graph.get<Profile>("Profile", elder.id);
-    greeting = P.eveningHello(elder.name, profile?.calms[0] ?? "Shall we put on your music?");
+    const offer = isHi(ctx)
+      ? profile?.calmsHi?.[0] ?? "चलिए आपका संगीत लगाते हैं?"
+      : profile?.calms[0] ?? "Shall we put on your music?";
+    greeting = voice(ctx).eveningHello(elder.name, offer);
   }
   const week = isoWeek(now, household.tz);
   let photoDue = false;

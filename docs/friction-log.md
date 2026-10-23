@@ -244,3 +244,16 @@ dominated by the network, while the server itself took 2–30 ms. That would hav
 tools were slow.
 **Fix:** chips and the strip now show the server's own time (coloured against the budget) next to
 the round trip, both labelled.
+
+## 32. Nova and Hindi in tool calls (23 Oct)
+**Doing:** Hindi and Hinglish in the simulator's Converse loop (`us.amazon.nova-pro-v1:0`), with tool
+descriptions asking for lookup arguments in English.
+**Problem:** two failures. Some Hindi sentences made Bedrock return "Model produced invalid sequence
+as part of ToolUse" (no reply at all), and the failed turn stayed in the history, so the next turn
+answered four questions at once. When we asked Nova to translate the question first, it sometimes
+added an explanation, or for "what was my school like?" a whole made-up essay about a school, which
+then reached recall and matched an unrelated story.
+**Fix:** her sentence is translated to one English line before the tool loop, cut to the first line
+and a word limit, and shown on screen; a failed turn is removed from the history. Her own words
+(stories, her day) are passed to the tools exactly as she said them. Unit tests cover all three.
+**Suggestion:** document Devanagari in tool-use arguments for Nova, and a "translation only" mode.

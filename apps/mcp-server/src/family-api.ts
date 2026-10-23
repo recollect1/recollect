@@ -1,7 +1,7 @@
 // REST for the family page (§13), family token only. Setup and consent writes live here, not in
 // MCP tools, because they are admin screens rather than things anyone says to Alexa.
 import type { IncomingMessage, ServerResponse } from "node:http";
-import {
+import { langOf, setLanguage,
   acknowledgeAlert, approveFact, changeConsent, familyAlerts, chooseWeeklyPhoto, deleteEverything, factCandidates, familyOverview, familyStories,
   familySummary, FamilyError, newId, saveMedicine, saveProfile, setStatusLine, speechTrend, thisIsMe, type Ctx,
   carerCoach, decideCare, ensureCarePlan, familyMessages, familyVoices, fidelityView, processSession, setFamilyMessage,
@@ -53,6 +53,11 @@ export async function familyApi(
       case "POST /api/family/message": {
         const b = z.object({ personId: z.string(), text: z.string().max(200) }).parse(body);
         return json(res, 200, await setFamilyMessage(ctx, b.personId, b.text)), true;
+      }
+      case "GET /api/family/language": return json(res, 200, { lang: langOf(ctx) }), true;
+      case "POST /api/family/language": {
+        const b = z.object({ lang: z.enum(["en", "hi"]) }).parse(body);
+        return json(res, 200, await setLanguage(ctx, b.lang)), true;
       }
       case "GET /api/family/fidelity": return json(res, 200, await fidelityView(ctx)), true;
       case "GET /api/family/coach": return json(res, 200, await carerCoach(ctx)), true;

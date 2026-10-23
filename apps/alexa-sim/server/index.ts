@@ -83,8 +83,10 @@ app.get("/api/status", handle(async (_req, res) => {
 }));
 
 app.post("/api/turn", handle(async (req, res) => {
-  const body = z.object({ role: RoleSchema, text: z.string().min(1).max(2000), shortReplies: z.boolean().optional() }).parse(req.body);
-  res.json(await turn(body.role, body.text, { shortReplies: body.shortReplies ?? false }));
+  const body = z.object({
+    role: RoleSchema, text: z.string().min(1).max(2000), shortReplies: z.boolean().optional(), lang: z.enum(['en', 'hi']).optional(),
+  }).parse(req.body);
+  res.json(await turn(body.role, body.text, { shortReplies: body.shortReplies ?? false, lang: body.lang ?? 'en' }));
 }));
 
 // Story mode: the verbatim transcript goes straight to remember_story — no model in between.

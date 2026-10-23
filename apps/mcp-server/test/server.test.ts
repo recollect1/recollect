@@ -287,4 +287,20 @@ describe("MCP server (§10)", () => {
     const r = await call(await connect(tokens.elder), "where_is", { person: "Aman" });
     expect(r.say).toBe('Aman is in London and calls you on Sundays. Aman left you a message: "Hello Biji, I\'ll call you on Sunday."');
   });
+
+  it("her language: the family switches to Hindi, she hears Hindi, the family still reads English", async () => {
+    const set = (lang: string) => fetch(new URL("/api/family/language", url), {
+      method: "POST", headers: { authorization: `Bearer ${tokens.family}`, "content-type": "application/json" },
+      body: JSON.stringify({ lang }),
+    });
+    expect((await set("hi")).status).toBe(200);
+    const elder = await connect(tokens.elder);
+    const a = await call(elder, "where_is", { person: "Aman" });
+    expect(a.say).toBe("Aman लंदन में हैं और रविवार को आपको फ़ोन करते हैं।");
+    expect((await call(elder, "where_is", { person: "Aman" })).say).toBe(a.say);
+    const family = await call(await connect(tokens.family), "who_is", { name: "Aman" });
+    expect(family.say.startsWith("That's Aman, your grandson")).toBe(true);
+    expect((await set("fr")).status).toBe(400);
+    expect((await set("en")).status).toBe(200);
+  });
 });

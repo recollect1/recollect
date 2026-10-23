@@ -736,5 +736,16 @@ Recorded as the code was written. Each has a friction-log entry where one applie
     `/report/memory-book`. Never books, buys or orders; tablet step lists schedules only (§1.5).
   - *Memory Lane* (`lane.ts`, `memory_lane`, `ui://recollect/lane-card`) and *carer coach*
     (`coach.ts`, `carer_coach`; `COACH` guidance in `phrases.ts`).
-  - *First language* (Punjabi/Hindi) stays out of scope (§1.10): documented as future work only.
+  - *First language*: Hindi was added on 23 Oct (next entry); Punjabi stays future work.
   - Doctor questions per metric live in `trend-phrases.json` (`question`, `doctorQuestionsIntro`).
+- **Hindi (23 Oct, changes §1.10 and §5).** `Household.lang` (`en` | `hi`), set on the family page or the
+  simulator (`GET/POST /api/family/language`). `packages/core/src/lang.ts` picks the phrase set for what
+  she hears (`phrases-hi.ts`, Hindi banned-medicine list too) and Hindi day/month names and dates;
+  family views, cards and reports stay English. Optional family-written `Person.statusLineHi`,
+  `relationToElderHi`, `Medicine.nameHi`, `Profile.calmsHi`; Devanagari aliases match (`normalise` keeps
+  U+0900–097F; quotes split at "।"). Quotes are never translated. Night places in Hindi/Hinglish map to
+  the English keys. The simulator: language switch, `hi-IN` recognition and voice, Hindi story trigger
+  and "बस इतना ही"; in Hindi it translates her utterance to one English line *before* the Bedrock tool
+  loop (`converse.ts`, not in any tool), and passes verbatim fields (`remember_story.text`,
+  `photo_moment.text`, `talk_about_today.answer`) as spoken. Not built: Hindi questions about Hindi
+  stories (English embedder), Punjabi, Hindi speech markers. Friction log 32.

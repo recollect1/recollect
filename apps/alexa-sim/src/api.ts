@@ -25,6 +25,8 @@ export interface TurnResult {
   calls: ToolCallRecord[];
   card: CardRef | null;
   modelMs?: number;
+  /** Hindi: the English line the tool-choosing model was given. */
+  understood?: string;
 }
 
 export class ApiError extends Error {
@@ -44,8 +46,13 @@ const post = <T>(path: string, body: unknown) =>
 
 export const api = {
   status: () => fetch('/api/status').then((r) => json<Record<string, any>>(r)),
-  turn: (role: Role, text: string, shortReplies = false) => post<TurnResult>('/api/turn', { role, text, shortReplies }),
+  turn: (role: Role, text: string, shortReplies = false, lang: 'en' | 'hi' = 'en') =>
+    post<TurnResult>('/api/turn', { role, text, shortReplies, lang }),
   story: (text: string, audio?: string) => post<TurnResult>('/api/story', audio ? { text, audio } : { text }),
+  language: () => fetch('/api/family/language').then((r) => json<{ lang: 'en' | 'hi' }>(r)).then((r) => r.lang),
+  setLanguage: (lang: 'en' | 'hi') => fetch('/api/family/language', {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ lang }),
+  }).then((r) => json<{ lang: 'en' | 'hi' }>(r)).then((r) => r.lang),
   fullVoice: () => fetch('/api/full-voice').then((r) => json<{ on: boolean }>(r)).then((r) => r.on).catch(() => false),
   direct: (role: Role, name: string, args: Record<string, unknown>) => post<TurnResult>('/api/direct', { role, name, args }),
   tool: (role: Role, name: string, args: Record<string, unknown>) => post<ToolCallRecord>('/api/tool', { role, name, args }),

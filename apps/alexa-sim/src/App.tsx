@@ -1,4 +1,5 @@
-import * as P from '@recollect/core/phrases';
+import * as EN from '@recollect/core/phrases';
+import { HI } from '@recollect/core/phrases-hi';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ApiError, type CardRef, type GraphData, type Role, type RoutineState, type ToolCallRecord, type TurnResult } from './api.ts';
 import { CardFrame } from './CardFrame.tsx';
@@ -6,12 +7,12 @@ import { GraphPanel } from './GraphPanel.tsx';
 import { HomePanel } from './HomePanel.tsx';
 import { LatencyStrip, latencyClass, timing, toolMs } from './LatencyStrip.tsx';
 import { startRecording, type Recording } from './audio.ts';
-import { listenForStory, listenOnce, recognitionSupported, speak, stopSpeaking, STORY_TRIGGER } from './speech.ts';
+import { listenForStory, listenOnce, recognitionSupported, setSpeechLang, speak, stopSpeaking, STORY_TRIGGER } from './speech.ts';
 
 type Phase = 'idle' | 'listening' | 'story' | 'thinking' | 'speaking';
 
 /** "Not now" to the weekly photo: back off gently, offer again next week. */
-const NOT_NOW = /^\s*(no|nah|not now|not today|later|maybe later|another time)/i;
+const NOT_NOW = /^\s*(?:(no|nah|not now|not today|later|maybe later|another time)\b|अभी नहीं|बाद में|नहीं|abhi nahi|baad mein)/i;
 
 interface Line {
   who: 'user' | 'recollect' | 'system';
@@ -68,11 +69,21 @@ export function App() {
   const [photoNext, setPhotoNext] = useState(false);
   // Day chat: after "tell me about your day", her next words are the answer (never a story to save).
   const [dayNext, setDayNext] = useState(false);
+  // The language she speaks and hears (household setting, also on the family page).
+  const [lang, setLang] = useState<'en' | 'hi'>('en');
+  const P = lang === 'hi' ? HI : EN;
   const offeredWeek = useRef<string | null>(null);
   const stopRef = useRef<(() => void) | null>(null);
   const logRef = useRef<HTMLOListElement>(null);
 
   useEffect(() => { api.status().then(setStatus).catch(() => setStatus({ error: true })); }, []);
+  useEffect(() => { api.language().then((l) => { setLang(l); setSpeechLang(l); }).catch(() => {}); }, []);
+  async function chooseLang(l: 'en' | 'hi') {
+    const saved = await api.setLanguage(l);
+    setLang(saved); setSpeechLang(saved);
+    setLines((x) => [...x, { who: 'system', text: saved === 'hi' ? 'Gurdev now speaks and hears Hindi (हिंदी).' : 'Gurdev now speaks and hears English.' }]);
+  }
+
   useEffect(() => { logRef.current?.lastElementChild?.scrollIntoView({ block: 'end', behavior: 'smooth' }); }, [lines, interim]);
 
   // Simulated home (§13): lights, speaker and short-reply mode follow routine_state, a real tool call.
@@ -139,8 +150,12 @@ export function App() {
     }
     if (role === 'elder' && STORY_TRIGGER.test(t)) return startStory();
     setPhase('thinking');
-    try { handleResult(await api.turn(role, t, routine?.shortReplies ?? false)); } catch (e) { fail(e); }
-  }, [role, routine, photoNext, dayNext, handleResult, fail]); // eslint-disable-line react-hooks/exhaustive-deps
+    try {
+      const r = await api.turn(role, t, routine?.shortReplies ?? false, lang);
+      if (r.understood) setLines((l) => [...l, { who: 'system', text: `Understood as: “${r.understood}”` }]);
+      handleResult(r);
+    } catch (e) { fail(e); }
+  }, [role, routine, photoNext, dayNext, lang, handleResult, fail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Offer this week's photo once, when routine_state says it is a calm moment for it. The offer is
   // a real photo_moment tool call; it is never made in the evening, at night or mid-conversation.
@@ -209,7 +224,7 @@ export function App() {
     if (storyNext) {
       setStoryNext(false);
       setLines((l) => [...l, { who: 'user', text: t, as: role }]);
-      void tellStory(t.replace(/[\s,.]*(that's all)[\s.!]*$/i, ''));
+      void tellStory(t.replace(/[\s,.।]*(that's all|that is all|बस इतना ही|बस इतनी सी|bas itna hi)[\s.!।]*$/i, ''));
     } else void send(t);
   }
 
@@ -273,6 +288,13 @@ export function App() {
             </button>
           ))}
         </div>
+        <div className="roles" role="radiogroup" aria-label="Her language">
+          {(['en', 'hi'] as const).map((l) => (
+            <button key={l} role="radio" aria-checked={lang === l} className={lang === l ? 'role on' : 'role'} onClick={() => void chooseLang(l)}>
+              {l === 'en' ? 'English' : 'हिंदी'}
+            </button>
+          ))}
+        </div>
         <div className="conn mono">
           {elderStatus?.ok ? <>MCP {elderStatus.protocol} · {elderStatus.tools.length} tools</> : status ? <span className="bad">MCP server unreachable</span> : '…'}
           {' · '}
@@ -290,7 +312,7 @@ export function App() {
                 <div className="idle">
                   <div className="idle-time">{routine?.localTime ?? '—'}</div>
                   <div className="idle-date">{routine?.routine === 'evening' ? 'Evening' : routine?.routine === 'night' ? 'Night' : ''}</div>
-                  <div className="idle-hint">{ROLES.find((r) => r.role === role)!.hint}</div>
+                  <div className="idle-hint">{lang === 'hi' && role === 'elder' ? 'बोलिए: “क्या मैंने BP की गोली ली?” या “मैं आपको एक कहानी सुनाना चाहती हूँ।”' : ROLES.find((r) => r.role === role)!.hint}</div>
                 </div>
               )}
             </div>

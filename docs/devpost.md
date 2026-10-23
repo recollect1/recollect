@@ -40,6 +40,9 @@ gives the family an honest, early signal to take to a doctor — without ever di
   questions for the doctor, a calendar invitation, a printable memory book and a tablet list to
   check with the pharmacy. The family approves each one; Recollect never books or buys anything.
 
+- **Her first language.** She can speak Hindi, English or Hinglish, and hear fixed, reviewed
+  Hindi wording for her day. Stories told in Hindi are kept word for word, never translated.
+
 ## How we built it
 
 - **MCP server** (TypeScript, Streamable HTTP, protocol 2025-11-25): 16 tools, role tokens for
@@ -87,8 +90,8 @@ fixed wording for memories, medicines and trends, and models used only where a m
 ## What's next
 
 A pilot with families and carers (with ethics review), on-device acoustic features if Alexa+ offers
-them (our feature request), and her first language: Punjabi and Hindi wording reviewed by native
-speakers, with markers validated per language. Memory Lane on Fire TV in the evening, and Ring telling
+them (our feature request), and more of her language: Punjabi, Hindi questions about Hindi stories,
+and speech markers validated per language. Memory Lane on Fire TV in the evening, and Ring telling
 her who is at the door with the who's-who card.
 
 ## Built with
