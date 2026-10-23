@@ -146,7 +146,7 @@ Amazon EC2 · AWS Systems Manager · Amazon ECR · Amazon Polly · React · Vite
 Amazon Bedrock (Converse, Nova Pro) for the extract agent and the simulator's conversation loop ·
 Strands Agents SDK for the extract agent · Amazon Bedrock AgentCore Runtime hosting it · Amazon EC2,
 ECR, IAM roles and SSM Parameter Store for the deployment · Amazon SNS for night alerts (built,
-switched off) · Amazon Polly for the video's voices. File paths are in the README's AWS section;
+switched off) · Amazon Polly for Recollect's voice in the video. File paths are in the README's AWS section;
 our experience with each is in `docs/product-feedback.md`.
 
 ## Before you press submit
