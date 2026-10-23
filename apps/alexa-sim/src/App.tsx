@@ -66,6 +66,8 @@ export function App() {
   const [storyNext, setStoryNext] = useState(false); // typed story mode
   // Weekly photo (§9.4): after the photo is offered, her next words are its description.
   const [photoNext, setPhotoNext] = useState(false);
+  // Day chat: after "tell me about your day", her next words are the answer (never a story to save).
+  const [dayNext, setDayNext] = useState(false);
   const offeredWeek = useRef<string | null>(null);
   const stopRef = useRef<(() => void) | null>(null);
   const logRef = useRef<HTMLOListElement>(null);
@@ -95,6 +97,8 @@ export function App() {
     setLines((l) => [...l, { who: 'recollect', text: r.reply, source: r.source, calls: r.calls }]);
     setCalls((c) => [...c, ...r.calls]);
     if (r.card) setCard(r.card);
+    const last = r.calls[r.calls.length - 1];
+    if (last?.name === 'talk_about_today' && !last.args.answer) setDayNext(true);
     // The reply is either a tool's `say` (verbatim) or short model small talk.
     say(r.reply);
   }, [say]);
@@ -127,10 +131,16 @@ export function App() {
       try { handleResult(await api.direct('elder', 'photo_moment', { text: t })); } catch (e) { fail(e); }
       return;
     }
+    if (dayNext && role === 'elder') {
+      setDayNext(false);
+      setPhase('thinking');
+      try { handleResult(await api.direct('elder', 'talk_about_today', { answer: t })); } catch (e) { fail(e); }
+      return;
+    }
     if (role === 'elder' && STORY_TRIGGER.test(t)) return startStory();
     setPhase('thinking');
     try { handleResult(await api.turn(role, t, routine?.shortReplies ?? false)); } catch (e) { fail(e); }
-  }, [role, routine, photoNext, handleResult, fail]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [role, routine, photoNext, dayNext, handleResult, fail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Offer this week's photo once, when routine_state says it is a calm moment for it. The offer is
   // a real photo_moment tool call; it is never made in the evening, at night or mid-conversation.
@@ -211,6 +221,7 @@ export function App() {
     setCard(null);
     setStoryNext(false);
     setPhotoNext(false);
+    setDayNext(false);
     setPhase('idle');
     setLines((l) => [...l, { who: 'system', text: `Now speaking as ${ROLES.find((x) => x.role === r)!.label}.` }]);
   }
