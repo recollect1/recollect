@@ -37,6 +37,7 @@ LINES: dict[str, tuple[str, str]] = {
     "r4a": ("rec", "Yes, you took your BP tablet at 8:10 today."),
     "g4b": ("gurdev", "Where is Aman?"),
     "r4b": ("rec", "Aman is in London and calls you on Sundays."),
+    "g4c": ("gurdev", "Where is Aman?"),
     "n4b": ("narr", "She asks again, and hears the same gentle answer. Never, you already asked."),
     # 5 · her story + memory graph
     "n5a": ("narr", "And Recollect is where her life story lives."),

@@ -16,10 +16,10 @@ family, gently, when her speech changes.
 
 **Repo:** https://github.com/recollect1/recollect (MIT)
 
-**Video:** <YouTube or Vimeo link, public> — file `video/final/recollect-final.mp4`, 2:58, English.
+**Video:** <YouTube or Vimeo link, public> — file `video/final/recollect-final.mp4`, 3:28, English.
 
-**About the video:** The opening, the architecture and the close are animations. The voice conversations are a re-enactment. Gurdev's, Aman's and the
-narrator's voices are Amazon Polly, and the microphone is replaced by her scripted words. Every reply
+**About the video:** The opening, the architecture and the close are animations. The voice conversations are a re-enactment. The narrator and Gurdev are voiced by our team;
+Recollect's voice is Amazon Polly, and the microphone is replaced by her scripted words. Every reply
 on screen and every Recollect line you hear is the real app's answer, recorded live from the running
 system (local FalkorDB, MCP server, Strands worker on Amazon Bedrock with Nova Pro). All people are
 fictional. The 12-week speech history is simulated and labelled "Simulated data" on screen.

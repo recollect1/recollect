@@ -4,3 +4,6 @@ clips/
 parts/
 *.mp4
 *.mp3
+clips_polly/
+vo/*.wav
+vo/*.json

@@ -24,7 +24,7 @@ TAKES, CLIPS = HERE / "takes", HERE / "clips"
 SIM, FAM = "http://127.0.0.1:5173/", "http://127.0.0.1:5174/"
 W, H = 1280, 720
 DUR: dict[str, float] = json.loads((CLIPS / "durations.json").read_text())
-GAP = 0.35  # silence between turns
+GAP = 0.25  # silence between turns
 
 INIT = r"""
 window.__say = []; window.__heardAt = 0;
@@ -65,7 +65,7 @@ SUB_JS = """t => { let d = document.getElementById('film-sub'); if (!d) { d = do
     background: '#000000d0', color: '#fff', font: '600 22px system-ui', padding: '8px 18px', borderRadius: '10px',
     maxWidth: '1000px', textAlign: 'center', pointerEvents: 'none' }); document.body.appendChild(d); }
   d.style.display = t ? 'block' : 'none'; d.textContent = t; }"""
-REENACT = "Re-enactment: voices are synthetic, every reply is the real app. People are fictional."
+REENACT = "Re-enactment: acted voices, every reply is the real app. People are fictional."
 
 
 class Scene:
@@ -226,7 +226,7 @@ def s4_morning(S: Scene, pre: bool):
     S.clip("n4a")
     say(S, p, "g4a", "r4a")
     say(S, p, "g4b", "r4b")
-    say(S, p, "g4b", "r4b")
+    say(S, p, "g4c", "r4b")
     S.clip("n4b")
     S.hold(0.3)
 
@@ -242,7 +242,7 @@ def s5_story(S: Scene, pre: bool):
     before = replies(p)
     story = f"{STORY_SPOKEN} {STORY_REST}"
     spoken_words = len(STORY_SPOKEN.split(" "))
-    delays = delays_for(STORY_SPOKEN, DUR["g5b"]) + [75] * (len(story.split(" ")) - spoken_words)
+    delays = delays_for(STORY_SPOKEN, DUR["g5b"]) + [45] * (len(story.split(" ")) - spoken_words)
     # Queue the story for when story mode starts listening, then say the trigger.
     p.evaluate("([t, d]) => window.__say.push({ text: t, delays: d })", ["I want to tell you a story.", delays_for("I want to tell you a story.", DUR["g5a"])])
     p.evaluate("([t, d]) => window.__say.push({ text: t, delays: d })", [story, delays])
@@ -264,7 +264,7 @@ def s5_story(S: Scene, pre: bool):
     p.wait_for_timeout(500)
     p.locator("[aria-label='Memory graph'], .graph").first.scroll_into_view_if_needed()
     S.clip("n5b")
-    S.hold(1.5)
+    S.hold(1.0)
 
 
 def s6_recall(S: Scene, pre: bool):

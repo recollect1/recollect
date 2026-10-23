@@ -21,7 +21,14 @@ CLIPS, PARTS = HERE / "clips", HERE / "parts"
 ORDER = ["s1_open", "s2_problem", "s3_solution", "s4_morning", "s5_story", "s6_recall", "s7_care",
          "s8_built", "s9_close"]
 FADE = 0.25
-SPEED = 1.12  # whole film, pitch kept (atempo); keeps it under 3:00 without rushing any one scene
+SPEED = 1.0  # the team's own voice-over sets the pace, so nothing is sped up
+# The app scenes were recorded with the note for all-synthetic voices; Gurdev and the narrator are now
+# voiced by the team, so the note is redrawn in the same place.
+NOTE = "Re-enactment: acted voices, every reply is the real app. People are fictional."
+NOTE_SCENES = {"s4_morning", "s5_story", "s6_recall"}
+NOTE_FILTER = ("drawbox=x=730:y=682:w=544:h=34:color=0x0b1226:t=fill,"
+               "drawtext=fontfile=/System/Library/Fonts/HelveticaNeue.ttc:fontsize=13:fontcolor=0xcfd8e6:"
+               "text='" + NOTE.replace(":", "\\:").replace(",", "\\,") + "':x=w-tw-22:y=693")
 
 
 def ranges(m: dict) -> list[tuple[str, float, float]]:
@@ -77,7 +84,8 @@ def build_scene(name: str, m: dict) -> Path:
     for i in range(len(rs)):
         f.append(f"[{i}:v]setpts=PTS-STARTPTS,scale=1280:720,fps=30,format=yuv420p[v{i}]")
     f.append("".join(f"[v{i}]" for i in range(len(rs))) + f"concat=n={len(rs)}:v=1:a=0[vc]")
-    f.append(f"[vc]tpad=stop_mode=clone:stop_duration={max(total - vlen, 0) + 0.1:.3f},"
+    fix = NOTE_FILTER + "," if name in NOTE_SCENES else ""
+    f.append(f"[vc]{fix}tpad=stop_mode=clone:stop_duration={max(total - vlen, 0) + 0.1:.3f},"
              f"fade=t=in:st=0:d={FADE},fade=t=out:st={total - FADE:.3f}:d={FADE}[vout]")
     n = len(rs)
     for j, (t, _) in enumerate(events):
