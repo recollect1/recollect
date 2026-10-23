@@ -1,0 +1,31 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="film.css">
+<style>
+.logo { position: absolute; top: 96px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 26px; }
+.logo .ring { width: 86px; height: 86px; border-width: 9px; animation: glow 2.4s ease-in-out infinite; }
+@keyframes glow { 50% { box-shadow: 0 0 60px #29d9ff, inset 0 0 30px #29d9ff; } }
+.logo h1 { font-family: Literata, serif; font-size: 92px; font-weight: 600; letter-spacing: -2px; }
+.tag { position: absolute; top: 222px; left: 0; right: 0; text-align: center; font-size: 26px; color: #b8c2e8; }
+.graph { position: absolute; left: 140px; right: 140px; top: 320px; height: 300px; }
+.hub { position: absolute; left: calc(50% - 115px); top: 70px; width: 230px; height: 230px; border-radius: 50%;
+  display: grid; place-items: center; text-align: center; font-size: 24px; font-weight: 700;
+  background: radial-gradient(circle, #1d3a6a, #0a1530 70%); border: 2px solid #5fe6ff88; box-shadow: 0 0 60px #29d9ff55; }
+.pill { position: absolute; width: 270px; padding: 18px 20px; border-radius: 18px; background: #0c1330ee; border: 1px solid #ffffff22; }
+.pill b { display: block; font-size: 24px; margin-bottom: 4px; }
+.pill span { font-size: 17px; color: #b8c2e8; }
+svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+path { stroke: #5fe6ff66; stroke-width: 2; fill: none; stroke-dasharray: 6 8; animation: flow 1.2s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -28; } }
+</style>
+<div class="logo in" style="animation-delay:.3s"><div class="ring"></div><h1>Recollect</h1></div>
+<p class="tag in" style="animation-delay:1s">An Alexa+ companion for people living with memory loss</p>
+<div class="graph">
+  <svg viewBox="0 0 1000 300" preserveAspectRatio="none" class="in" style="animation-delay:3.2s">
+    <path d="M160 60 C 330 60, 380 150, 500 150" /><path d="M500 30 L 500 150" /><path d="M840 60 C 670 60, 620 150, 500 150" />
+  </svg>
+  <div class="hub in" style="animation-delay:3.2s"><span>One memory<br>graph</span></div>
+  <div class="pill in" style="left:0;top:0;animation-delay:1.9s"><b class="gold">For her</b><span>Calm answers, her own stories, her language</span></div>
+  <div class="pill in" style="left:calc(50% - 125px);top:-40px;animation-delay:2.3s;width:250px;text-align:center"><b class="rose">For her family</b><span>Questions, memories, gentle alerts</span></div>
+  <div class="pill in" style="right:0;top:0;animation-delay:2.7s"><b class="teal">For her doctor</b><span>An honest, early signal, never a diagnosis</span></div>
+</div>
+<p class="foot in" style="animation-delay:5.6s">Everything that follows is the working app, recorded live · all people and stories are fictional</p>
+<script src="dust.js"></script>

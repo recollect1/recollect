@@ -1,0 +1,54 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="film.css">
+<style>
+h2 { position: absolute; top: 36px; left: 60px; font-size: 34px; font-weight: 600; }
+h2 small { display: block; font-family: "Atkinson Hyperlegible"; font-size: 17px; color: #9aa6c8; font-weight: 400; margin-top: 4px; }
+svg.wires { position: absolute; inset: 0; }
+.wire { stroke: #5fe6ff44; stroke-width: 2.5; fill: none; }
+.wire.slow { stroke: #ffc65c44; }
+.node { position: absolute; padding: 16px 18px; border-radius: 18px; background: #0c1330f2; border: 1px solid #ffffff26;
+  box-shadow: 0 10px 40px #0008; }
+.node b { display: block; font-size: 21px; margin-bottom: 6px; }
+.node span { display: block; font-size: 15px; color: #b8c2e8; line-height: 1.45; }
+.node.hot { border-color: #5fe6ffaa; box-shadow: 0 0 40px #29d9ff44; }
+.node.gold { border-color: #ffc65caa; box-shadow: 0 0 40px #ffc65c33; }
+.stats { position: absolute; left: 60px; right: 60px; bottom: 34px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.stat { padding: 14px 18px; border-radius: 16px; background: #0c1330ee; border: 1px solid #ffffff1f; }
+.stat b { display: block; font-size: 30px; font-family: Literata, serif; }
+.stat span { font-size: 15px; color: #9aa6c8; }
+</style>
+<h2 class="serif in" style="animation-delay:.2s">How it works<small>Real MCP on both ends · no model writes what she hears · slow work in the background</small></h2>
+
+<svg class="wires in" style="animation-delay:.6s" viewBox="0 0 1280 720">
+  <path id="w1" class="wire" d="M300 260 L 420 260" />
+  <path id="w2" class="wire" d="M700 260 L 820 260" />
+  <path id="w3" class="wire slow" d="M960 330 L 960 400" />
+  <path id="w4" class="wire slow" d="M820 470 L 700 470" />
+  <path id="w5" class="wire slow" d="M560 400 L 560 330" />
+  <path id="w6" class="wire" d="M1100 210 L 1100 150" />
+  <g fill="#5fe6ff">
+    <circle r="6"><animateMotion dur="1.4s" repeatCount="indefinite"><mpath href="#w1" /></animateMotion></circle>
+    <circle r="6"><animateMotion dur="1.4s" begin=".7s" repeatCount="indefinite"><mpath href="#w1" /></animateMotion></circle>
+    <circle r="6"><animateMotion dur="1.4s" begin="1s" repeatCount="indefinite"><mpath href="#w2" /></animateMotion></circle>
+    <circle r="6"><animateMotion dur="1.6s" begin="1.2s" repeatCount="indefinite"><mpath href="#w6" /></animateMotion></circle>
+  </g>
+  <g fill="#ffc65c">
+    <circle r="6"><animateMotion dur="2.2s" begin="2s" repeatCount="indefinite"><mpath href="#w3" /></animateMotion></circle>
+    <circle r="6"><animateMotion dur="2.2s" begin="2.6s" repeatCount="indefinite"><mpath href="#w4" /></animateMotion></circle>
+    <circle r="6"><animateMotion dur="2.2s" begin="3.2s" repeatCount="indefinite"><mpath href="#w5" /></animateMotion></circle>
+  </g>
+</svg>
+
+<div class="node in" style="left:60px;top:190px;width:240px;animation-delay:.6s"><b>Her voice</b><span>Alexa+, or our Echo-style simulator<br>English · हिंदी · Hinglish</span></div>
+<div class="node hot in" style="left:420px;top:170px;width:280px;animation-delay:1.4s"><b class="cyan">MCP server</b><span>Streamable HTTP, spec 2025-11-25<br>26 tools · MCP Apps cards · Agent Skill<br>Answers in milliseconds, fixed wording<br>Local embeddings + reranker, no LLM</span></div>
+<div class="node in" style="left:820px;top:170px;width:290px;animation-delay:7.3s"><b class="teal">FalkorDB memory graph</b><span>Her quotes, people, places, retellings,<br>tablets, questions, consent</span></div>
+<div class="node in" style="left:1000px;top:66px;width:240px;animation-delay:7.8s"><b class="rose">Family page · 3D timeline</b><span>Doctor report · Ask Biji</span></div>
+<div class="node gold in" style="left:820px;top:400px;width:300px;animation-delay:9.3s"><b class="gold">Worker (Python)</b><span>Speech markers · trends · reports<br>Runs after the tool has answered</span></div>
+<div class="node gold in" style="left:400px;top:400px;width:300px;animation-delay:10.4s"><b class="gold">Strands agents</b><span>Extract agent on Bedrock AgentCore<br>Amazon Nova Pro on Bedrock<br>Validated: every span is in her words</span></div>
+
+<div class="stats">
+  <div class="stat in" style="animation-delay:13.3s"><b class="gold">30 / 30</b><span>grounding eval · 0 invented</span></div>
+  <div class="stat in" style="animation-delay:13.9s"><b class="cyan">144 ms</b><span>slowest p95 on AWS · budget 500</span></div>
+  <div class="stat in" style="animation-delay:14.5s"><b class="teal">133</b><span>automated tests, plus 51 in Python</span></div>
+  <div class="stat in" style="animation-delay:15.1s"><b class="rose">mcp-latency</b><span>our open-source latency CLI</span></div>
+</div>
+<script src="dust.js"></script>

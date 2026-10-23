@@ -1,0 +1,29 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="film.css">
+<style>
+.wrap { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+.big { font-size: 112px; font-weight: 600; letter-spacing: -2px; line-height: 1; }
+.sub { font-size: 30px; margin-top: 12px; }
+.stack { display: grid; gap: 26px; justify-items: center; }
+.who { display: flex; gap: 18px; align-items: center; font-size: 40px; }
+.avatar { width: 64px; height: 64px; border-radius: 50%; background: #8a5a44; display: grid; place-items: center; font-size: 30px; font-weight: 700; color: #fff;
+  box-shadow: 0 0 30px #ffc65c55; }
+.row { display: grid; grid-template-columns: 140px 1fr 200px; gap: 20px; align-items: center; width: 900px; padding: 16px 26px;
+  border-radius: 18px; border: 1px solid #ffffff1a; background: #0c1330aa; font-size: 28px; text-align: left; }
+.row b { font-size: 34px; }
+.tag { font-size: 20px; font-weight: 700; padding: 6px 14px; border-radius: 999px; text-align: center; }
+.kept { color: #1a1204; background: #ffc65c; box-shadow: 0 0 24px #ffc65c88; }
+.lost { color: #ff9ab0; border: 2px dashed #ff9ab0; }
+#first { animation: gone 1s 3.3s forwards; } @keyframes gone { to { opacity: 0; filter: blur(8px); } }
+</style>
+<div class="wrap" id="first"><div class="in"><div class="big serif"><span id="n">0</span> million</div><div class="sub muted">people live with dementia</div></div></div>
+<div class="wrap"><div class="stack">
+  <div class="who in" style="animation-delay:3.9s"><div class="avatar">G</div><span class="serif">Gurdev, 78 · Patiala</span></div>
+  <div class="row in" style="animation-delay:6.0s"><b class="gold serif">1966</b><span>Her wedding day</span><span class="tag kept">Remembered</span></div>
+  <div class="row in" style="animation-delay:9.4s"><b class="cyan serif">8:00 am</b><span>This morning's tablet</span><span class="tag lost">Forgotten</span></div>
+</div></div>
+<p class="foot in" style="animation-delay:1s">WHO: about 57 million people were living with dementia in 2021 · Gurdev and everyone shown are fictional</p>
+<script src="dust.js"></script>
+<script>
+let n = 0; const el = document.getElementById('n');
+const t = setInterval(() => { n += 1; el.textContent = n; if (n >= 57) clearInterval(t); }, 38);
+</script>

@@ -1,0 +1,38 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="film.css">
+<style>
+h2 { position: absolute; top: 70px; left: 0; right: 0; text-align: center; font-size: 40px; font-weight: 600; }
+.lane { position: absolute; top: 170px; left: 120px; right: 120px; height: 150px; }
+.bar { position: absolute; top: 60px; left: 0; right: 0; height: 10px; border-radius: 10px;
+  background: linear-gradient(90deg, #ffc65c, #ffc65c 45%, #5fe6ff); box-shadow: 0 0 22px #ffc65c66; }
+.fog { position: absolute; top: 10px; bottom: 10px; right: 0; width: 0; background: linear-gradient(90deg, transparent, #070a18 40%);
+  animation: fog 5s 1.6s ease-in-out forwards; }
+@keyframes fog { to { width: 52%; } }
+.dot { position: absolute; top: 48px; width: 34px; height: 34px; border-radius: 50%; transform: translateX(-50%); }
+.dot.old { background: #ffc65c; box-shadow: 0 0 22px #ffc65c; }
+.dot.new { background: #5fe6ff; box-shadow: 0 0 22px #5fe6ff; animation: vanish 3s 2.2s forwards; }
+@keyframes vanish { to { opacity: 0; transform: translateX(-50%) scale(.3); filter: blur(4px); } }
+.lab { position: absolute; top: 100px; transform: translateX(-50%); font-size: 18px; color: #c9cbd2; white-space: nowrap; }
+.ends { position: absolute; top: 0; font-size: 18px; color: #9aa6c8; }
+.cards { position: absolute; left: 90px; right: 90px; bottom: 90px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.card { padding: 24px 26px; border-radius: 20px; background: #0c1330cc; border: 1px solid #ffffff1a; min-height: 170px; }
+.card b { display: block; font-size: 26px; margin-bottom: 10px; }
+.card p { font-size: 19px; color: #b8c2e8; line-height: 1.45; }
+.n { font-size: 15px; font-weight: 700; letter-spacing: 1.5px; color: #ffc65c; margin-bottom: 8px; }
+</style>
+<h2 class="serif in" style="animation-delay:.4s">The newest memories fade first. The oldest stay longest.</h2>
+<div class="lane in" style="animation-delay:.9s">
+  <span class="ends" style="left:0">childhood</span><span class="ends" style="right:0">today</span>
+  <div class="bar"></div>
+  <div class="dot old" style="left:8%"></div><span class="lab" style="left:8%">the village well</span>
+  <div class="dot old" style="left:24%"></div><span class="lab" style="left:24%">wedding, 1966</span>
+  <div class="dot old" style="left:34%"></div><span class="lab" style="left:34%">the first radio</span>
+  <div class="dot new" style="left:80%"></div><span class="lab" style="left:80%;animation:vanish 3s 2.2s forwards">who visited</span>
+  <div class="dot new" style="left:94%"></div><span class="lab" style="left:94%;animation:vanish 3s 2.6s forwards">this morning's tablet</span>
+  <div class="fog"></div>
+</div>
+<div class="cards">
+  <div class="card in" style="animation-delay:6.3s"><div class="n">EVERY DAY</div><b>The same questions</b><p>What day is it? Did I take my tablet? Where is Aman?</p></div>
+  <div class="card in" style="animation-delay:8.8s"><div class="n">EVERY YEAR</div><b>Her life story slips away</b><p>Stories told once, then retold, then lost, with no one recording them.</p></div>
+  <div class="card in" style="animation-delay:11.0s"><div class="n">TOO LATE</div><b>Change noticed late</b><p>Her grandson is in London. By the time anyone notices, months have passed.</p></div>
+</div>
+<script src="dust.js"></script>

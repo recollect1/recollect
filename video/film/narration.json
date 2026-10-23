@@ -1,0 +1,16 @@
+{
+ "m01_open": "Fifty-seven million people live with dementia. Gurdev is seventy-eight. She can still tell you about her wedding day in 1966. She can't remember if she took her tablet this morning.",
+ "m02_problem": "That's how dementia often works. The newest memories fade first, the oldest stay longest. So every day brings the same questions. Her life story slowly slips away. And her family, one of them in London, notices the change too late.",
+ "m03_intro": "Recollect is an Alexa Plus companion for her, her family and her doctor, built on one memory graph. Everything you'll see is running live.",
+ "m04_daily": "Each morning, the same calm greeting. Did I take my BP tablet? The answer comes from today's log, never as advice. Who is Aman? A card with his photo. Asked again and again where Aman is, she hears the same gentle answer. Never, you already asked.",
+ "m05_hindi": "She can speak Hindi too, and hear her own language back.",
+ "m06_story": "Now she tells a story about the first radio in her house. Recollect keeps her exact words, and seconds later the story rises onto her life timeline, at 1968, the year she said.",
+ "m07_graph": "On our AWS deployment, a Strands agent on Bedrock AgentCore finds the people, places and things in each story, and her memory graph grows as she speaks.",
+ "m08_recall": "When her grandson asks how she came to Patiala, he hears her own words and the date she said them. Ask about something she never told, and Recollect says so. It never invents a memory.",
+ "m09_ask": "Her family can leave questions. In the calm of the afternoon, Recollect asks her gently, and keeps her answer, in her words, for her grandson.",
+ "m10_evening": "At five, when confusion often rises, the lights warm, familiar music plays, and replies stay short.",
+ "m11_timeline": "This is her life, in time. Every point is a story she told. Gold, she said the year. Teal, her family confirmed it. Nothing is guessed.",
+ "m12_family": "For her family, Recollect tracks changes in her everyday speech against her own baseline. This history is simulated. Only a change lasting four weeks raises a gentle note, and a report for her doctor, with next steps to approve. It never diagnoses.",
+ "m13_arch": "Under the hood: a real MCP server with twenty-six tools, answering in milliseconds, with no language model writing any answer. FalkorDB holds the graph. Strands agents on Bedrock and AgentCore work in the background. Our grounding test: thirty out of thirty, nothing invented.",
+ "m14_close": "Recollect. Her story, in her words. Her days, calm. Her family, a step ahead."
+}
