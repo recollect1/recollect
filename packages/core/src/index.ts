@@ -21,3 +21,6 @@ export { seed, loadSimulated, loadSimulatedDayChats, type SeedOptions } from "./
 export * as seedData from "./seed/data.ts";
 export * from "./lang.ts";
 export { HI, BANNED_MEDICINE_HI } from "./phrases-hi.ts";
+export * from "./questions.ts";
+export * from "./digest.ts";
+export * from "./timeline.ts";

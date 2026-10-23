@@ -192,3 +192,37 @@ export const familyMemoryNoStory = () =>
 export const careTabletCheck = (admin: string) =>
   `Before the visit, check with the pharmacy that her regular tablets will last until then. ` +
   `Recollect lists them below; ${admin} or the pharmacy decides everything about them.`;
+
+// --- "Ask Biji": questions from the family, asked at a calm moment (her answer is kept verbatim) ---
+export const familyQuestionPrompt = (asker: string, question: string) =>
+  `${asker} would love to know: "${question}" Would you tell me about it? There's no right or wrong answer.`;
+export const familyQuestionThanks = (asker: string) => `Thank you. I've kept that, and I'll keep it for ${asker} too.`;
+export const questionLater = () => "Alright, we can talk about it another time.";
+export const noFamilyQuestion = () => "There are no questions from the family just now.";
+/** Family-facing. */
+export const questionQueued = (elder: string) =>
+  `Saved. Recollect will ask ${elder} at a calm time of day, once a day at most, and keep her answer in her own words.`;
+export const questionAnswered = (elder: string, asker: string) => `${elder} answered ${asker}'s question.`;
+
+// --- good morning (the same calm words every day) ---
+export const goodMorning = (name: string, todayLine: string) => `Good morning, ${name}. ${todayLine}`;
+
+// --- family: missed tablets, weekly digest, carer check-in ---
+export const missedDoseNote = (name: string, medicine: string, time: string) =>
+  `${name}'s ${time} ${medicine} isn't marked as taken yet. Recollect never suggests a late or extra tablet to her; ` +
+  `please check with her, or with her doctor if you're unsure.`;
+export const weeklyDigest = (name: string, stories: number, familyMemories: number, answered: number,
+  taken: number, scheduled: number, repeats: string[]) =>
+  `This week ${name} told ${stories} ${stories === 1 ? "story" : "stories"}` +
+  `${familyMemories ? `, the family added ${familyMemories} ${familyMemories === 1 ? "memory" : "memories"}` : ""}` +
+  `${answered ? `, and she answered ${answered} family ${answered === 1 ? "question" : "questions"}` : ""}. ` +
+  `Tablets marked: ${taken} of ${scheduled}.` +
+  `${repeats.length ? ` Questions she asked most: ${repeats.join("; ")}.` : ""}`;
+export const CARER_PROMPT = (admin: string) => `How are you doing this week, ${admin}?`;
+export const CARER_REPLIES: Record<"ok" | "tired" | "struggling", string> = {
+  ok: "Glad to hear it. Thank you for everything you do for her.",
+  tired: "Caring is tiring. If you can, ask another family member or her helper to cover an afternoon this week, " +
+    "and take that time for yourself.",
+  struggling: "Thank you for saying so. You don't have to manage this alone: please talk to someone you trust, " +
+    "her doctor, or a local carers' support group about getting more help.",
+};

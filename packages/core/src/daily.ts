@@ -2,6 +2,7 @@
 // Same calm answer every time (§1.4): repeats are logged as AskEvents, never mentioned.
 import type { Ctx } from "./ctx.ts";
 import { dayNames, isHi, medName, relationOf, statusOf, voice } from "./lang.ts";
+import { questionDue } from "./questions.ts";
 import * as P from "./phrases.ts";
 import { newId, normalise } from "./text.ts";
 import { fmtHHMM, fmtTime, isoWeek, localAt, localDayBounds, localParts, minutesOfDay, parseHHMM } from "./time.ts";
@@ -30,7 +31,7 @@ export async function logAsk(ctx: Ctx, intent: AskIntent, detail = ""): Promise<
 export interface DoseSlot { medicine: Medicine; time: string; taken: boolean; takenAt?: string }
 
 /** Today's slots per medicine. The n-th dose logged today covers that medicine's n-th slot. */
-async function todaysDoses(ctx: Ctx): Promise<{ slots: DoseSlot[]; events: DoseEvent[] }> {
+export async function todaysDoses(ctx: Ctx): Promise<{ slots: DoseSlot[]; events: DoseEvent[] }> {
   const { graph, household } = ctx;
   const now = ctx.clock.now();
   const { from, to } = localDayBounds(now, household.tz);
@@ -110,6 +111,13 @@ export interface TodayCard {
 }
 
 export async function whatsToday(ctx: Ctx): Promise<{ say: string; card: TodayCard }> {
+  const r = await todayLine(ctx);
+  await logAsk(ctx, "whats_today");
+  return r;
+}
+
+/** Today's sentence and card, without logging an ask (also used by the morning greeting). */
+async function todayLine(ctx: Ctx): Promise<{ say: string; card: TodayCard }> {
   const { graph, household } = ctx;
   const p = localParts(ctx.clock.now(), household.tz);
   const [{ slots }, visits, people] = await Promise.all([
@@ -125,7 +133,6 @@ export async function whatsToday(ctx: Ctx): Promise<{ say: string; card: TodayCa
   const nowMin = minutesOfDay(ctx.clock.now(), household.tz);
   const next = slots.find((s) => !s.taken && parseHHMM(s.time) >= nowMin - NEXT_DOSE_LATE_MIN);
   const nextLine = next ? V.nextDose(medName(ctx, next.medicine), fmtHHMM(next.time)) : V.noMoreDoses();
-  await logAsk(ctx, "whats_today");
   const spoken = dayNames(ctx, ctx.clock.now());
   return {
     say: V.today(spoken.weekdayName, spoken.day, spoken.monthName, visitorLine, nextLine),
@@ -215,6 +222,8 @@ const NIGHT_END = "05:00";
  * once a week, and a missed day simply moves it to the next.
  */
 export const PHOTO_WINDOW = ["11:00", "12:00"] as const;
+/** Morning greeting window. */
+export const MORNING_WINDOW = ["06:00", "11:00"] as const;
 
 export interface RoutineState {
   routine: "evening" | "night" | "none"; shortReplies: boolean; greeting?: string;
@@ -223,6 +232,8 @@ export interface RoutineState {
   photoDue: boolean;
   /** ISO week in household time, so a client offers the photo once per week. */
   week: string;
+  /** True when the simulator should ask her the next family question now (family_question). */
+  questionDue: boolean;
 }
 
 export async function routineState(ctx: Ctx): Promise<RoutineState> {
@@ -267,10 +278,14 @@ export async function routineState(ctx: Ctx): Promise<RoutineState> {
     const entries = await graph.find<WeeklyPhoto>("WeeklyPhoto");
     photoDue = entries.length > 0 && !entries.some((e) => e.week === week && e.sessionId);
   }
+  // Good morning: the same calm words every morning, built from today's sentence.
+  if (routine === "none" && min >= parseHHMM(MORNING_WINDOW[0]) && min < parseHHMM(MORNING_WINDOW[1]))
+    greeting = voice(ctx).goodMorning(elder.name, (await todayLine(ctx)).say);
+  const askDue = !photoDue && routine === "none" && (await questionDue(ctx));
   return {
     routine, shortReplies: routine === "evening", ...(greeting ? { greeting } : {}),
     devices: devices.sort((a, b) => a.id.localeCompare(b.id)), localTime: fmtTime(now, household.tz),
-    photoDue, week,
+    photoDue, week, questionDue: askDue,
   };
 }
 

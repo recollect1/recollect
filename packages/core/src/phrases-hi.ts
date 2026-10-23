@@ -16,7 +16,8 @@ type Elder = Pick<typeof EN,
   | "personStatus" | "whoIs" | "whoIsUnknown" | "trackingPaused" | "eveningHello"
   | "nightReassure" | "goingOutDaytime" | "nightPlaceReassure"
   | "storySaved" | "privateKept" | "nothingRecorded" | "fromTheirWords" | "fromFamilyWords" | "messageFrom"
-  | "todayChatPrompt" | "todayChatThanks" | "listeningForStory" | "didNotCatchStory" | "photoLater">;
+  | "todayChatPrompt" | "todayChatThanks" | "listeningForStory" | "didNotCatchStory" | "photoLater"
+  | "familyQuestionPrompt" | "familyQuestionThanks" | "questionLater" | "noFamilyQuestion" | "goodMorning">;
 
 export const HI: Elder = {
   // --- medicines ---
@@ -68,4 +69,12 @@ export const HI: Elder = {
   listeningForStory: () => "मैं सुन रही हूँ। आराम से बताइए, और जब पूरा हो जाए तो कहिए \"बस इतना ही\"।",
   didNotCatchStory: () => "मैं कहानी ठीक से सुन नहीं पाई। क्या आप फिर से बताएँगी?",
   photoLater: () => "ठीक है, हम इसे फिर कभी देख लेंगे।",
+
+  // --- questions from the family; good morning ---
+  familyQuestionPrompt: (asker, question) =>
+    `${asker} जानना चाहते हैं: "${question}" क्या आप इसके बारे में बताएँगी? कोई सही या गलत जवाब नहीं है।`,
+  familyQuestionThanks: (asker) => `धन्यवाद। मैंने इसे संभाल कर रख लिया है, और ${asker} के लिए भी रख लूँगी।`,
+  questionLater: () => "ठीक है, हम इसके बारे में फिर कभी बात कर लेंगे।",
+  noFamilyQuestion: () => "अभी परिवार की ओर से कोई सवाल नहीं है।",
+  goodMorning: (name, todayLine) => `सुप्रभात, ${name} जी। ${todayLine}`,
 };

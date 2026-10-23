@@ -12,7 +12,7 @@ import type { Clock } from "../time.ts";
 import type { Quote } from "../types.ts";
 import {
   CONSENT, DEVICES, ENTITIES, FAMILY_MEMORIES, HOUSEHOLD, MEDICINES, PEOPLE, PHOTOS, PROFILE, RETELLINGS, SAME_AS,
-  SCHEDULES, SIMULATED_DAY_CHATS, STORIES, VISITS, WEEKLY_PHOTO_ID, type SeedStory,
+  SCHEDULES, SIMULATED_DAY_CHATS, STORIES, STORY_ERAS, VISITS, WEEKLY_PHOTO_ID, type SeedStory,
 } from "./data.ts";
 import { shareFamilyMemory } from "../network.ts";
 import type { RecentRecall } from "../types.ts";
@@ -89,6 +89,8 @@ export async function seed(
     // Seeded stories carry hand-written mentions, so the extract worker must never redo them.
     const { sessionId } = await rememberStory(ctx, { text: story.text, at, storyKey, queued: false });
     if (!sessionOf.has(storyKey)) sessionOf.set(storyKey, sessionId);
+    const era = STORY_ERAS[storyKey];
+    await graph.upsert("Session", { id: sessionId, title: story.title, ...(era ? { eraYear: era.year, eraById: era.by } : {}) });
     await linkMentions(sessionId, story.mentions, !story.retellOf);
     await processSession(ctx, sessionId);
   }

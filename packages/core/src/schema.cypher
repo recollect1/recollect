@@ -33,3 +33,6 @@ CREATE INDEX FOR (n:DoseEvent) ON (n.at);
 CREATE INDEX FOR (n:AskEvent) ON (n.at);
 CREATE INDEX FOR (n:MarkerSet) ON (n.computedAt);
 CREATE VECTOR INDEX FOR (n:Quote) ON (n.embedding) OPTIONS {dimension: 384, similarityFunction: 'cosine'};
+CREATE INDEX FOR (n:FamilyQuestion) ON (n.id);
+CREATE INDEX FOR (n:FamilyQuestion) ON (n.status);
+CREATE INDEX FOR (n:CarerCheckin) ON (n.id);

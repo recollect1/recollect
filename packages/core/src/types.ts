@@ -20,6 +20,11 @@ export interface Session {
   private: boolean; hasAudio: boolean; storyKey?: string;
   /** Family memory network: the story of hers that a family member's memory is about. */
   aboutSessionId?: string;
+  /** A short title for the story (family-written, or the family question it answers). */
+  title?: string;
+  /** Life timeline: roughly when it happened, as confirmed by the family (her own words win if she said a year). */
+  eraYear?: number;
+  eraById?: string;
 }
 export interface Quote {
   id: string; text: string; speakerId: string; saidAt: string; sessionId: string;
@@ -76,3 +81,11 @@ export interface TrendCard {
   id: string; personId: string; createdAt: string; kind: "stable" | "change";
   say: string; changes: string[]; since?: string; weeks: number; simulated: boolean;
 }
+
+/** "Ask Biji": a question from a family member, asked to her once at a calm time of day. */
+export interface FamilyQuestion {
+  id: string; askedById: string; text: string; createdAt: string;
+  status: "open" | "asked" | "answered"; askedAt?: string; answerSessionId?: string; answeredAt?: string;
+}
+/** The family admin's weekly "how are you doing?" (P2 carer check-in). */
+export interface CarerCheckin { id: string; personId: string; week: string; mood: "ok" | "tired" | "struggling"; at: string }

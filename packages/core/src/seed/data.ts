@@ -221,3 +221,12 @@ export const FAMILY_MEMORIES: { personId: string; about: string; toldOn: string;
  * each week's three chats named the helper who had visited that morning.
  */
 export const SIMULATED_DAY_CHATS = { start: "2026-07-20", namedPerWeek: [3, 3, 2, 3, 3, 3, 2, 2, 2, 1, 1, 1] };
+
+/**
+ * Life timeline: roughly when the undated stories happened, as Simran confirmed them on the family
+ * page (fictional). Stories where she said a year herself (1966, 1968) use her own words instead.
+ */
+export const STORY_ERAS: Record<string, { year: number; by: string }> = {
+  saag: { year: 1954, by: "p-simran" }, jagdish: { year: 1956, by: "p-simran" },
+  well: { year: 1958, by: "p-simran" }, aman: { year: 2001, by: "p-simran" },
+};
