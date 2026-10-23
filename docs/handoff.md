@@ -1,5 +1,8 @@
 # Handoff (Shambhvi, 16 Oct 2026)
 
+> **23 Oct: start with [`docs/handoff-video.md`](handoff-video.md)** (final video, AWS status, what is left)
+> **and [`video/FILM_PLAN.md`](../video/FILM_PLAN.md)** (the approved script and shot list).
+
 Deadline: submit **Oct 23 evening IST** (official: Oct 24, 00:30 IST). `CLAUDE.md` §19 lists every
 place the build differs from the spec; `docs/friction-log.md` has 29 entries.
 
