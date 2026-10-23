@@ -738,6 +738,15 @@ Recorded as the code was written. Each has a friction-log entry where one applie
     (`coach.ts`, `carer_coach`; `COACH` guidance in `phrases.ts`).
   - *First language*: Hindi was added on 23 Oct (next entry); Punjabi stays future work.
   - Doctor questions per metric live in `trend-phrases.json` (`question`, `doctorQuestionsIntro`).
+- **23 Oct features (branch `features`).** `questions.ts` (`FamilyQuestion`, `WANTS_TO_KNOW`, `ANSWERS`;
+  window `QUESTION_WINDOW` 15:00–16:30, once a day; `routine_state.questionDue`; tools `family_question`
+  (elder) and `ask_question` (family)). Morning greeting in `routine_state.greeting` (06:00–11:00,
+  `goodMorning` + today's sentence, no AskEvent). `digest.ts`: `missedDoses` (≥ 60 min late, family only),
+  `weeklyDigest` (tool `weekly_digest`), `carerCheckin` (`CarerCheckin`, weekly). `timeline.ts`:
+  `lifeTimeline` (year from her words, else `Session.eraYear` set by the family, else null; retellings sit
+  with the first telling; family voices attached), `setStoryEra`; seed `STORY_ERAS`; REST
+  `/api/timeline` and `/api/family/{timeline,story-era,questions,question-remove,missed,digest,carer}`;
+  tool `life_timeline`. 3D view: `apps/family/timeline.html` + `src/timeline/` (three@0.170.0).
 - **Hindi (23 Oct, changes §1.10 and §5).** `Household.lang` (`en` | `hi`), set on the family page or the
   simulator (`GET/POST /api/family/language`). `packages/core/src/lang.ts` picks the phrase set for what
   she hears (`phrases-hi.ts`, Hindi banned-medicine list too) and Hindi day/month names and dates;

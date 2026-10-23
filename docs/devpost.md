@@ -43,6 +43,10 @@ gives the family an honest, early signal to take to a doctor — without ever di
 - **Her first language.** She can speak Hindi, English or Hinglish, and hear fixed, reviewed
   Hindi wording for her day. Stories told in Hindi are kept word for word, never translated.
 
+- **Her life in time, and her family's questions.** A live 3D timeline places each story at the
+  year she said, or the year her family confirmed, never guessed. Grandchildren leave questions;
+  Recollect asks her one at a calm moment and keeps her answer in her own words for them.
+
 ## How we built it
 
 - **MCP server** (TypeScript, Streamable HTTP, protocol 2025-11-25): 16 tools, role tokens for

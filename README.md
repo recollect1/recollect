@@ -111,6 +111,27 @@ family-only views never spoken to her).
   stories (her actual sentence and date) and what calms her from the profile. Night alerts on the
   family page show the "going out" tip.
 
+## Added on 23 Oct: her life in time, questions from the family, and care for the carer
+
+- **Her life on a 3D timeline** (`apps/family/timeline.html`, three.js): every story she told is a
+  glowing point on a river of time, placed at the year **she said in her own words** (gold) or a year
+  **the family confirmed** (teal); anything else floats, undated, near "now" until someone places it
+  (never guessed). Click a point for her exact words, the people and places in it, photos and family
+  members' memories; threads join stories that name the same person or place; "Play her life" tours
+  them in order. It polls every 3 s, so a story told to the simulator appears live, with a burst.
+  Data: `packages/core/src/timeline.ts`, `GET /api/timeline` (either token), family tool `life_timeline`.
+- **Ask Biji** (`packages/core/src/questions.ts`): a grandchild leaves a question on the family page
+  or through Alexa (`ask_question`). In the calm afternoon window (15:00–16:30), at most once a day,
+  `routine_state` says `questionDue` and Recollect asks her, in the family member's words and with
+  their name (`family_question`). Her answer is kept verbatim as one of her stories, linked to the
+  question; the family sees it on the page and on her timeline. "Not now" waits for another day.
+- **Good morning**: in the morning `routine_state` carries the same calm greeting every day, built from
+  today's sentence (visitors, next tablet), in her language.
+- **This week** for the family (`weekly_digest`): stories, family memories, answered questions,
+  tablets marked and the questions she asked most, plus **tablets not marked** an hour after their
+  time ("Recollect never suggests a late or extra tablet to her"). Counts only.
+- **And you?** A weekly check-in for the family admin with fixed, kind replies (P2 in the spec).
+
 ## Her first language: Hindi (23 Oct)
 
 Gurdev can speak Hindi, English or a mix (Hinglish), and hear Recollect in Hindi. The family switches
