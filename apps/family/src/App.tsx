@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, type Alert, type CareStep, type CoachTip, type Fidelity, type Medicine, type Message, type Overview, type Person, type Profile, type Story, type ThisIsMe, type Today, type Trend } from './api.ts';
 import { CareSection, CoachSection, FidelitySection, MessageField, StoryVoices } from './Ideas.tsx';
+import { FeatureSections } from './Features.tsx';
 
 // The family page (§13): setup, consent, stories, today, trends, "This is me".
 // Trends are family-only and never spoken to her. Simulated data is always labelled.
@@ -48,7 +49,8 @@ export function App() {
         <p className="eyebrow">Recollect · family page</p>
         <h1>{first}</h1>
         <nav aria-label="Sections">
-          <a href="#today">Today</a><a href="#trends">Speech changes</a>{care.length > 0 && <a href="#care">Next steps</a>}
+          <a href="#today">Today</a><a href="#timeline">Life timeline</a><a href="#week">This week</a><a href="#ask">Ask {first}</a>
+          <a href="#trends">Speech changes</a>{care.length > 0 && <a href="#care">Next steps</a>}
           <a href="#fidelity">Memory fidelity</a><a href="#coach">When things are hard</a><a href="#stories">Her stories</a>
           <a href="#people">People</a><a href="#medicines">Medicines</a><a href="#photo">Weekly photo</a>
           <a href="#me">This is me</a><a href="#consent">Consent</a>
@@ -99,6 +101,8 @@ export function App() {
           </div>
         </div>
       </section>
+
+      <FeatureSections people={overview.people} name={first} admin={overview.admin.name} />
 
       <TrendSection trend={trend} name={first} />
 
