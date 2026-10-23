@@ -28,12 +28,22 @@ export const statusOf = (ctx: Ctx, p: Person) => (isHi(ctx) && p.statusLineHi ? 
 export const relationOf = (ctx: Ctx, p: Person) =>
   (isHi(ctx) && p.relationToElderHi ? p.relationToElderHi : p.relationToElder ?? "");
 
+// Fixed Hindi names (not Intl): ICU versions spell some differently (अक्तूबर / अक्टूबर), and what she
+// hears must be the same on every machine.
+const WEEKDAY_HI: Record<string, string> = {
+  Sunday: "रविवार", Monday: "सोमवार", Tuesday: "मंगलवार", Wednesday: "बुधवार", Thursday: "गुरुवार",
+  Friday: "शुक्रवार", Saturday: "शनिवार",
+};
+const MONTH_HI: Record<string, string> = {
+  January: "जनवरी", February: "फ़रवरी", March: "मार्च", April: "अप्रैल", May: "मई", June: "जून", July: "जुलाई",
+  August: "अगस्त", September: "सितंबर", October: "अक्तूबर", November: "नवंबर", December: "दिसंबर",
+};
+
 /** Weekday and month names for what she hears. */
 export function dayNames(ctx: Ctx, d: Date): { weekdayName: string; monthName: string; day: number; year: number } {
   const p = localParts(d, ctx.household.tz);
   if (!isHi(ctx)) return p;
-  const f = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("hi-IN", { timeZone: ctx.household.tz, ...o }).format(d);
-  return { ...p, weekdayName: f({ weekday: "long" }), monthName: f({ month: "long" }) };
+  return { ...p, weekdayName: WEEKDAY_HI[p.weekdayName] ?? p.weekdayName, monthName: MONTH_HI[p.monthName] ?? p.monthName };
 }
 
 /** "3 August 2026" or "3 अगस्त 2026". */

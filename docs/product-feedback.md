@@ -1,8 +1,8 @@
 # Product feedback
 
-Draft notes from the build. **A human must confirm every entry before submission** (CLAUDE.md §18.6).
-Entries marked *pending a live run* describe code that is built and tested with stand-ins but has
-not yet called the real AWS service.
+What we used each tool for, what worked, what needs work, how onboarding felt, and whether we would
+build with it again. Entries marked *pending a live run* describe code that is built and tested with
+stand-ins but has not yet called the real service.
 
 ## MCP TypeScript SDK (`@modelcontextprotocol/sdk` 1.32.1)
 
@@ -85,3 +85,34 @@ not yet called the real AWS service.
 
 - **Used for:** optional SMS to the family when a night-time alert is raised, sent in the background
   after the tool has answered (`apps/mcp-server/src/sms.ts`). Off unless `SNS_TOPIC_ARN` is set.
+
+## FalkorDB (Docker image, `falkordb` npm and Python clients)
+
+- **Used for:** the whole memory graph: her verbatim sentences, the people and places in them,
+  retellings, family, tablets, questions, speech markers and trend cards, read by the MCP tools, the
+  Python agents, the timeline and the doctor report.
+- **Worked well:** one `docker compose up` and it was running; Cypher made the links that matter
+  (sentence → person or place, story → earlier telling) one-line queries, and the same graph served
+  TypeScript and Python. Queries were fast enough to keep every tool inside the Alexa+ budget.
+- **Needs work:** we could not run it on the first build machine (no Docker; friction log 10), so we
+  wrote an in-memory adapter for tests and local development. A small embedded or in-process mode for
+  tests would help.
+- **Again?** Yes.
+
+## Amazon Polly
+
+- **Used for:** Recollect's voice in the demo video (neural voices, SSML).
+- **Worked well:** quick to call from boto3; the neural voices sound natural; the en-IN and hi-IN
+  voices were a good fit for an Indian household.
+- **Needs work:** some voices are standard-engine only, so the quality differs between voices.
+- **Again?** Yes.
+
+## Amazon EC2, ECR, IAM and SSM Parameter Store (the deployment, 16–21 Oct)
+
+- **Used for:** one EC2 host (Docker Compose: FalkorDB, MCP server, web, worker, Caddy for HTTPS),
+  images in ECR, AWS access only through the instance role, secrets in Parameter Store.
+- **Worked well:** instance roles meant no keys on the host; Parameter Store kept secrets out of the
+  images.
+- **Needs work:** from India the round trip to us-east-1 alone is about 280 ms, more than the Alexa+
+  budget allows (friction log 29); a clear note on which region Alexa+ calls from would help builders.
+- **Again?** Yes, for a small deployment like this.
