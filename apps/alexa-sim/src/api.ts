@@ -61,7 +61,17 @@ export const api = {
   reset: (role: Role) => post('/api/reset', { role }),
   clock: (at?: string) => post<{ now: string }>('/api/clock', at ? { at } : {}),
   graph: () => fetch('/api/graph').then((r) => json<GraphData>(r)),
+  /** The household as the family page sees it: names for the role switch and suggestions. */
+  household: () => fetch('/api/family/overview').then((r) => json<Household>(r)),
 };
+
+/** Subset of GET /api/family/overview used by the simulator (names only, nothing private). */
+export interface Household {
+  elder: { id: string; name: string };
+  admin: { id: string; name: string };
+  people: { id: string; name: string; nameHi?: string; relation: string; photoUrl?: string }[];
+  medicines: { id: string; name: string; nameHi?: string }[];
+}
 
 /** routine_state payload (§9.4): read by the home panel and for short-reply mode. */
 export interface RoutineState {

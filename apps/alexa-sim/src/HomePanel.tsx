@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { RoutineState } from './api.ts';
 
 // Simulated home (§13): the lights and speaker the routine agent controls, plus a demo clock
@@ -13,7 +14,14 @@ const JUMPS: { at?: string; label: string }[] = [
 
 const LABEL: Record<string, string> = { light: 'Light', speaker: 'Speaker' };
 
-export function HomePanel({ routine, onJump }: { routine: RoutineState | null; onJump: (at?: string) => void }) {
+export function HomePanel({ routine, onJump }: { routine: RoutineState | null; onJump: (at?: string) => Promise<void> | void }) {
+  // The last demo-clock button pressed in this page (the server's clock keeps running from there).
+  const [picked, setPicked] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  async function jump(j: (typeof JUMPS)[number]) {
+    setBusy(true);
+    try { await onJump(j.at); setPicked(j.label); } finally { setBusy(false); }
+  }
   return (
     <section className="home" aria-label="Simulated home">
       <div className="home-head">
@@ -24,16 +32,18 @@ export function HomePanel({ routine, onJump }: { routine: RoutineState | null; o
       </div>
       <ul className="devices">
         {(routine?.devices ?? []).map((d) => (
-          <li key={d.id} className={`device-tile ${d.state === 'off' ? 'off' : 'on'}`}>
+          <li key={d.id} className={`device-tile ${d.state === 'off' || d.state === 'idle' ? 'off' : 'on'}`}>
             <span className="device-dot" aria-hidden="true" />
             <span>{LABEL[d.kind] ?? d.kind} · {d.room}</span>
             <b>{d.state}</b>
           </li>
         ))}
       </ul>
-      <div className="jumps">
+      <div className="jumps" role="group" aria-label="Demo clock">
         <span className="mono muted">demo clock</span>
-        {JUMPS.map((j) => <button key={j.label} onClick={() => onJump(j.at)}>{j.label}</button>)}
+        {JUMPS.map((j) => (
+          <button key={j.label} disabled={busy} aria-pressed={picked === j.label} onClick={() => void jump(j)}>{j.label}</button>
+        ))}
       </div>
     </section>
   );
