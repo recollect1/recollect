@@ -226,3 +226,6 @@ export const CARER_REPLIES: Record<"ok" | "tired" | "struggling", string> = {
   struggling: "Thank you for saying so. You don't have to manage this alone: please talk to someone you trust, " +
     "her doctor, or a local carers' support group about getting more help.",
 };
+export const timelineReady = (name: string, stories: number, dated: number) =>
+  `${name}'s life timeline has ${stories} ${stories === 1 ? "story" : "stories"}, ${dated} of them placed in a year. ` +
+  `Open it on the family page.`;

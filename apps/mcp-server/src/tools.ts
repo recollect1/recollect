@@ -7,6 +7,7 @@ import {
   checkDose, familySummary, keepPrivate, localAt, logDose, pauseTracking, photoMoment, processSession,
   nightReassure, recall, rememberStory, routineState, speechTrend, storyPrompt, thisIsMe, whatsToday, whereIs, whoIs,
   logAsk, todayChat, memoryLane, carerCoach, ensureCarePlan, fidelityView, shareFamilyMemory, findPerson, phrases,
+  askQuestion, familyQuestion, weeklyDigest, missedDoses, lifeTimeline, FamilyError,
   type Ctx,
 } from "@recollect/core";
 import { CARDS, cardHtml, type CardName } from "@recollect/ui-cards";
@@ -18,7 +19,10 @@ const SAY = "Read the `say` field exactly as written.";
 const BOTH: ToolRole[] = ["elder", "family"];
 // MCP annotations. readOnlyHint only where nothing is written: the elder's tools all log asks
 // (silently, for the family view) or update routine/device state, so they are not read-only.
-const READ_ONLY = new Set(["family_summary", "speech_trend", "this_is_me", "carer_coach", "memory_fidelity", "memory_lane"]);
+const READ_ONLY = new Set([
+  "family_summary", "speech_trend", "this_is_me", "carer_coach", "memory_fidelity", "memory_lane", "weekly_digest",
+  "life_timeline",
+]);
 
 export interface ToolLog { tool: string; ms: number; ok: boolean }
 export interface ServerDeps {
@@ -249,6 +253,52 @@ export function buildServer(deps: ServerDeps, role: ToolRole): McpServer {
         say: steps.length ? phrases.careReady(ctx.elder.name, steps.length) : phrases.careNone(ctx.elder.name),
         steps,
       };
+    });
+
+  tool("family_question", ["elder"],
+    "A question her family left for her (\"Ask Biji\"). Call with no answer to ask her the next one; call " +
+    "again with her words, exactly as spoken in the language she used, to keep her answer. Never press her: " +
+    "if she says not now, leave it.",
+    { answer: z.string().optional().describe("Her answer, exactly as spoken, in the language she used. Never translate.") },
+    async ({ answer }) => {
+      const r = await familyQuestion(ctx, answer);
+      const { sessionId } = r;
+      if (sessionId) background(() => processSession(ctx, sessionId));
+      return { ...r };
+    });
+
+  tool("ask_question", ["family"],
+    "For family: leave a question for her, e.g. 'Ask Grandma what her wedding day was like'. Recollect asks " +
+    "her at a calm time of day, at most once a day, and keeps her answer in her own words.",
+    {
+      from: z.string().min(1).describe("Who is asking: their name or relation, e.g. 'Aman'."),
+      question: z.string().min(3).max(200).describe("The question, in their words, as it should be read to her."),
+    },
+    async ({ from, question }) => {
+      try {
+        const r = await askQuestion(ctx, from, question);
+        return { say: r.say, id: r.question.id };
+      } catch (e) {
+        if (e instanceof FamilyError) return { say: e.message };
+        throw e;
+      }
+    });
+
+  tool("weekly_digest", ["family"],
+    "For family: the last seven days in a few lines: stories she told, memories the family added, questions " +
+    "she answered, tablets marked, and the questions she asked most. Counts only.",
+    {}, async () => {
+      const [digest, missed] = await Promise.all([weeklyDigest(ctx), missedDoses(ctx)]);
+      return { ...digest, missed };
+    });
+
+  tool("life_timeline", ["family"],
+    "For family: her life on a timeline, from the stories she told, each at the year she said or the year the " +
+    "family confirmed, with her exact words.",
+    {}, async () => {
+      const t = await lifeTimeline(ctx, "family");
+      const dated = t.events.filter((e) => e.year !== null).length;
+      return { say: phrases.timelineReady(ctx.elder.name, t.events.length, dated), ...t };
     });
 
   tool("this_is_me", ["family"],

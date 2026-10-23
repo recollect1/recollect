@@ -9,13 +9,14 @@ import { createApp, type App } from "../src/app.ts";
 
 const tokens = { elder: "test-elder", family: "test-family" };
 const ELDER_TOOLS = [
-  "check_dose", "keep_private", "log_dose", "memory_lane", "night_reassure", "pause_tracking", "photo_moment",
+  "check_dose", "family_question", "keep_private", "log_dose", "memory_lane", "night_reassure", "pause_tracking", "photo_moment",
   "recall_memory", "remember_story", "routine_state", "story_prompt", "talk_about_today", "whats_today", "where_is",
   "who_is",
 ];
 const FAMILY_TOOLS = [
-  "care_follow_through", "carer_coach", "family_summary", "memory_fidelity", "recall_memory", "routine_state",
-  "share_family_memory", "speech_trend", "story_prompt", "this_is_me", "who_is",
+  "ask_question", "care_follow_through", "carer_coach", "family_summary", "life_timeline", "memory_fidelity",
+  "recall_memory", "routine_state", "share_family_memory", "speech_trend", "story_prompt", "this_is_me",
+  "weekly_digest", "who_is",
 ];
 
 let app: App, url: URL, ctx: Ctx, clock: DemoClock;
@@ -88,7 +89,7 @@ describe("MCP server (§10)", () => {
     const family = await connect(tokens.family);
     const familyTools = (await family.listTools()).tools;
     expect(familyTools.filter((t) => t.annotations?.readOnlyHint).map((t) => t.name).sort())
-      .toEqual(["carer_coach", "family_summary", "memory_fidelity", "speech_trend", "this_is_me"]);
+      .toEqual(["carer_coach", "family_summary", "life_timeline", "memory_fidelity", "speech_trend", "this_is_me", "weekly_digest"]);
     // Every elder tool writes something (an ask, a session, routine state) except Memory Lane.
     expect(tools.filter((t) => t.annotations?.readOnlyHint).map((t) => t.name)).toEqual(["memory_lane"]);
     const trend = familyTools.find((t) => t.name === "speech_trend");
@@ -302,5 +303,35 @@ describe("MCP server (§10)", () => {
     expect(family.say.startsWith("That's Aman, your grandson")).toBe(true);
     expect((await set("fr")).status).toBe(400);
     expect((await set("en")).status).toBe(200);
+  });
+
+  it("Ask Biji over MCP: Aman leaves a question, she is asked in the afternoon, her answer reaches the family", async () => {
+    const family = await connect(tokens.family);
+    const elder = await connect(tokens.elder);
+    const asked = await call(family, "ask_question", { from: "Aman", question: "What was your wedding day like?" });
+    expect(asked.say).toBe(phrases.questionQueued("Gurdev"));
+    clock.set(new Date("2026-10-13T15:20:00+05:30"));
+    expect((await call(elder, "routine_state")).data.questionDue).toBe(true);
+    expect((await call(elder, "family_question")).say).toBe(phrases.familyQuestionPrompt("Aman", "What was your wedding day like?"));
+    expect((await call(elder, "family_question", { answer: "It rained all morning and everyone laughed." })).say)
+      .toBe(phrases.familyQuestionThanks("Aman"));
+    const qs = await (await fetch(new URL("/api/family/questions", url), { headers: { authorization: `Bearer ${tokens.family}` } })).json();
+    expect(qs[0]).toMatchObject({ status: "answered", answer: ["It rained all morning and everyone laughed."] });
+    const digest = await call(family, "weekly_digest");
+    expect(digest.data.questionsAnswered).toBe(1);
+  });
+
+  it("life timeline: REST for either token (private left out for family), MCP tool for family", async () => {
+    const get = (t: string) => fetch(new URL("/api/timeline", url), { headers: { authorization: `Bearer ${t}` } });
+    expect((await get("nope")).status).toBe(401);
+    const t = await (await get(tokens.family)).json();
+    expect(t.events.find((e: { storyKey?: string }) => e.storyKey === "patiala")).toMatchObject({ year: 1966, yearSource: "said" });
+    const tool = await call(await connect(tokens.family), "life_timeline");
+    expect(tool.say).toBe(phrases.timelineReady("Gurdev", t.events.length, t.events.filter((e: { year: number | null }) => e.year !== null).length));
+    const era = await fetch(new URL("/api/family/story-era", url), {
+      method: "POST", headers: { authorization: `Bearer ${tokens.family}`, "content-type": "application/json" },
+      body: JSON.stringify({ sessionId: t.events[0].id, year: 2099 }),
+    });
+    expect(era.status).toBe(400);
   });
 });

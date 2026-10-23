@@ -1,7 +1,8 @@
 // REST for the family page (§13), family token only. Setup and consent writes live here, not in
 // MCP tools, because they are admin screens rather than things anyone says to Alexa.
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { langOf, setLanguage,
+import { langOf, setLanguage, askQuestion, familyQuestions, removeQuestion, missedDoses, weeklyDigest,
+  carerView, carerCheckin, lifeTimeline, setStoryEra,
   acknowledgeAlert, approveFact, changeConsent, familyAlerts, chooseWeeklyPhoto, deleteEverything, factCandidates, familyOverview, familyStories,
   familySummary, FamilyError, newId, saveMedicine, saveProfile, setStatusLine, speechTrend, thisIsMe, type Ctx,
   carerCoach, decideCare, ensureCarePlan, familyMessages, familyVoices, fidelityView, processSession, setFamilyMessage,
@@ -53,6 +54,32 @@ export async function familyApi(
       case "POST /api/family/message": {
         const b = z.object({ personId: z.string(), text: z.string().max(200) }).parse(body);
         return json(res, 200, await setFamilyMessage(ctx, b.personId, b.text)), true;
+      }
+      case "GET /api/family/questions": return json(res, 200, await familyQuestions(ctx)), true;
+      case "POST /api/family/questions": {
+        const b = z.object({ from: z.string().min(1), text: z.string() }).parse(body);
+        return json(res, 200, await askQuestion(ctx, b.from, b.text)), true;
+      }
+      case "POST /api/family/question-remove": {
+        await removeQuestion(ctx, z.object({ id: z.string() }).parse(body).id);
+        return json(res, 200, { ok: true }), true;
+      }
+      case "GET /api/family/missed": return json(res, 200, await missedDoses(ctx)), true;
+      case "GET /api/family/digest": return json(res, 200, await weeklyDigest(ctx)), true;
+      case "GET /api/family/carer": return json(res, 200, await carerView(ctx)), true;
+      case "POST /api/family/carer": {
+        const b = z.object({ mood: z.string() }).parse(body);
+        return json(res, 200, await carerCheckin(ctx, b.mood)), true;
+      }
+      case "GET /api/family/timeline": return json(res, 200, await lifeTimeline(ctx, "family")), true;
+      case "POST /api/family/story-era": {
+        const b = z.object({
+          sessionId: z.string(), year: z.number().int().nullable().optional(), title: z.string().optional(),
+        }).parse(body);
+        await setStoryEra(ctx, b.sessionId, {
+          ...(b.year !== undefined ? { year: b.year } : {}), ...(b.title !== undefined ? { title: b.title } : {}),
+        });
+        return json(res, 200, { ok: true }), true;
       }
       case "GET /api/family/language": return json(res, 200, { lang: langOf(ctx) }), true;
       case "POST /api/family/language": {

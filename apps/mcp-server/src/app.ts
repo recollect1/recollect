@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { SUPPORTED_PROTOCOL_VERSIONS } from "@modelcontextprotocol/sdk/types.js";
-import { graphView, localAt, type Ctx, type DemoClock, careCalendar, memoryBookHtml } from "@recollect/core";
+import { lifeTimeline, graphView, localAt, type Ctx, type DemoClock, careCalendar, memoryBookHtml } from "@recollect/core";
 import { familyApi } from "./family-api.ts";
 import { buildServer, type ToolLog, type ToolRole } from "./tools.ts";
 
@@ -101,6 +101,11 @@ export function createApp(opts: AppOptions): App {
       if (path === "/api/graph" && req.method === "GET") {
         if (!role) return json(res, 401, { error: "missing or unknown bearer token" });
         return json(res, 200, await graphView(ctx, role));
+      }
+      // Life timeline (3D view in the simulator and family page): either role, private left out for family.
+      if (path === "/api/timeline" && req.method === "GET") {
+        if (!role) return json(res, 401, { error: "missing or unknown bearer token" });
+        return json(res, 200, await lifeTimeline(ctx, role));
       }
 
       // Family page REST (§13). Family token only.
