@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api, type CareStep, type CoachTip, type Fidelity, type Person, type Story } from './api.ts';
+import { api, notifyError, type CareStep, type CoachTip, type Fidelity, type Person, type Story } from './api.ts';
 
 // Family page sections for the memory fidelity engine, family memories, carer coach and care
 // follow-through. Family only: nothing here is ever said to her.
@@ -120,8 +120,8 @@ export function CareSection({ steps, onSaved, name }: { steps: CareStep[]; onSav
             <div className="actions">
               {s.status === 'proposed' && (
                 <>
-                  <button onClick={() => void api.careDecision(s.id, true).then(onSaved)}>Approve</button>
-                  <button className="secondary" onClick={() => void api.careDecision(s.id, false).then(onSaved)}>Not now</button>
+                  <button onClick={() => void api.careDecision(s.id, true).then(onSaved, notifyError)}>Approve</button>
+                  <button className="secondary" onClick={() => void api.careDecision(s.id, false).then(onSaved, notifyError)}>Not now</button>
                 </>
               )}
               {s.status === 'approved' && s.kind === 'appointment' && (
@@ -189,7 +189,7 @@ export function MessageField({ person, current, onSaved }: { person: Person; cur
   return (
     <form className="inline message" onSubmit={(e) => {
       e.preventDefault();
-      void api.setMessage(person.id, v).then(() => { setSaved(true); setTimeout(() => setSaved(false), 2000); onSaved(); });
+      void api.setMessage(person.id, v).then(() => { setSaved(true); setTimeout(() => setSaved(false), 2000); onSaved(); }, notifyError);
     }}>
       <label className="small muted" htmlFor={`msg-${person.id}`}>A message for her</label>
       <input id={`msg-${person.id}`} value={v} maxLength={200} onChange={(e) => setV(e.target.value)}

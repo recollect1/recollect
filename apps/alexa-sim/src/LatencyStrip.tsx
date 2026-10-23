@@ -24,6 +24,7 @@ export function LatencyStrip({ calls }: { calls: ToolCallRecord[] }) {
   const trip = p95(calls.map((c) => c.ms));
   return (
     <section className="latency" aria-label="Tool latency">
+      <div className="panel-head"><h2>Tool latency</h2></div>
       <div className="latency-sum mono">
         <span className="muted">tool calls</span> <b>{calls.length}</b>
         <span className="muted"> · p95 on the server </span>

@@ -91,21 +91,32 @@ export function listenForStory(onInterim: (t: string) => void, pauseMs = 4000): 
   return { done, stop: finish };
 }
 
+/**
+ * The utterance being spoken now. cancel() makes the previous utterance fire onerror/onend
+ * asynchronously; without this guard that late callback would reset the phase to idle while the
+ * next utterance (or listening) had already started.
+ */
+let current: SpeechSynthesisUtterance | null = null;
+
 export function speak(text: string, onEnd?: () => void): void {
   if (!('speechSynthesis' in window)) return onEnd?.();
+  current = null;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
+  current = u;
+  const end = () => { if (current === u) { current = null; onEnd?.(); } };
   const voices = window.speechSynthesis.getVoices();
   const want = speechLang;
   u.lang = want;
   u.voice = voices.find((v) => v.lang.replace('_', '-') === want) ?? voices.find((v) => v.lang.startsWith(want.slice(0, 2))) ?? null;
   u.rate = 0.92;
-  u.onend = () => onEnd?.();
-  u.onerror = () => onEnd?.();
+  u.onend = end;
+  u.onerror = end;
   window.speechSynthesis.speak(u);
 }
 
 export function stopSpeaking(): void {
+  current = null;
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 

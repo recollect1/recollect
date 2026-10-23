@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, type Alert, type CareStep, type CoachTip, type Fidelity, type Medicine, type Message, type Overview, type Person, type Profile, type Story, type ThisIsMe, type Today, type Trend } from './api.ts';
+import { api, notifyError, type Alert, type CareStep, type CoachTip, type Fidelity, type Medicine, type Message, type Overview, type Person, type Profile, type Story, type ThisIsMe, type Today, type Trend } from './api.ts';
 import { CareSection, CoachSection, FidelitySection, MessageField, StoryVoices } from './Ideas.tsx';
 import { FeatureSections } from './Features.tsx';
 
@@ -43,22 +43,40 @@ export function App() {
   const openAlerts = alerts.filter((a) => !a.acknowledged);
   const first = overview.elder.name;
 
+  const marked = today.doses.filter((d) => d.taken).length;
+  const repeats = today.repeatedQuestions.reduce((n, q) => n + q.count, 0);
+  const tracking = Boolean(overview.consent?.trackingOn);
+  const sections = [
+    ['today', 'Today'], ['timeline', 'Life timeline'], ['week', 'This week'], ['ask', `Ask ${first}`],
+    ['trends', 'Speech changes'], ...(care.length > 0 ? [['care', 'Next steps']] : []),
+    ['fidelity', 'Memory fidelity'], ['coach', 'When things are hard'], ['stories', 'Her stories'],
+    ['people', 'People'], ['medicines', 'Medicines'], ['photo', 'Weekly photo'], ['me', 'This is me'],
+    ['you', 'And you'], ['language', 'Her language'], ['consent', 'Consent'],
+  ] as [string, string][];
+
   return (
     <div className="shell">
       <header className="masthead">
-        <p className="eyebrow">Recollect · family page</p>
+        <div className="mast-top">
+          <p className="eyebrow"><span className="logo-dot" aria-hidden="true" />Recollect · family page</p>
+          <p className="eyebrow">{today.date}</p>
+        </div>
         <h1>{first}</h1>
-        <nav aria-label="Sections">
-          <a href="#today">Today</a><a href="#timeline">Life timeline</a><a href="#week">This week</a><a href="#ask">Ask {first}</a>
-          <a href="#trends">Speech changes</a>{care.length > 0 && <a href="#care">Next steps</a>}
-          <a href="#fidelity">Memory fidelity</a><a href="#coach">When things are hard</a><a href="#stories">Her stories</a>
-          <a href="#people">People</a><a href="#medicines">Medicines</a><a href="#photo">Weekly photo</a>
-          <a href="#me">This is me</a><a href="#consent">Consent</a>
-        </nav>
+        <ul className="stats" aria-label="At a glance">
+          <li><a href="#today"><b>{marked} of {today.doses.length}</b><span>tablets marked today</span></a></li>
+          <li><a href="#stories"><b>{today.storiesToday}</b><span>{today.storiesToday === 1 ? 'story told today' : 'stories told today'}</span></a></li>
+          <li><a href="#today"><b>{repeats}</b><span>repeated questions today</span></a></li>
+          <li className={tracking ? 'on' : 'off'}><a href="#consent"><b>{tracking ? 'On' : 'Off'}</b><span>change tracking</span></a></li>
+          {openAlerts.length > 0 && <li className="alerting"><a href="#alerts"><b>{openAlerts.length}</b><span>{openAlerts.length === 1 ? 'alert to see' : 'alerts to see'}</span></a></li>}
+        </ul>
       </header>
+      <nav className="sections" aria-label="Sections">
+        {sections.map(([id, label]) => <a key={id} href={`#${id}`}>{label}</a>)}
+      </nav>
+      <Toast />
 
       {openAlerts.length > 0 && (
-        <section className="alerts" aria-live="polite" aria-label="Alerts">
+        <section id="alerts" className="alerts" aria-live="polite" aria-label="Alerts">
           {openAlerts.map((a) => (
             <div key={a.id} className="alert">
               <p>{a.say}</p>
@@ -66,7 +84,7 @@ export function App() {
               {goingOut?.starter && (
                 <p className="small"><b>What might help:</b> {goingOut.guidance} Ask her about {goingOut.starter.topic}: <span className="voice">“{goingOut.starter.quote}”</span></p>
               )}
-              <button onClick={() => void api.ackAlert(a.id).then(load)}>I've seen this</button>
+              <button onClick={() => void api.ackAlert(a.id).then(load, notifyError)}>I've seen this</button>
             </div>
           ))}
         </section>
@@ -170,7 +188,7 @@ export function App() {
               <p>{ph.caption}</p>
               {ph.id === overview.weeklyPhotoId
                 ? <p className="taken">This week’s photo</p>
-                : <button onClick={() => void api.weeklyPhoto(ph.id).then(load)}>Use this photo every week</button>}
+                : <button onClick={() => void api.weeklyPhoto(ph.id).then(load, notifyError)}>Use this photo every week</button>}
             </li>
           ))}
         </ul>
@@ -185,11 +203,23 @@ export function App() {
   );
 }
 
+/** A short message when an action fails (otherwise a failed click would do nothing visible). */
+function Toast() {
+  const [msg, setMsg] = useState<string | null>(null);
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const on = (e: Event) => { setMsg((e as CustomEvent<string>).detail); clearTimeout(t); t = setTimeout(() => setMsg(null), 6000); };
+    window.addEventListener('recollect:error', on);
+    return () => { window.removeEventListener('recollect:error', on); clearTimeout(t); };
+  }, []);
+  return msg ? <div className="toast" role="alert">{msg}<button className="link" onClick={() => setMsg(null)}>Dismiss</button></div> : null;
+}
+
 function TrendSection({ trend, name }: { trend: Trend; name: string }) {
   return (
     <section id="trends" className="block">
       <h2>Speech changes</h2>
-      <p className="muted">Recollect compares {name}’s everyday conversations only with her own usual pattern. It does not diagnose anything.</p>
+      <p className="muted">Recollect compares {name}’s everyday conversations only with her own usual pattern. This is not a medical assessment.</p>
       <div className="trend-card">
         {trend.card?.simulated && <span className="sim">Simulated data</span>}
         <p className="trend-say">{trend.say}</p>
@@ -312,7 +342,7 @@ function ThisIsMeSection({ me, onSaved }: { me: ThisIsMe; onSaved: () => void })
         <div className="prompts">
           <h3>Suggested from her stories: approve before it appears</h3>
           <ul className="plain">{me.candidates.map((f) => (
-            <li key={f} className="fact"><span>{f}</span><button onClick={() => void api.fact(f, true).then(onSaved)}>Approve</button></li>
+            <li key={f} className="fact"><span>{f}</span><button onClick={() => void api.fact(f, true).then(onSaved, notifyError)}>Approve</button></li>
           ))}</ul>
         </div>
       )}
@@ -328,7 +358,7 @@ function ThisIsMeSection({ me, onSaved }: { me: ThisIsMe; onSaved: () => void })
                 <div><h4>Important people</h4><ul>{me.card!.people.map((p) => <li key={p.name}>{p.name} — {p.relation}</li>)}</ul></div>
                 {profile.approvedFacts.length > 0 && (
                   <div><h4>From her stories (approved by family)</h4><ul>{profile.approvedFacts.map((x) => (
-                    <li key={x}>{x} <button className="link" onClick={() => void api.fact(x, false).then(onSaved)}>remove</button></li>
+                    <li key={x}>{x} <button className="link" onClick={() => void api.fact(x, false).then(onSaved, notifyError)}>remove</button></li>
                   ))}</ul></div>
                 )}
               </div>
@@ -372,7 +402,7 @@ function LanguageSection({ name }: { name: string }) {
       <div className="actions">
         {(['en', 'hi'] as const).map((l) => (
           <button key={l} className={lang === l ? '' : 'secondary'} aria-pressed={lang === l}
-            onClick={() => void api.setLanguage(l).then((r) => setLang(r.lang))}>{l === 'en' ? 'English' : 'हिंदी (Hindi)'}</button>
+            onClick={() => void api.setLanguage(l).then((r) => setLang(r.lang), notifyError)}>{l === 'en' ? 'English' : 'हिंदी (Hindi)'}</button>
         ))}
       </div>
     </section>

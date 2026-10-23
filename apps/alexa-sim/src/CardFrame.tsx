@@ -3,6 +3,11 @@ import { useEffect, useRef, useState } from 'react';
 import { api, type CardRef, type Role } from './api.ts';
 import { FallbackCard } from './FallbackCard.tsx';
 
+const CARD_TITLE: Record<string, string> = {
+  whats_today: 'Today card', recall_memory: 'Story card', who_is: 'Who’s who card', speech_trend: 'Speech trend card',
+  photo_moment: 'Weekly photo card', memory_lane: 'Memory Lane card',
+};
+
 // Hosts an MCP Apps card (ui:// resource) in a sandboxed iframe via AppBridge.
 // Falls back to plain HTML from structuredContent if the card cannot start.
 
@@ -59,7 +64,7 @@ export function CardFrame({ card, role, onCardMessage }: { card: CardRef; role: 
   return (
     <iframe
       ref={ref}
-      title={card.toolName === 'whats_today' ? 'Today card' : 'Story card'}
+      title={CARD_TITLE[card.toolName] ?? 'Card'}
       sandbox="allow-scripts"
       className="card-frame"
       style={{ height }}
