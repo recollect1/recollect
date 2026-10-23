@@ -4,6 +4,7 @@ const PATHS: Record<string, React.ReactNode> = {
   stop: <rect x="7" y="7" width="10" height="10" rx="2" />,
   home: <><path d="M4 11 12 4l8 7" /><path d="M6 10v9h12v-9" /></>,
   send: <path d="M4 12 20 4l-6 16-3-7-7-1Z" />,
+  timeline: <><path d="M3 16c4-6 7 2 11-4s5-4 7-5" /><circle cx="7" cy="12.5" r="1.6" /><circle cx="14" cy="12" r="1.6" /><circle cx="20" cy="7.5" r="1.6" /></>,
   graph: <><circle cx="6" cy="7" r="2.5" /><circle cx="18" cy="6" r="2.5" /><circle cx="12" cy="18" r="2.5" /><path d="m8 8 3 8M16 8l-3 8M8.5 6.8h7" /></>,
 };
 

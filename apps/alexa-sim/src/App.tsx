@@ -26,6 +26,10 @@ interface Line {
 }
 
 const DEBUG = new URLSearchParams(location.search).has('debug');
+/** The 3D life timeline lives on the family page: /family/ in production, the next port in dev. */
+const TIMELINE_URL = import.meta.env.DEV
+  ? `${location.protocol}//${location.hostname}:${Number(location.port) + 1}/timeline.html`
+  : '/family/timeline.html';
 
 /** Names used by the simulator, all from the household overview (never literals in the UI). */
 interface Names { elder: string; family: string; familyHi?: string; medicine?: string; medicineHi?: string }
@@ -53,6 +57,7 @@ function debugCalls(n: Names): { role: Role; name: string; args: Record<string, 
     { role: 'elder', name: 'story_prompt', args: {}, label: 'story_prompt' },
     { role: 'elder', name: 'memory_lane', args: {}, label: 'memory_lane' },
     { role: 'elder', name: 'talk_about_today', args: {}, label: 'talk_about_today' },
+    { role: 'elder', name: 'family_question', args: {}, label: 'family_question' },
     { role: 'family', name: 'speech_trend', args: {}, label: 'speech_trend (family)' },
   ];
 }
@@ -94,6 +99,9 @@ export function App() {
   const [photoNext, setPhotoNext] = useState(false);
   // Day chat: after "tell me about your day", her next words are the answer (never a story to save).
   const [dayNext, setDayNext] = useState(false);
+  // Ask Biji: after a family member's question is read to her, her next words are her answer.
+  const [questionNext, setQuestionNext] = useState(false);
+  const questionOffered = useRef(false);
   // The language she speaks and hears (household setting, also on the family page).
   const [lang, setLang] = useState<'en' | 'hi'>('en');
   const P = lang === 'hi' ? HI : EN;
@@ -186,6 +194,18 @@ export function App() {
       try { handleResult(await api.direct('elder', 'photo_moment', { text: t })); } catch (e) { fail(e); }
       return;
     }
+    if (questionNext && role === 'elder') {
+      setQuestionNext(false);
+      if (NOT_NOW.test(t)) {
+        const reply = P.questionLater();
+        setLines((l) => [...l, { who: 'recollect', text: reply, source: 'say' }]);
+        setCard(null); setShowReply(true);
+        return say(reply);
+      }
+      setPhase('thinking');
+      try { handleResult(await api.direct('elder', 'family_question', { answer: t })); } catch (e) { fail(e); }
+      return;
+    }
     if (dayNext && role === 'elder') {
       setDayNext(false);
       setPhase('thinking');
@@ -199,7 +219,7 @@ export function App() {
       if (r.understood) setLines((l) => [...l, { who: 'system', text: `Understood as: “${r.understood}”` }]);
       handleResult(r);
     } catch (e) { fail(e); }
-  }, [role, routine, photoNext, dayNext, lang, handleResult, fail]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [role, routine, photoNext, dayNext, questionNext, lang, handleResult, fail]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Offer this week's photo once, when routine_state says it is a calm moment for it. The offer is
   // a real photo_moment tool call; it is never made in the evening, at night or mid-conversation.
@@ -213,6 +233,20 @@ export function App() {
       if (r.calls[0]?.structuredContent?.photo) setPhotoNext(true);
     }).catch(fail);
   }, [routine, role, phase, handleResult, fail]);
+
+  // Ask Biji: when routine_state says a family question is due (calm afternoon, once a day), ask it
+  // with a real family_question call. The server records it as asked, so it is not repeated today.
+  useEffect(() => {
+    if (!routine?.questionDue) { questionOffered.current = false; return; }
+    if (role !== 'elder' || phase !== 'idle' || questionOffered.current || photoNext) return;
+    questionOffered.current = true;
+    setLines((l) => [...l, { who: 'system', text: 'A calm part of the afternoon: asking a question from the family.' }]);
+    setPhase('thinking');
+    api.direct('elder', 'family_question', {}).then((r) => {
+      handleResult(r);
+      if (r.calls[0]?.structuredContent?.question) setQuestionNext(true);
+    }).catch(fail);
+  }, [routine, role, phase, photoNext, handleResult, fail]);
 
   function startStory() {
     const prompt = P.listeningForStory();
@@ -282,6 +316,7 @@ export function App() {
     setStoryNext(false);
     setPhotoNext(false);
     setDayNext(false);
+    setQuestionNext(false);
     setPhase('idle');
     setShowReply(false);
     setLines((l) => [...l, { who: 'system', text: `Now speaking as ${roles.find((x) => x.role === r)!.label}.` }]);
@@ -470,6 +505,9 @@ export function App() {
         <button className="chip-btn" aria-expanded={showGraph} onClick={() => setShowGraph((s) => !s)}>
           <Icon name="graph" size={18} /> {showGraph ? 'Hide memory graph' : 'Show memory graph'}
         </button>
+        <a className="chip-btn" href={TIMELINE_URL} target="_blank" rel="noreferrer">
+          <Icon name="timeline" size={18} /> Open her life timeline
+        </a>
       </div>
       {showGraph && (
         <GraphPanel

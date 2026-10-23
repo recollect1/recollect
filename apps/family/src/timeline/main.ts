@@ -25,7 +25,7 @@ interface Timeline {
   threads: { entityId: string; name: string; kind: string; events: string[] }[]; updatedAt: string;
 }
 
-const API = 'api/family/timeline';
+const API = '/api/family/timeline';
 const POLL_MS = 3000;
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -472,7 +472,7 @@ function renderPanel(e: TEvent): void {
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const year = input.value ? Number(input.value) : null;
-      const r = await fetch('api/family/story-era', {
+      const r = await fetch('/api/family/story-era', {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId: e.id, year }),
       });
       if (!r.ok) { msg.textContent = (await r.json().catch(() => ({}))).error ?? 'Could not save.'; return; }
