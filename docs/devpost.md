@@ -16,7 +16,7 @@ family, gently, when her speech changes.
 
 **Repo:** https://github.com/recollect1/recollect (MIT)
 
-**Video:** <YouTube or Vimeo link, public> — file `video/final/recollect-final.mp4`, 3:28, English.
+**Video:** <YouTube or Vimeo link, public> — file `video/final/recollect-under3.mp4`, 2:58, English.
 
 **About the video:** The opening, the architecture and the close are animations. The voice conversations are a re-enactment. The narrator and Gurdev are voiced by our team;
 Recollect's voice is Amazon Polly, and the microphone is replaced by her scripted words. Every reply
