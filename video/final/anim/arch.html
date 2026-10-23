@@ -1,0 +1,48 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="anim.css">
+<style>.box{position:absolute;box-sizing:border-box;border:2px solid #2f6fd1;border-radius:14px;background:#101b38;padding:16px 20px}
+.box .h{font-size:26px;font-weight:700}.box .s{font-size:18px;color:#8a97ad;margin-top:6px;line-height:1.3}
+.bub{position:absolute;box-sizing:border-box;border-radius:16px;padding:9px 16px;font-size:19px;line-height:1.3;background:#15213f;border:1px solid #2a3a60}
+.chip{display:inline-block;font-size:16px;border:1px solid #f2a93b88;color:#f5c27a;border-radius:20px;padding:4px 12px;margin:10px 6px 0 0}
+svg text{font-family:system-ui,-apple-system,sans-serif}</style></head><body><div class="stage">
+<div class="abs a muted" data-b="0" data-d="0" style="left:60px;top:36px;font-size:18px;letter-spacing:.12em;text-transform:uppercase">How it works</div>
+<svg id="sv" class="abs" width="1280" height="720" style="left:0;top:0;z-index:2;pointer-events:none">
+  <path class="draw" data-b="0" data-d="0.8" d="M330 195 L505 195" stroke="#4ea1ff" stroke-width="3" fill="none" style="transition-duration:.5s"/>
+  <path class="draw" data-b="0" data-d="2.1" d="M775 195 L950 195" stroke="#4ea1ff" stroke-width="3" fill="none" style="transition-duration:.5s"/>
+  <path class="draw" data-b="2" data-d="0.2" d="M750 260 L750 450" stroke="#6b7a95" stroke-width="3" stroke-dasharray="7 7" fill="none" style="transition-duration:.6s"/>
+  <path class="draw" data-b="2" data-d="2.0" d="M860 470 L1010 362" stroke="#f2a93b" stroke-width="3" fill="none" style="transition-duration:.6s"/>
+  <path class="draw" data-b="2" data-d="3.2" d="M860 540 L950 528" stroke="#f2a93b" stroke-width="3" fill="none" style="transition-duration:.5s"/>
+  <g class="a" data-b="0" data-d="2.2" stroke="#3a4d78" stroke-width="2">
+    <line x1="1000" y1="235" x2="1090" y2="205"/><line x1="1090" y1="205" x2="1170" y2="255"/><line x1="1000" y1="235" x2="1040" y2="305"/><line x1="1040" y1="305" x2="1140" y2="322"/>
+  </g>
+  <g class="a" data-b="0" data-d="2.2" font-size="14" fill="#cfd8e6" text-anchor="middle">
+    <circle cx="1000" cy="235" r="8" fill="#4ea1ff" stroke="none"/><text x="1000" y="260" stroke="none">Patiala</text>
+    <circle cx="1090" cy="205" r="8" fill="#f2a93b" stroke="none"/><text x="1090" y="190" stroke="none">father</text>
+    <circle cx="1170" cy="255" r="8" fill="#e05d7a" stroke="none"/><text x="1170" y="280" stroke="none">wedding</text>
+    <circle cx="1040" cy="305" r="8" fill="#f2a93b" stroke="none"/><text x="1040" y="330" stroke="none">Aman</text>
+    <circle cx="1140" cy="322" r="8" fill="#5fd38d" stroke="none"/><text x="1140" y="347" stroke="none">saag</text>
+  </g>
+  <g class="pop" data-b="2" data-d="2.9" font-size="14" fill="#f5c27a" text-anchor="middle" style="transform-origin:1110px 260px">
+    <line x1="1090" y1="205" x2="1110" y2="262" stroke="#f2a93b" stroke-width="2"/><line x1="1000" y1="235" x2="1110" y2="262" stroke="#f2a93b" stroke-width="2"/>
+    <circle cx="1110" cy="262" r="9" fill="#f2a93b" style="filter:drop-shadow(0 0 6px #f2a93b)"/><text x="1110" y="290">radio, 1968</text>
+  </g>
+</svg>
+<div class="box a" data-b="0" data-d="0" style="left:60px;top:130px;width:270px;height:130px"><div class="h">Alexa+</div><div class="s">her voice, at home</div></div>
+<div class="bub a" data-b="0" data-d="0.3" style="left:60px;top:280px;width:270px">“Did I take my BP tablet?”</div>
+<div class="bub a" data-b="1" data-d="0.7" style="left:60px;top:346px;width:270px;border-color:#f2a93b">“Yes, you took your BP tablet at 8:10 today.”</div>
+<div class="box a" data-b="0" data-d="1.1" style="left:505px;top:130px;width:270px;height:130px"><div class="h">MCP server</div><div class="s">26 tools · answers in milliseconds</div></div>
+<div class="abs a" data-b="0" data-d="3.8" style="left:465px;width:350px;top:98px;text-align:center;font-size:16px;color:#5fd38d">p95 144 ms on AWS · budget 500 ms</div>
+<div class="abs a" data-b="1" data-d="1.0" style="left:470px;top:282px;width:250px;font-size:18px;line-height:1.35;border-left:3px solid #5fd38d;padding-left:12px;color:#d7f5e3">Her words, copied exactly.<br>No AI writes what she hears.</div>
+<div class="box a" data-b="0" data-d="2.2" style="left:950px;top:100px;width:280px;height:262px"><div class="h" style="font-size:22px">Memory graph</div><div class="s" style="font-size:16px">FalkorDB · her words, people, places</div></div>
+<div class="abs a muted" data-b="2" data-d="0.5" style="left:762px;top:340px;font-size:15px">after she's answered</div>
+<div class="box a" data-b="2" data-d="0.1" style="left:420px;top:450px;width:440px;height:160px;border-color:#f2a93b"><div class="h" style="font-size:23px">Background agents</div><div class="s" style="color:#f5c27a">Strands · Amazon Bedrock · AgentCore</div>
+  <span class="chip a" data-b="2" data-d="1.2">people &amp; places</span><span class="chip a" data-b="2" data-d="1.7">speech markers</span><span class="chip a" data-b="2" data-d="2.2">trends</span></div>
+<div class="box a" data-b="2" data-d="3.4" style="left:950px;top:470px;width:280px;height:112px;border-color:#f2a93b"><div class="h" style="font-size:23px">Family page</div><div class="s">and her doctor's report</div></div>
+<div class="abs a" data-b="2" data-d="4.3" style="left:60px;width:1160px;top:648px;text-align:center;font-size:20px;color:#f2a93b;border-top:1px solid #22304f;padding-top:14px">Grounding eval 30/30, 0 invented · 133 tests · open source: mcp-latency</div>
+</div><script src="anim.js"></script><script>
+const sv = document.getElementById("sv");
+window.onBeat = async (n) => {
+  if (n === 0) { await wait(1300); await pulse(sv, 330, 195, 505, 195, 600); await wait(1000); await pulse(sv, 775, 195, 950, 195, 600); await pulse(sv, 950, 195, 775, 195, 600, "#7fd1ff"); }
+  if (n === 1) { await pulse(sv, 505, 195, 330, 195, 650, "#f2a93b"); }
+  if (n === 2) { await wait(600); await pulse(sv, 750, 260, 750, 450, 700, "#8a97ad"); await wait(1100); await pulse(sv, 860, 470, 1010, 362, 600, "#f2a93b"); await wait(400); await pulse(sv, 860, 540, 950, 528, 500, "#f2a93b"); }
+};
+</script></body></html>

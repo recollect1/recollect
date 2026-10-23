@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="anim.css">
+<style>#life{transition:opacity 1s ease}#life.gone{opacity:0}.lt{transition:opacity 1.1s ease, box-shadow 1.1s ease}.lt.lost{opacity:.12;box-shadow:none}</style></head><body><div class="stage">
+<div id="life" class="abs" style="left:0;top:0;width:1280px;height:720px">
+  <svg class="abs" width="1280" height="720" style="left:0;top:0"><path d="M90 330 L1190 330" stroke="#f2a93b" stroke-opacity=".45" stroke-width="4"/></svg>
+  <div class="dot lt" style="left:230px;top:330px"></div><div class="cap" style="left:230px;top:356px"><div class="t">her wedding</div></div>
+  <div class="dot lt" style="left:420px;top:330px"></div><div class="cap" style="left:420px;top:250px"><div class="t">the radio</div></div>
+  <div class="dot lt" style="left:610px;top:330px"></div><div class="cap" style="left:610px;top:356px"><div class="t">her mother's saag</div></div>
+  <div class="dot lt" style="left:800px;top:330px"></div><div class="cap" style="left:800px;top:250px"><div class="t">her brother Jagdish</div></div>
+  <div class="dot lt" style="left:990px;top:330px"></div><div class="cap" style="left:990px;top:356px"><div class="t">Aman is born</div></div>
+  <div class="dot lt" style="left:1150px;top:330px"></div><div class="cap" style="left:1150px;top:250px"><div class="t">today</div></div>
+  <div class="abs a" data-b="0" data-d="3.3" style="left:0;width:1280px;top:470px;text-align:center;font-size:36px;font-weight:700">Her memories, kept safe.</div>
+  <div class="abs a amber" data-b="0" data-d="5.9" style="left:0;width:1280px;top:530px;text-align:center;font-size:36px;font-weight:700">Her family, close.</div>
+</div>
+<div class="abs pop" data-b="1" data-d="0.6" style="left:0;width:1280px;top:250px;display:flex;justify-content:center;align-items:center;gap:20px"><svg class="ring" viewBox="0 0 80 80"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7fd1ff"/><stop offset="1" stop-color="#2f6fd1"/></linearGradient></defs><circle cx="40" cy="40" r="30" fill="none" stroke="url(#rg)" stroke-width="9"/></svg><span style="font-size:72px;font-weight:700">Recollect</span></div>
+<div class="abs a amber" data-b="1" data-d="1.2" style="left:0;width:1280px;top:368px;text-align:center;font-size:34px">Her story, in her words.</div>
+<div class="abs a muted" data-b="1" data-d="1.8" style="left:0;width:1280px;top:600px;text-align:center;font-size:19px">An Alexa+ companion · github.com/recollect1/recollect · open source, MIT<br>All people in this film are fictional.</div>
+</div><script src="anim.js"></script><script>
+const dots = [...document.querySelectorAll(".lt")];
+window.onBeat = async (n) => {
+  if (n === 0) {
+    for (const i of [5, 1, 3, 0, 4, 2]) { dots[i].classList.add("lost"); await wait(330); }
+    await wait(900);
+    for (const d of dots) { d.classList.remove("lost"); await wait(260); }
+  }
+  if (n === 1) document.getElementById("life").classList.add("gone");
+};
+</script></body></html>

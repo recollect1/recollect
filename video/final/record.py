@@ -1,4 +1,4 @@
-"""Records the final film (video/FILM_PLAN.md v2) from the real running app (`pnpm dev`: simulator
+"""Records the final film (v3 script in lines.py) from the real running app (`pnpm dev`: simulator
 :5173, family :5174, MCP :8787 with DEMO_CLOCK=1, FalkorDB + worker for the memory graph).
 
 Every reply on screen is a real MCP tool call; Bedrock (Nova Pro) picks the tools. Her lines are
@@ -193,21 +193,26 @@ def glide(p: Page, sel: str, offset: int = -20) -> None:
 
 # ---------------- scenes ----------------
 
-def slide(file: str, key: str):
+def anim(file: str, keys: list[str], tail: float = 0.5, gap: float = 0.15):
+    """An animated title scene (anim/*.html): beat(i) starts each visual beat as narration line i begins."""
     def run(S: Scene, pre: bool):
         p = S.page("slide")
         if pre:
-            p.goto((HERE / file).as_uri())
+            p.goto((HERE / "anim" / file).as_uri())
             return
         p.reload()
+        p.wait_for_function("() => typeof window.beat === 'function'")
         S.show("slide")
-        S.hold(0.4)
-        S.clip(key)
-        S.hold(0.7)
+        S.hold(0.2)
+        for i, key in enumerate(keys):
+            p.evaluate(f"beat({i})")
+            S.clip(key)
+            S.hold(gap)
+        S.hold(tail)
     return run
 
 
-def s3_morning(S: Scene, pre: bool):
+def s4_morning(S: Scene, pre: bool):
     p = S.page("sim")
     if pre:
         sim_ready(p)
@@ -218,27 +223,12 @@ def s3_morning(S: Scene, pre: bool):
         return
     S.show("sim")
     jump(S, p, "Morning 09:00")
-    S.clip("n3a")
-    say(S, p, "g3a", "r3a")
-    say(S, p, "g3c", "r3c")
-    say(S, p, "g3c", "r3c")
-    S.clip("n3b")
+    S.clip("n4a")
+    say(S, p, "g4a", "r4a")
+    say(S, p, "g4b", "r4b")
+    say(S, p, "g4b", "r4b")
+    S.clip("n4b")
     S.hold(0.3)
-
-
-def s4_hindi(S: Scene, pre: bool):
-    p = S.page("sim")
-    if pre:
-        sim_ready(p)
-        p.get_by_role("radio", name="हिंदी").click()
-        p.wait_for_timeout(1200)
-        note(p)
-        return
-    S.show("sim")
-    S.clip("n4")
-    sub(p, "She asks: “Where is Aman?”")
-    say(S, p, "g4", "r4")
-    sub(p, "")
 
 
 def s5_story(S: Scene, pre: bool):
@@ -248,6 +238,7 @@ def s5_story(S: Scene, pre: bool):
         api(p, "POST", "/api/clock", {"at": "10:30"})
         return
     S.show("sim")
+    S.clip("n5a")
     before = replies(p)
     story = f"{STORY_SPOKEN} {STORY_REST}"
     spoken_words = len(STORY_SPOKEN.split(" "))
@@ -272,8 +263,8 @@ def s5_story(S: Scene, pre: bool):
     p.get_by_role("button", name=re.compile("memory graph")).click()
     p.wait_for_timeout(500)
     p.locator("[aria-label='Memory graph'], .graph").first.scroll_into_view_if_needed()
-    S.clip("n5")
-    S.hold(1.0)
+    S.clip("n5b")
+    S.hold(1.5)
 
 
 def s6_recall(S: Scene, pre: bool):
@@ -282,62 +273,15 @@ def s6_recall(S: Scene, pre: bool):
         sim_ready(p)
         return
     S.show("sim")
-    S.clip("n6a", wait=False)
-    p.get_by_role("radio", name=re.compile("family")).click()
-    time.sleep(DUR["n6a"] + 0.2)
-    say(S, p, "a6", "r6a")
-    S.hold(0.4)
-    p.get_by_role("radio", name=re.compile("elder")).click()
-    p.wait_for_timeout(400)
-    say(S, p, "g6", "r6b")
+    S.clip("n6a")
+    say(S, p, "g6a", "r6a")
+    S.hold(0.3)
+    say(S, p, "g6b", "r6b")
     S.clip("n6b")
     S.hold(0.3)
 
 
-def s7_ask(S: Scene, pre: bool):
-    fam, p = S.page("family"), S.page("sim")
-    if pre:
-        fam.goto(FAM)
-        fam.wait_for_selector("#ask", timeout=90000)
-        glide(fam, "#ask", -10)
-        fam.wait_for_timeout(800)
-        note(fam)
-        sim_ready(p)
-        return
-    S.show("family")
-    S.clip("n7a", wait=False)
-    fam.locator("#ask select").select_option(label="Aman")
-    fam.locator("#ask input").click()
-    fam.locator("#ask input").type("What was your wedding day like?", delay=40)
-    fam.get_by_role("button", name="Leave the question").click()
-    left = DUR["n7a"] - S.now() + 0.4
-    if left > 0:
-        time.sleep(left)
-    S.show("sim")
-    jump(S, p, "Family question 15:20", voice="r7a")
-    say(S, p, "g7", "r7b")
-    S.hold(0.2)
-
-
-def s8_timeline(S: Scene, pre: bool):
-    tl = S.page("timeline")
-    if pre:
-        tl.goto(FAM + "timeline.html")
-        tl.wait_for_timeout(5000)
-        tl.get_by_role("button", name="Reset view").click()
-        tl.wait_for_timeout(1500)
-        note(tl, "Her life timeline, live from the memory graph. People are fictional.")
-        return
-    S.show("timeline")
-    S.clip("n8", wait=False)
-    tl.wait_for_timeout(2000)
-    tl.locator(".tl-tag", has_text="Arriving in Patiala").first.dispatch_event("click")
-    tl.wait_for_timeout(int(max(DUR["n8"] - 2.0, 2.5) * 1000))
-    tl.locator(".tl-tag", has_text="1968").first.dispatch_event("click")
-    tl.wait_for_timeout(2600)
-
-
-def s9_family(S: Scene, pre: bool):
+def s7_care(S: Scene, pre: bool):
     fam = S.page("family")
     if pre:
         fam.goto(FAM)
@@ -347,44 +291,31 @@ def s9_family(S: Scene, pre: bool):
         return
     S.show("family")
     glide(fam, "#today", -10)
-    S.clip("n9a")
-    S.hold(0.5)
+    S.clip("n7a")
+    S.hold(0.3)
     glide(fam, "#trends", -10)
-    S.hold(0.5)
-    S.clip("n9b")
-    S.hold(0.6)
+    S.hold(0.4)
+    S.clip("n7b")
+    S.hold(0.2)
     fam.goto(FAM + "report/doctor")
     fam.wait_for_timeout(600)
-    S.clip("n9c", wait=False)
+    S.clip("n7c", wait=False)
     for _ in range(4):
         fam.mouse.wheel(0, 300)
-        fam.wait_for_timeout(int(DUR["n9c"] * 1000 / 4))
+        fam.wait_for_timeout(int(DUR["n7c"] * 1000 / 4))
     S.hold(0.4)
-    fam.goto(FAM)
-    fam.wait_for_selector("#care", timeout=60000)
-    glide(fam, "#care", -10)
-    fam.wait_for_timeout(500)
-    S.clip("n9d", wait=False)
-    step = fam.locator("li.row.care", has_text="Book a check-up")
-    if step.count():
-        step.first.get_by_role("button", name="Approve").click()
-    fam.wait_for_timeout(int(DUR["n9d"] * 1000 * 0.55))
-    glide(fam, "#you", -10)
-    fam.wait_for_timeout(int(DUR["n9d"] * 1000 * 0.45) + 600)
 
 
 SCENES = {
-    "s1_problem": slide("s1_problem.html", "n1"),
-    "s2_who": slide("s2_who.html", "n2"),
-    "s3_morning": s3_morning,
-    "s4_hindi": s4_hindi,
+    "s1_open": anim("open.html", ["n1a", "n1b", "n1c"], tail=0.7),
+    "s2_problem": anim("problem.html", ["n2a", "n2b", "n2c"], tail=0.7),
+    "s3_solution": anim("solution.html", ["n3a", "n3b"], tail=0.6),
+    "s4_morning": s4_morning,
     "s5_story": s5_story,
     "s6_recall": s6_recall,
-    "s7_ask": s7_ask,
-    "s8_timeline": s8_timeline,
-    "s9_family": s9_family,
-    "s10_built": slide("s10_built.html", "n10"),
-    "s11_close": slide("s11_close.html", "n11"),
+    "s7_care": s7_care,
+    "s8_built": anim("arch.html", ["n8a", "n8b", "n8c"], tail=1.0),
+    "s9_close": anim("close.html", ["n9a", "n9b"], tail=2.2),
 }
 
 

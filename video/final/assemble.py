@@ -18,10 +18,10 @@ from tts import duration
 HERE = Path(__file__).parent
 FF = imageio_ffmpeg.get_ffmpeg_exe()
 CLIPS, PARTS = HERE / "clips", HERE / "parts"
-ORDER = ["s1_problem", "s2_who", "s3_morning", "s4_hindi", "s5_story", "s6_recall", "s7_ask",
-         "s8_timeline", "s9_family", "s10_built", "s11_close"]
+ORDER = ["s1_open", "s2_problem", "s3_solution", "s4_morning", "s5_story", "s6_recall", "s7_care",
+         "s8_built", "s9_close"]
 FADE = 0.25
-SPEED = 1.10  # whole film, pitch kept (atempo); keeps it under 3:00 without rushing any one scene
+SPEED = 1.12  # whole film, pitch kept (atempo); keeps it under 3:00 without rushing any one scene
 
 
 def ranges(m: dict) -> list[tuple[str, float, float]]:
